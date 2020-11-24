@@ -1,0 +1,16 @@
+@media only screen and (min-width: 320px) {
+    html {
+        font-size: 10px;
+    }
+
+    .module {
+        padding: 2rem;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    html {
+        font-size: 20px;
+    }
+
+}
