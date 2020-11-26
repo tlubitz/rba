@@ -1,0 +1,123 @@
+<RBAParameters>
+	<listOfFunctions>
+		<function id="ribosome_capacity" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_transporter_efficiency_foreward" type="michaelisMenten" variable="M_Glucose_e">
+			<listOfParameters>
+				<parameter id="kmax" value="1"/>
+				<parameter id="Km" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_transporter_efficiency_backward" type="michaelisMenten" variable="M_Glucose_e">
+			<listOfParameters>
+				<parameter id="kmax" value="1"/>
+				<parameter id="Km" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_UpperGlycolysis_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1.0"/>
+			</listOfParameters>
+		</function>
+		<function id="k_UpperGlycolysis_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1.0"/>
+			</listOfParameters>
+		</function>
+		<function id="k_CitratCycle_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="0.1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_CitratCycle_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_AA_synthesis_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_AA_synthesis_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_fermentation_NAD_regeneration_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_fermentation_NAD_regeneration_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_fermentation_ATP_generation_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_fermentation_ATP_generation_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_respiration_efficiency_foreward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="k_respiration_efficiency_backward" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="1"/>
+			</listOfParameters>
+		</function>
+		<function id="nonenzymatic_proteins_Cytoplasm" type="linear" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="LINEAR_CONSTANT" value="0"/>
+				<parameter id="LINEAR_COEF" value="0"/>
+				<parameter id="X_MIN" value="-inf"/>
+				<parameter id="X_MAX" value="inf"/>
+				<parameter id="Y_MIN" value="-inf"/>
+				<parameter id="Y_MAX" value="inf"/>
+			</listOfParameters>
+		</function>
+		<function id="nonenzymatic_proteins_Cytoplasm" type="linear" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="LINEAR_CONSTANT" value="0"/>
+				<parameter id="LINEAR_COEF" value="0"/>
+				<parameter id="X_MIN" value="-inf"/>
+				<parameter id="X_MAX" value="inf"/>
+				<parameter id="Y_MIN" value="-inf"/>
+				<parameter id="Y_MAX" value="inf"/>
+			</listOfParameters>
+		</function>
+		<function id="maintenance_atp" type="linear" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="LINEAR_CONSTANT" value="0"/>
+				<parameter id="LINEAR_COEF" value="200"/>
+				<parameter id="X_MIN" value="-inf"/>
+				<parameter id="X_MAX" value="inf"/>
+				<parameter id="Y_MIN" value="-inf"/>
+				<parameter id="Y_MAX" value="inf"/>
+			</listOfParameters>
+		</function>
+		<function id="Cytoplasm_density" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="10"/>
+			</listOfParameters>
+		</function>
+		<function id="Membrane_density" type="constant" variable="growth_rate">
+			<listOfParameters>
+				<parameter id="CONSTANT" value="10"/>
+			</listOfParameters>
+		</function>
+	</listOfFunctions>
+	<listOfAggregates>
+	</listOfAggregates>
+</RBAParameters>
