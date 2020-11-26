@@ -2,7 +2,7 @@
 RBA XML classes.
 """
 
-from rba.xml import (common, metabolism, parameters,
+from . import (common, metabolism, parameters,
                      macromolecules, processes, targets, enzymes)
 from .common import *
 from .metabolism import *

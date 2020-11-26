@@ -9,7 +9,7 @@ from collections import namedtuple
 from scipy.sparse import hstack
 
 # local imports
-from rba.core.parameter_vector import ParameterVector
+from .parameter_vector import ParameterVector
 
 # class used to communicate target information
 TargetSet = namedtuple('TargetSet', 'names values lb ub composition '

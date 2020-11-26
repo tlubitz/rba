@@ -6,7 +6,7 @@ from __future__ import division, print_function, absolute_import
 # global imports
 
 # local imports
-from rba.prerba.default_data import DefaultData
+from .default_data import DefaultData
 
 _DEFAULT_AMINO_ACIDS = DefaultData().metabolites.aas
 

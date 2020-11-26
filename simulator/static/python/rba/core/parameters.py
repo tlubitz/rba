@@ -4,7 +4,7 @@
 from __future__ import division, print_function, absolute_import
 
 # local imports
-from rba.core.functions import build_function, build_aggregate
+from .functions import build_function, build_aggregate
 
 
 class Parameters(object):

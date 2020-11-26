@@ -4,13 +4,13 @@
 from __future__ import division, print_function, absolute_import
 
 # local imports
-from rba.core.metabolism import Metabolism
-from rba.core.parameters import Parameters
-from rba.core.species import Species
-from rba.core.density import Density
-from rba.core.enzymes import Enzymes
-from rba.core.processes import Processes
-from rba.core.targets import Targets
+from .metabolism import Metabolism
+from .parameters import Parameters
+from .species import Species
+from .density import Density
+from .enzymes import Enzymes
+from .processes import Processes
+from .targets import Targets
 
 
 class ConstraintBlocks(object):

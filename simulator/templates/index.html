@@ -16,10 +16,17 @@
 
     {% if rbafilename %}
         Good job! You have uploaded the file {{ rbafilename }}<br>
-        <button type="button" onclick="delete_session()">Delete Session</button> 
+        <div>
+            <button type="button" onclick="simulate()">Simulate!</button>
+            <button type="button" onclick="delete_session()">Delete Session</button>
+        </div>
     {% endif %}
 
-    {% if error_code %}
+    {% if status %}
+        Status: {{ status }}
+    {% endif %}
+
+    {% if error_code != '' %}
         {{ error_code }}
     {% endif %}
 </article>

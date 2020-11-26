@@ -9,7 +9,7 @@ from __future__ import division, print_function, absolute_import
 from lxml import etree
 
 # local imports
-from rba.xml.common import (is_true, get_unique_child,
+from .common import (is_true, get_unique_child,
                             ListOf, ListOfProducts, ListOfReactants)
 
 __all__ = ['RbaMetabolism', 'Compartment', 'ListOfCompartments',

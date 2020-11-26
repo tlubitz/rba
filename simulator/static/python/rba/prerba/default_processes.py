@@ -4,7 +4,7 @@
 from __future__ import division, print_function, absolute_import
 
 # local imports
-import rba.xml
+from .. import xml
 
 
 def create_processing(processing_map, set_, inputs):

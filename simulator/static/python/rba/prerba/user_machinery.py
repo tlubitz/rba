@@ -6,7 +6,7 @@ from __future__ import division, print_function, absolute_import
 import itertools
 
 # local imports
-from rba.prerba.fasta_parser import RbaFastaParser
+from .fasta_parser import RbaFastaParser
 
 
 class UserMachinery(object):

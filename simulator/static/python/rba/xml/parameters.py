@@ -7,7 +7,7 @@ from __future__ import division, print_function, absolute_import
 from lxml import etree
 
 # local imports
-from rba.xml.common import get_unique_child, ListOf
+from .common import get_unique_child, ListOf
 
 __all__ = ['RbaParameters', 'Parameter', 'ListOfParameters', 'Function',
            'ListOfFunctions', 'FunctionReference', 'ListOfFunctionReferences',

@@ -7,8 +7,9 @@ from __future__ import division, print_function, absolute_import
 from os.path import join
 
 # local imports
-import rba
-from rba.utils import efficiencies
+from ..rba import xml
+from ..rba.core import ConstraintMatrix
+from .utils import efficiencies
 
 
 class RbaModel(object):
@@ -31,15 +32,15 @@ class RbaModel(object):
 
     def __init__(self):
         """Build object with empty structures."""
-        self.metabolism = rba.xml.RbaMetabolism()
-        self.density = rba.xml.RbaDensity()
-        self.parameters = rba.xml.RbaParameters()
-        self.proteins = rba.xml.RbaMacromolecules()
-        self.enzymes = rba.xml.RbaEnzymes()
-        self.rnas = rba.xml.RbaMacromolecules()
-        self.dna = rba.xml.RbaMacromolecules()
-        self.processes = rba.xml.RbaProcesses()
-        self.targets = rba.xml.RbaTargets()
+        self.metabolism = xml.RbaMetabolism()
+        self.density = xml.RbaDensity()
+        self.parameters = xml.RbaParameters()
+        self.proteins = xml.RbaMacromolecules()
+        self.enzymes = xml.RbaEnzymes()
+        self.rnas = xml.RbaMacromolecules()
+        self.dna = xml.RbaMacromolecules()
+        self.processes = xml.RbaProcesses()
+        self.targets = xml.RbaTargets()
         self.medium = {}
         self.output_dir = ''
         self._constraint_matrix = None
@@ -74,31 +75,31 @@ class RbaModel(object):
         """
         obj = cls()
         obj.output_dir = input_dir
-        obj.parameters = rba.xml.RbaParameters().from_file(
+        obj.parameters = xml.RbaParameters().from_file(
             open(join(input_dir, 'parameters.xml'))
             )
-        obj.density = rba.xml.RbaDensity().from_file(
+        obj.density = xml.RbaDensity().from_file(
             open(join(input_dir, 'density.xml'))
             )
-        obj.metabolism = rba.xml.RbaMetabolism().from_file(
+        obj.metabolism = xml.RbaMetabolism().from_file(
             open(join(input_dir, 'metabolism.xml'))
             )
-        obj.proteins = rba.xml.RbaMacromolecules().from_file(
+        obj.proteins = xml.RbaMacromolecules().from_file(
             open(join(input_dir, 'proteins.xml'))
             )
-        obj.rnas = rba.xml.RbaMacromolecules().from_file(
+        obj.rnas = xml.RbaMacromolecules().from_file(
             open(join(input_dir, 'rnas.xml'))
             )
-        obj.dna = rba.xml.RbaMacromolecules().from_file(
+        obj.dna = xml.RbaMacromolecules().from_file(
             open(join(input_dir, 'dna.xml'))
             )
-        obj.processes = rba.xml.RbaProcesses().from_file(
+        obj.processes = xml.RbaProcesses().from_file(
             open(join(input_dir, 'processes.xml'))
             )
-        obj.targets = rba.xml.RbaTargets().from_file(
+        obj.targets = xml.RbaTargets().from_file(
             open(join(input_dir, 'targets.xml'))
             )
-        obj.enzymes = rba.xml.RbaEnzymes().from_file(
+        obj.enzymes = xml.RbaEnzymes().from_file(
             open(join(input_dir, 'enzymes.xml'))
             )
         obj.set_medium(join(input_dir, 'medium.tsv'))
@@ -176,10 +177,10 @@ class RbaModel(object):
 
         """
         if recompute_matrices or self._constraint_matrix is None:
-            self._constraint_matrix = rba.ConstraintMatrix(self)
+            self._constraint_matrix = ConstraintMatrix(self)
         solver = rba.Solver(self._constraint_matrix)
         solver.solve()
-	#solver.solve_grid()
+	    #solver.solve_grid()
         return rba.Results(self, self._constraint_matrix, solver)
 
     def set_enzyme_efficiencies(self, file_name):

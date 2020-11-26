@@ -7,8 +7,8 @@ import os.path
 from collections import namedtuple
 import pandas
 
-from rba.prerba.curation_data import CurationData
-from rba.prerba.uniprot_data import Cofactor
+from .curation_data import CurationData
+from .uniprot_data import Cofactor
 
 Metabolite = namedtuple('Metabolite', 'name sbml_id concentration')
 

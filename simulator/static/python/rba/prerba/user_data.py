@@ -7,18 +7,18 @@ from __future__ import division, print_function, absolute_import
 import os.path
 
 # local imports
-from rba.prerba.pipeline_parameters import PipelineParameters
-from rba.prerba.default_data import DefaultData
-from rba.prerba import sbml_data
-from rba.prerba.protein_data import ProteinData
-from rba.prerba.uniprot_importer import create_uniprot_if_absent
-from rba.prerba.manual_annotation import (
+from .pipeline_parameters import PipelineParameters
+from .default_data import DefaultData
+from . import sbml_data
+from .protein_data import ProteinData
+from .uniprot_importer import create_uniprot_if_absent
+from .manual_annotation import (
     CuratedMetabolites, CuratedMacrocomponents
     )
-from rba.prerba.enzyme import Enzyme
-from rba.prerba.user_machinery import UserMachinery
-from rba.prerba.fasta_parser import RbaFastaParser
-from rba.prerba import protein_export
+from .enzyme import Enzyme
+from .user_machinery import UserMachinery
+from .fasta_parser import RbaFastaParser
+from . import protein_export
 
 
 class UserData(object):

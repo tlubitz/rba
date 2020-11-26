@@ -4,7 +4,7 @@
 from __future__ import division, print_function, absolute_import
 
 # local imports
-from rba.core.parameter_vector import ParameterVector
+from .parameter_vector import ParameterVector
 
 
 class Density(object):

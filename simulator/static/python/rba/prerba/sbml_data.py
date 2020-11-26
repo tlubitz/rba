@@ -9,8 +9,8 @@ import itertools
 import libsbml
 
 # local imports
-from rba.prerba.enzyme import Enzyme
-import rba.xml
+from .enzyme import Enzyme
+from .. import xml
 
 
 class SbmlData(object):

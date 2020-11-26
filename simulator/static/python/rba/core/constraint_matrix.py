@@ -9,7 +9,7 @@ from scipy.sparse import coo_matrix, diags, hstack, vstack
 import cplex
 
 # local imports
-from rba.core.constraint_blocks import ConstraintBlocks
+from .constraint_blocks import ConstraintBlocks
 
 
 class ConstraintMatrix(object):

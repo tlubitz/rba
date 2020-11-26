@@ -7,8 +7,8 @@ from __future__ import division, print_function, absolute_import
 import numpy
 
 # local imports
-from rba.core.parameter_vector import ParameterVector
-from rba.core import functions
+from .parameter_vector import ParameterVector
+from . import functions
 
 
 class Processes(object):

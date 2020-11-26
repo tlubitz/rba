@@ -7,9 +7,9 @@ from collections import namedtuple
 from itertools import chain
 import pandas
 
-from rba.prerba.macromolecule import Protein
-from rba.prerba.uniprot_data import Cofactor, UniprotData
-from rba.prerba.manual_annotation import (
+from .macromolecule import Protein
+from .uniprot_data import Cofactor, UniprotData
+from .manual_annotation import (
     CuratedCofactors, CuratedSubunits, CuratedLocations,
     CuratedLocationMap, CuratedUnknownProteins
     )

@@ -5,7 +5,7 @@ from __future__ import division, print_function, absolute_import
 # global imports
 
 # local imports
-from rba.prerba.default_data import DefaultActivity
+from .default_data import DefaultActivity
 
 
 class Enzyme(object):

@@ -1,28 +1,41 @@
 #!/usr/bin/env python
 import sys
-#from rbastructure.NewControler import RBA_newControler
-#import rbastructure.NewControler
-print('START2')
-from rbastructure.NewControler import RBA_newControler
+from .rbastructure.NewControler import RBA_newControler
 
-#model_name = sys.argv[1]
-#path = 'models/' + model_name
-path = sys.argv[1]
-print("le path: ", path)
-Simulation = RBA_newControler(path)
+class Wrapper:
 
-## Set medium to first condition, simulate and record results.##
-Simulation.setMedium({'M_Glucose': 10})
-Simulation.findMaxGrowthRate()
-Simulation.recordResults('Glucose')
+    def __init__(self):
+        self.path = False
+        self.Simulation = False
 
+    def set_path(self, rpath):
+        self.path = rpath
+        print('Set path: ', self.path)
 
-## Write recorded results to RBA_SimulationData object ##
-Simulation.writeResults(session_name='LeTest')
+    def create_simulation(self):
+        self.Simulation = RBA_newControler(self.path)
+        print('Created Sim: ', self.Simulation)
+    
+    def set_default_parameters(self):
+        ## Set medium to first condition, simulate and record results. ##
+        self.Simulation.setMedium({'M_Glucose': 10})
+        self.Simulation.findMaxGrowthRate()
+        self.Simulation.recordResults('Glucose')
+        print('Set default params: ', self.Simulation)
 
-## Export results in various formats ##
-Simulation.SimulationData.exportCSV()
-Simulation.SimulationData.exportEscherMap(type='investment')
-print('result!')
+    def write_results(self):
+        ## Write recorded results to RBA_SimulationData object ##
+        self.Simulation.writeResults(session_name='Test')
 
-sys.stdout.flush()
+    def get_csv(self):
+        ## Export results in CSV ##
+        csv = self.Simulation.SimulationData.exportCSV()
+        return csv
+        
+    def get_eschermap(self):
+        ## Export results as Escher Map ##
+        em = self.Simulation.SimulationData.exportEscherMap(type='investment')
+        print(em)
+        sys.stdout.flush()
+        print(em)
+        return em

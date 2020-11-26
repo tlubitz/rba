@@ -8,7 +8,7 @@ import numpy
 import itertools
 
 # local imports
-from rba.core.functions import build_function, zero_function, default_ub
+from .functions import build_function, zero_function, default_ub
 
 
 class Enzymes(object):

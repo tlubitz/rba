@@ -4,8 +4,8 @@
 from __future__ import division, print_function, absolute_import
 
 # local imports
-import rba.xml
-from rba.xml import Function
+import xml
+from ..xml import Function
 
 GROWTH_RATE = 'growth_rate'
 

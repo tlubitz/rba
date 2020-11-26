@@ -9,8 +9,8 @@ from scipy.sparse import lil_matrix, hstack
 from itertools import chain
 
 # local imports
-from rba.core.parameter_vector import ParameterVector
-from rba.core import functions
+from .parameter_vector import ParameterVector
+from . import functions
 
 
 class Metabolism(object):

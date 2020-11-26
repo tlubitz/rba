@@ -8,7 +8,7 @@ from collections import namedtuple
 from Bio import SeqIO
 
 # local imports
-from rba.prerba.macromolecule import Protein, Rna
+from .macromolecule import Protein, Rna
 
 # class holding fasta entries
 FastaEntry = namedtuple('FastaEntry',

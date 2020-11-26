@@ -7,13 +7,13 @@ from __future__ import division, print_function, absolute_import
 import itertools
 
 # local imports
-from rba import RbaModel
-from rba.prerba.user_data import UserData
-from rba.prerba.default_data import DefaultData
-from rba.prerba.enzyme import Enzyme
-from rba.prerba.default_processes import DefaultProcesses
-from rba.prerba.default_targets import DefaultTargets
-import rba.xml
+from ..model import RbaModel
+from .user_data import UserData
+from .default_data import DefaultData
+from .enzyme import Enzyme
+from .default_processes import DefaultProcesses
+from .default_targets import DefaultTargets
+import xml
 
 
 class ModelBuilder(object):

@@ -7,7 +7,7 @@ from __future__ import division, print_function, absolute_import
 from lxml import etree
 
 # local imports
-from rba.xml.common import (
+from .common import (
     get_unique_child, is_true, ListOf, MachineryComposition
     )
 
