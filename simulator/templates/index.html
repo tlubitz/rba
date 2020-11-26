@@ -6,8 +6,22 @@
     <header>
         <h1>RBA <small>Ressource Balance Analysis</small></h1>
     </header>
-    UPLOADFORM
+    
+    <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <!--input type="file" placeholder="Rba File" name="zipfile" id="rba-id"/><br-->
+        <input type="submit" value="OK">
+    </form>
 
+    {% if rbafilename %}
+        Good job! You have uploaded the file {{ rbafilename }}<br>
+        <button type="button" onclick="delete_session()">Delete Session</button> 
+    {% endif %}
+
+    {% if error_code %}
+        {{ error_code }}
+    {% endif %}
 </article>
 {% endblock %}
 
