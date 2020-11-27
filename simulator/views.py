@@ -17,10 +17,11 @@ def index(request):
     main page handling rba file upload and fine tuning parameters
     '''
     # create essential variables
-    for var in ['rbafilezip', 'rbafilename', 'status']:
+    for var in ['rbafilezip', 'rbafilename', 'emap_path']:
         if not request.session.get(var, None):
             request.session[var] = False
-    request.session['error_code'] = ''
+    if not request.session.get('error_code', None):
+        request.session['error_code'] = ''
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -53,7 +54,7 @@ def index(request):
     return render(request, 'index.html', {'form': form,
                                           'rbafilename': request.session['rbafilename'],
                                           'error_code': request.session['error_code'],
-                                          'status': request.session['status']})
+                                          'emap_path': request.session['emap_path']})
 
 
 def clearsession(request):
@@ -65,7 +66,7 @@ def clearsession(request):
     except: print('Cannot delete %s' %request.session['newdir'])
 
     # delete session variables
-    keys = ['rbafilezip', 'rbafilename', 'newdir', 'errorcode', 'status']
+    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path']
     for key in keys:
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
@@ -95,11 +96,19 @@ def simulate(request):
 
     try: csv_file = wrapper.get_csv()
     except: request.session['error_code'] += 'Could not create CSV output.\n'
-
-    try: e_map = wrapper.get_eschermap()
-    except: request.session['error_code'] += 'Could not create Escher Map for this model.\n'
-
-    request.session['status'] = 'simulated'
+   
+    try:
+        # create Escher map file, save it, and create link to download
+        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
+        os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        emap_path = 'simulator/static/results/%s/eschermap.json' %request.session['rbafilename'][:-4]
+        emap_content = wrapper.get_eschermap()
+        f = open(emap_path, 'w+')
+        f.write(emap_content)
+        f.close()
+        request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4]
+    except:
+        request.session['error_code'] += 'Could not create Escher Map for this model.\n'
 
     request.session.modified = True
 

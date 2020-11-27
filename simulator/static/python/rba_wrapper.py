@@ -10,18 +10,15 @@ class Wrapper:
 
     def set_path(self, rpath):
         self.path = rpath
-        print('Set path: ', self.path)
 
     def create_simulation(self):
         self.Simulation = RBA_newControler(self.path)
-        print('Created Sim: ', self.Simulation)
     
     def set_default_parameters(self):
         ## Set medium to first condition, simulate and record results. ##
         self.Simulation.setMedium({'M_Glucose': 10})
         self.Simulation.findMaxGrowthRate()
         self.Simulation.recordResults('Glucose')
-        print('Set default params: ', self.Simulation)
 
     def write_results(self):
         ## Write recorded results to RBA_SimulationData object ##
@@ -34,8 +31,7 @@ class Wrapper:
         
     def get_eschermap(self):
         ## Export results as Escher Map ##
-        em = self.Simulation.SimulationData.exportEscherMap(type='investment')
-        print(em)
-        sys.stdout.flush()
-        print(em)
+        self.Simulation.SimulationData.exportEscherMap(type='investment')
+        em = self.Simulation.SimulationData.getEscherMap()
+
         return em

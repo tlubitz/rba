@@ -676,6 +676,10 @@ class RBA_SimulationData(ModelData):
                     filename = 'RBA_Eschermap_investment_'+run+'.json'
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionInvestments, indent=4))
+        self.eschermap = json.dumps(ReactionInvestments, indent=4)
+    
+    def getEscherMap(self):
+        return self.eschermap
 
     def exportProteoMap(self, type='proto'):
         """

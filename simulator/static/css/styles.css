@@ -30,6 +30,10 @@
     .pp {
 
     }
+
+    .errors {
+        color: red;
+    }
 }
 
 @media only screen and (min-width: 1200px) {

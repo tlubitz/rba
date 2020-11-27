@@ -27,14 +27,10 @@
     <h2>RBA simulations</h2>
 
     <article class="module">
-        <header>
-            <h1>RBA <small>Ressource Balance Analysis</small></h1>
-        </header>
         
         <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
             {% csrf_token %}
             {{ form }}
-            <!--input type="file" placeholder="Rba File" name="zipfile" id="rba-id"/><br-->
             <input type="submit" value="OK">
         </form>
 
@@ -47,11 +43,16 @@
         {% endif %}
 
         {% if status %}
-            Status: {{ status }}
+            Status: {{ status }}<br>
+            {% if emap_path %}
+                <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
+            {% endif %}
         {% endif %}
 
         {% if error_code != '' %}
-            {{ error_code }}
+            <div class="errors">
+                {{ error_code }}
+            </div>
         {% endif %}
     </article>
 </div>
