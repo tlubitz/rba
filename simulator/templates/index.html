@@ -2,34 +2,59 @@
 {% load static %}
 
 {% block content %}
-<article class="module">
-    <header>
-        <h1>RBA <small>Ressource Balance Analysis</small></h1>
-    </header>
+<div class="content">
+    <h1>
+        <a href="./index.html">
+            <img src="{% static 'images/main.jpg' %}" width="180" class="logoresize"></a>&nbsp;&nbsp;
+            Resource balance analysis
+    </h1>
+
+    <hr align="left">
     
-    <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
-        {% csrf_token %}
-        {{ form }}
-        <!--input type="file" placeholder="Rba File" name="zipfile" id="rba-id"/><br-->
-        <input type="submit" value="OK">
-    </form>
+    <p class="pp">
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/index.html">Main</a>  &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/overview.html">Getting started</a>  &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/models.html">Models</a>  &nbsp;|&nbsp;
+        Simulation  &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/theory.html">Theory</a> &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/learning.html">Learning materials</a>  &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/literature.html">Literature</a> &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/downloads.html">Downloads</a> &nbsp;|&nbsp;
+        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/contact.html">Contact</a>
+    </p>
+    <br>
 
-    {% if rbafilename %}
-        Good job! You have uploaded the file {{ rbafilename }}<br>
-        <div>
-            <button type="button" onclick="simulate()">Simulate!</button>
-            <button type="button" onclick="delete_session()">Delete Session</button>
-        </div>
-    {% endif %}
+    <h2>RBA simulations</h2>
 
-    {% if status %}
-        Status: {{ status }}
-    {% endif %}
+    <article class="module">
+        <header>
+            <h1>RBA <small>Ressource Balance Analysis</small></h1>
+        </header>
+        
+        <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
+            {% csrf_token %}
+            {{ form }}
+            <!--input type="file" placeholder="Rba File" name="zipfile" id="rba-id"/><br-->
+            <input type="submit" value="OK">
+        </form>
 
-    {% if error_code != '' %}
-        {{ error_code }}
-    {% endif %}
-</article>
+        {% if rbafilename %}
+            Good job! You have uploaded the file {{ rbafilename }}<br>
+            <div>
+                <button type="button" onclick="simulate()">Simulate!</button>
+                <button type="button" onclick="delete_session()">Delete Session</button>
+            </div>
+        {% endif %}
+
+        {% if status %}
+            Status: {{ status }}
+        {% endif %}
+
+        {% if error_code != '' %}
+            {{ error_code }}
+        {% endif %}
+    </article>
+</div>
 {% endblock %}
 
 {% block js%}
