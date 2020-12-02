@@ -35,3 +35,16 @@ class Wrapper:
         em = self.Simulation.SimulationData.getEscherMap()
 
         return em
+
+    def get_proteomap(self):
+        ## Export results in CSV ##
+        self.Simulation.SimulationData.exportProteoMap()
+        proteomap = self.Simulation.SimulationData.getProteoMap()
+        
+        return proteomap
+
+    def get_sbtab(self):
+        ## Export results in CSV ##
+        sbtab = self.Simulation.SimulationData.exportSBtab(filename_SBtab='Sbtab_Results_Glucose_Screen')
+        return sbtab
+

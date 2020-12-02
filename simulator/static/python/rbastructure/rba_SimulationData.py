@@ -675,8 +675,8 @@ class RBA_SimulationData(ModelData):
                 else:
                     filename = 'RBA_Eschermap_investment_'+run+'.json'
                 with open(filename, 'w') as fout:
-                    fout.write(json.dumps(ReactionInvestments, indent=4))
-        self.eschermap = json.dumps(ReactionInvestments, indent=4)
+                    self.eschermap = json.dumps(ReactionInvestments, indent=4)
+                    fout.write(self.eschermap)
     
     def getEscherMap(self):
         return self.eschermap
@@ -713,7 +713,11 @@ class RBA_SimulationData(ModelData):
                 else:
                     filename = 'RBA_Proteomap_'+run+'.tsv'
                 with open(filename, 'w') as fout:
-                    fout.write('\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]))
+                    self.proteomap = '\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()])
+                    fout.write(self.proteomap)
+    
+    def getProteoMap(self):
+        return self.proteomap
 
 
 def htmlStyle(structOriginal):
