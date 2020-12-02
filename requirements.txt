@@ -1,1 +1,10 @@
 django~=2.2.17
+numpy>=1.18.5
+pandas>=0.24.2
+scipy>=1.4.1
+python-libsbml>=5.18.3
+lxml>=4.6.1
+biopython==1.76
+cplex>=12.8.0.1
+urllib3>=1.26.2
+jxmlease>=1.0.3

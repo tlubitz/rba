@@ -20,12 +20,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5y!f&1s2-)eju@8j_)cj1b1wl7+c!-v%xb*1+q295t!57ul0^$'
+SECRET_KEY = os.getenv("SECRET_KEY")       #prod
+
+if SECRET_KEY == None:
+    DEV = True
+    SECRET_KEY = '5y!f&1s2-)eju@8j_)cj1b1wl7+c!-v%xb*1+q295t!57ul0^$' #dev
+    print('*>>>>> You are working in DEVELOPMENT mode <<<<<*')
+else:
+    DEV = False
+    print('*>>>>> You are working in PRODUCTION mode <<<<<*')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'timosan.pythonanywhere.com']
 
 
 # Application definition
@@ -119,6 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

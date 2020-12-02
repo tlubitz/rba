@@ -1,0 +1,49 @@
+<RBAProcesses>
+	<listOfProcesses>
+		<process id="P_TA" name="Translation">
+			<machinery>
+				<machineryComposition>
+					<listOfReactants>
+						<speciesReference species="Protein_standard_membrane" stoichiometry="1.0"/>
+						<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+					</listOfReactants>
+					<listOfProducts>	
+					</listOfProducts>
+				</machineryComposition>
+				<capacity value="ribosome_capacity"/>
+			</machinery>
+			<processings>
+				<listOfProductions>
+					<processing processingMap="translation" set="protein">
+						<listOfInputs>
+							<speciesReference species="Protein_standard_membrane" stoichiometry="1"/>
+							<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1"/>
+							<speciesReference species="Protein_target" stoichiometry="1"/>
+						</listOfInputs>
+					</processing>
+				</listOfProductions>
+			</processings>
+		</process>
+	</listOfProcesses>
+	<listOfProcessingMaps>
+		<processingMap id="translation">
+			<constantProcessing>
+				<listOfReactants>
+				</listOfReactants>
+				<listOfProducts>					
+				</listOfProducts>
+			</constantProcessing>
+			<listOfComponentProcessings>
+				<componentProcessing component="precursor" machineryCost="1">
+					<listOfReactants>
+						<speciesReference species="M_AA_c" stoichiometry="1"/>
+						<speciesReference species="M_ATP_c" stoichiometry="0"/>
+					</listOfReactants>
+					<listOfProducts>
+						<speciesReference species="M_ADP_c" stoichiometry="0"/>					
+					</listOfProducts>
+				</componentProcessing>
+			</listOfComponentProcessings>
+		</processingMap>
+	</listOfProcessingMaps>
+</RBAProcesses>
