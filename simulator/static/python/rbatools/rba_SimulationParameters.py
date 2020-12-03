@@ -8,7 +8,7 @@ import copy
 import json
 import jxmlease
 import xml.etree.ElementTree as ET
-#from sbtab import SBtab
+from sbtab import SBtab
 
 # package imports
 import rba

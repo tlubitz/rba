@@ -46,7 +46,8 @@ class Wrapper:
         return proteomap
 
     def get_sbtab(self):
-        ## Export results in CSV ##
-        sbtab = self.Simulation.SimulationData.exportSBtab(filename_SBtab='Sbtab_Results_Glucose_Screen')
+        ## Export results in SBtab ##
+        self.Simulation.SimulationData.exportSBtab(filename_SBtab='Sbtab_Results_Glucose_Screen')
+        sbtab = self.Simulation.SimulationData.getSBtabDoc()
         return sbtab
 

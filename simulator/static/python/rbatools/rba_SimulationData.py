@@ -9,7 +9,7 @@ import json
 import jxmlease
 import xml.etree.ElementTree as ET
 import csv
-#from sbtab import SBtab
+from sbtab import SBtab
 
 # package imports
 import rba
@@ -353,21 +353,24 @@ class RBA_SimulationData(object):
         ProcessConstraintDataTable.unset_attribute('Date')
         ProcessConstraintDataTable.unset_attribute('SBtabVersion')
 
-        Out = SBtab.SBtabDocument(name='rbatools_SimulationData_withLinks',
+        self.Out = SBtab.SBtabDocument(name='rbatools_SimulationData_withLinks',
                                   sbtab_init=None, filename=str(filename_SBtab+'.tsv'))
-        Out.add_sbtab(GeneralRunInfoTable)
-        Out.add_sbtab(ReactionDataTable)
-        Out.add_sbtab(EnzymeDataTable)
-        Out.add_sbtab(ProcessDataTable)
-        Out.add_sbtab(ProteinDataTable)
-        Out.add_sbtab(MetaboliteConstraintDataTable)
-        Out.add_sbtab(DensityConstraintDataTable)
-        Out.add_sbtab(EnzymeConstraintDataTable)
-        Out.add_sbtab(ProcessConstraintDataTable)
-        Out.change_attribute('DocumentName', 'RBA data')
-        Out.name = filename_SBtab
-        Out.change_attribute('DocumentType', 'rba-simulation-data')
-        Out.write()
+        self.Out.add_sbtab(GeneralRunInfoTable)
+        self.Out.add_sbtab(ReactionDataTable)
+        self.Out.add_sbtab(EnzymeDataTable)
+        self.Out.add_sbtab(ProcessDataTable)
+        self.Out.add_sbtab(ProteinDataTable)
+        self.Out.add_sbtab(MetaboliteConstraintDataTable)
+        self.Out.add_sbtab(DensityConstraintDataTable)
+        self.Out.add_sbtab(EnzymeConstraintDataTable)
+        self.Out.add_sbtab(ProcessConstraintDataTable)
+        self.Out.change_attribute('DocumentName', 'RBA data')
+        self.Out.name = filename_SBtab
+        self.Out.change_attribute('DocumentType', 'rba-simulation-data')
+        self.Out.write()
+    
+    def getSBtabDoc(self):
+        return self.Out
 
     def exportJSON(self):
         """
