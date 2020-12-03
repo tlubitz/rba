@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from .rbastructure.NewControler import RBA_newControler
+from .rba_Session import RBA_Session
 
 class Wrapper:
 
@@ -12,7 +12,7 @@ class Wrapper:
         self.path = rpath
 
     def create_simulation(self):
-        self.Simulation = RBA_newControler(self.path)
+        self.Simulation = RBA_Session(self.path)
     
     def set_default_parameters(self):
         ## Set medium to first condition, simulate and record results. ##
@@ -24,10 +24,12 @@ class Wrapper:
         ## Write recorded results to RBA_SimulationData object ##
         self.Simulation.writeResults(session_name='Test')
 
-    def get_csv(self):
-        ## Export results in CSV ##
-        csv = self.Simulation.SimulationData.exportCSV()
-        return csv
+    def get_csvs(self):
+        ## Export results in CSV files ##
+        self.Simulation.SimulationData.exportCSV()
+        csvs = self.Simulation.SimulationData.getCSVFiles()
+        
+        return csvs
         
     def get_eschermap(self):
         ## Export results as Escher Map ##
