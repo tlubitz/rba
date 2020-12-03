@@ -1,4 +1,6 @@
 *.pyc
 *.py~
 Test_*
+simulator/static/results/*
+simulator/static/python/rbatools/__pychache__/
 db.sqlite3

@@ -24,10 +24,12 @@ class Wrapper:
         ## Write recorded results to RBA_SimulationData object ##
         self.Simulation.writeResults(session_name='Test')
 
-    def get_csv(self):
-        ## Export results in CSV ##
-        csv = self.Simulation.SimulationData.exportCSV()
-        return csv
+    def get_csvs(self):
+        ## Export results in CSV files ##
+        self.Simulation.SimulationData.exportCSV()
+        csvs = self.Simulation.SimulationData.getCSVFiles()
+        
+        return csvs
         
     def get_eschermap(self):
         ## Export results as Escher Map ##

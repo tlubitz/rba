@@ -42,18 +42,26 @@
             </div>
         {% endif %}
 
-        {% if status %}
-            Status: {{ status }}<br>
-            {% if emap_path %}
-                <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
-            {% endif %}
+        {% if emap_path %}
+            <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
+        {% endif %}
+        {% if proteomap_path %}
+            <a href="{{ proteomap_path }}" target="_blank">Download Proteomap</a><br>
+        {% endif %}
+        {% if csv_paths %}
+            {% for path in csv_paths %}
+                <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>
+            {% endfor %}
         {% endif %}
 
-        {% if error_code != '' %}
-            <div class="errors">
-                {{ error_code }}
-            </div>
-        {% endif %}
+
+        {% ifnotequal error_code '[]' %}
+            {% for ec in error_code %}
+                <div class="errors">
+                    {{ ec }}
+                </div>
+            {% endfor %}
+        {% endifnotequal %}
     </article>
 </div>
 {% endblock %}
