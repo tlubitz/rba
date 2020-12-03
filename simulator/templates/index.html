@@ -48,6 +48,9 @@
         {% if proteomap_path %}
             <a href="{{ proteomap_path }}" target="_blank">Download Proteomap</a><br>
         {% endif %}
+        {% if sbtab_path %}
+            <a href="{{ sbtab_path }}" target="_blank">Download SBtab</a><br>
+        {% endif %}
         {% if csv_paths %}
             {% for path in csv_paths %}
                 <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>

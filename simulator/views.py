@@ -17,7 +17,7 @@ def index(request):
     main page handling rba file upload and fine tuning parameters
     '''
     # create essential variables
-    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path']:
+    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path']:
         if not request.session.get(var, None):
             request.session[var] = False
     for var in ['error_code', 'csv_paths']:
@@ -57,7 +57,8 @@ def index(request):
                                           'error_code': request.session['error_code'],
                                           'emap_path': request.session['emap_path'],
                                           'proteomap_path': request.session['proteomap_path'],
-                                          'csv_paths': request.session['csv_paths']})
+                                          'csv_paths': request.session['csv_paths'],
+                                          'sbtab_path': request.session['sbtab_path']})
 
 
 def clearsession(request):
@@ -69,7 +70,7 @@ def clearsession(request):
     except: print('Cannot delete %s' %request.session['newdir'])
 
     # delete session variables
-    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths']
+    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path']
     for key in keys:
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
@@ -142,6 +143,20 @@ def simulate(request):
         request.session['proteomap_path'] = '../static/results/%s/proteomap.json'%request.session['rbafilename'][:-4]
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
+   
+    #try:
+    # create SBtab Document, save it, and create link to download
+    # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
+    try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+    except: pass
+    sbtab_path = 'simulator/static/results/%s/sbtab.tsv' %request.session['rbafilename'][:-4]
+    sbtab_content = wrapper.get_sbtab()
+    f = open(sbtab_path, 'w+')
+    f.write(sbtab_content.to_str())
+    f.close()
+    request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+    #except:
+    #    request.session['error_code'].append('Could not create SBtab for this model.')
 
     request.session.modified = True
 

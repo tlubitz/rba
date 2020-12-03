@@ -8,3 +8,4 @@ biopython==1.76
 cplex>=12.8.0.1
 urllib3>=1.26.2
 jxmlease>=1.0.3
+sbtab>=0.9.79

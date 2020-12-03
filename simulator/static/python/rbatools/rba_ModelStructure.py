@@ -35,7 +35,7 @@ from .enzyme_constraints import EnzymeConstraints
 from .statistics_block import StatisticsBlock
 from .target_block import TargetBlock
 
-#from sbtab import SBtab
+from sbtab import SBtab
 
 
 class RBA_ModelStructure(object):
