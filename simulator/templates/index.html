@@ -9,7 +9,7 @@
             Resource balance analysis
     </h1>
 
-    <hr align="left">
+    <hr>
     
     <p class="pp">
         <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/index.html">Main</a>  &nbsp;|&nbsp;
@@ -26,46 +26,78 @@
 
     <h2>RBA simulations</h2>
 
-    <article class="module">
-        
-        <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
-            {% csrf_token %}
-            {{ form }}
-            <input type="submit" value="OK">
-        </form>
+    <article class="module modelchoice">
+        <div class="row">
+            <div class="db-models col-md-6">
+                <h4>Choose an existing model...</h4>
+                <button class="btn btn-primary" onclick="load_model('louis.zip')">Louis</button>
+                <button class="btn btn-primary" onclick="load_model('ecoli.zip')">Ecoli</button>
+            </div>
+            <div class="uploadform col-md-6">
+                <h4>...or upload a new model</h4>
+                <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
+                    {% csrf_token %}
+                    {{ form }}
+                    <input type="submit" value="OK">
+                </form>
+            </div>
+        </div>
+
+        <hr>
 
         {% if rbafilename %}
-            Good job! You have uploaded the file {{ rbafilename }}<br>
-            <div>
-                <button type="button" onclick="simulate()">Simulate!</button>
-                <button type="button" onclick="delete_session()">Delete Session</button>
+            <div class="row uploaded">
+                <div class="col-md-12">
+                    Good job! You have uploaded the file {{ rbafilename }}<br>
+                    <div class="button-row">
+                        <button type="button" class="btn btn-primary" onclick="simulate()">Simulate!</button>
+                        <button type="button" class="btn btn-primary" onclick="delete_session()">Delete Session</button>
+                    </div>
+                </div>
             </div>
         {% endif %}
-
-        {% if emap_path %}
-            <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
-        {% endif %}
-        {% if proteomap_path %}
-            <a href="{{ proteomap_path }}" target="_blank">Download Proteomap</a><br>
-        {% endif %}
-        {% if sbtab_path %}
-            <a href="{{ sbtab_path }}" target="_blank">Download SBtab</a><br>
-        {% endif %}
-        {% if csv_paths %}
-            {% for path in csv_paths %}
-                <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>
-            {% endfor %}
-        {% endif %}
-
-
-        {% ifnotequal error_code '[]' %}
-            {% for ec in error_code %}
-                <div class="errors">
-                    {{ ec }}
-                </div>
-            {% endfor %}
-        {% endifnotequal %}
     </article>
+
+    {% if status %}
+    <hr>
+        <article class="module results">
+            <h4>Simulation Results</h4>
+            <div class="sublist">
+                <div class="bold">Maps & Tabs</div>
+                {% if emap_path %}
+                    <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
+                {% endif %}
+                {% if proteomap_path %}
+                    <a href="{{ proteomap_path }}" target="_blank">Download Proteomap</a><br>
+                {% endif %}
+                {% if sbtab_path %}
+                    <a href="{{ sbtab_path }}" target="_blank">Download SBtab</a><br>
+                {% endif %}
+            </div>
+            {% if csv_paths %}
+                <div class="sublist">
+                    <div class="bold">CSV files</div>
+                    {% for path in csv_paths %}
+                        <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </article>
+    {% endif %}
+
+    {% if errors %}
+    <hr>
+        <article class="module error">
+            {% ifnotequal error_code '[]' %}
+                <h4>Errors</h4>
+                {% for ec in error_code %}
+                    <div class="errors">
+                        {{ ec }}
+                    </div>
+                {% endfor %}
+            {% endifnotequal %}
+        </article>
+    {% endif %}
 </div>
 {% endblock %}
 

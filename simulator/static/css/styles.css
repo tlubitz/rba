@@ -34,6 +34,36 @@
     .errors {
         color: red;
     }
+
+    .bold {
+        font-weight: 800;
+    }
+
+    .sublist a {
+        padding-left: 1rem;
+    }
+
+    .sublist .bold {
+        padding-top: 1rem;
+    }
+
+    .uploaded {
+        background-color:  #eff5f5;
+        padding-bottom: 2rem;
+    }
+
+    .modelchoice {
+        padding-bottom: 0;
+    }
+
+    .uploaded .col-md-12 {
+        padding-top: 2rem;
+        text-align: center;
+    }
+
+    .button-row {
+        margin-top: 1rem;
+    }
 }
 
 @media only screen and (min-width: 1200px) {

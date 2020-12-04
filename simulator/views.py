@@ -5,11 +5,14 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import redirect
-from .static.python.rbatools import rba_wrapper
+from django.views.decorators.csrf import csrf_exempt
 
 import os
 import shutil
 import zipfile
+import json
+
+from .static.python.rbatools import rba_wrapper
 
 
 def index(request):
@@ -17,7 +20,7 @@ def index(request):
     main page handling rba file upload and fine tuning parameters
     '''
     # create essential variables
-    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path']:
+    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path', 'status', 'errors']:
         if not request.session.get(var, None):
             request.session[var] = False
     for var in ['error_code', 'csv_paths']:
@@ -50,9 +53,12 @@ def index(request):
     else:
         form = UploadFileForm()
 
+    if request.session['error_code'] != []: request.session['errors'] = True
     request.session.modified = True
 
     return render(request, 'index.html', {'form': form,
+                                          'status': request.session['status'],
+                                          'errors': request.session['errors'],
                                           'rbafilename': request.session['rbafilename'],
                                           'error_code': request.session['error_code'],
                                           'emap_path': request.session['emap_path'],
@@ -65,17 +71,30 @@ def clearsession(request):
     '''
     clears all session variables
     '''
-    # delete current project directory
-    try: shutil.rmtree(request.session['newdir'])
-    except: print('Cannot delete %s' %request.session['newdir'])
+    # delete current project directory (only if it was an uploaded model)
+    if not request.session['newdir'].startswith('simulator/static/python/models/'):
+        print(request.session['newdir'])
+        try: shutil.rmtree(request.session['newdir'])
+        except: print('Cannot delete %s' %request.session['newdir'])
 
     # delete session variables
-    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path']
+    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path', 'status', 'errors']
     for key in keys:
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
 
     request.session.modified = True
+
+    return HttpResponse('ok')
+
+
+@csrf_exempt
+def loadmodel(request):
+    '''
+    load an existing model from server
+    '''
+    request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
+    request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     return HttpResponse('ok')
 
@@ -92,29 +111,30 @@ def simulate(request):
     try: wrapper.create_simulation()
     except: request.session['error_code'].append('The simulation cannot be initialised. Is the model valid?')
 
+    wrapper.set_default_parameters()
     try: wrapper.set_default_parameters()
     except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     
     try: wrapper.write_results()
     except: request.session['error_code'].append('Model could not be simulated.')
 
-    #try:
-    # create CSV files, save em, and create links to download
-    # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-    try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
-    except: pass
+    try:
+        # create CSV files, save em, and create links to download
+        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
+        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        except: pass
 
-    csv_files = wrapper.get_csvs()
-    for cf_key in csv_files:
-        csv_file = csv_files[cf_key]
-        csv_path = 'simulator/static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key)
-        f = open(csv_path, 'w+')
-        f.write(csv_file)
-        f.close()
-        current_paths = request.session['csv_paths']
-        current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
-        request.session['csv_paths'] = current_paths
-    #except: request.session['error_code'].append('Could not create CSV output.')
+        csv_files = wrapper.get_csvs()
+        for cf_key in csv_files:
+            csv_file = csv_files[cf_key]
+            csv_path = 'simulator/static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key)
+            f = open(csv_path, 'w+')
+            f.write(csv_file)
+            f.close()
+            current_paths = request.session['csv_paths']
+            current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
+            request.session['csv_paths'] = current_paths
+    except: request.session['error_code'].append('Could not create CSV output.')
    
     try:
         # create Escher map file, save it, and create link to download
@@ -144,20 +164,21 @@ def simulate(request):
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
    
-    #try:
-    # create SBtab Document, save it, and create link to download
-    # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-    try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
-    except: pass
-    sbtab_path = 'simulator/static/results/%s/sbtab.tsv' %request.session['rbafilename'][:-4]
-    sbtab_content = wrapper.get_sbtab()
-    f = open(sbtab_path, 'w+')
-    f.write(sbtab_content.to_str())
-    f.close()
-    request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
-    #except:
-    #    request.session['error_code'].append('Could not create SBtab for this model.')
-
+    try:
+        # create SBtab Document, save it, and create link to download
+        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
+        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        sbtab_path = 'simulator/static/results/%s/sbtab.tsv' %request.session['rbafilename'][:-4]
+        sbtab_content = wrapper.get_sbtab()
+        f = open(sbtab_path, 'w+')
+        f.write(sbtab_content.to_str())
+        f.close()
+        request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+    except:
+        request.session['error_code'].append('Could not create SBtab for this model.')
+    
+    request.session['status'] = True
     request.session.modified = True
 
     return HttpResponse('ok')
