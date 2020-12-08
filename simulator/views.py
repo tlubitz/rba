@@ -103,6 +103,9 @@ def simulate(request):
     '''
     Simulate model
     '''
+    if settings.DEV: pre_path = 'simulator/static/results/'
+    else: pre_path = '/home/TimoSan/rba/static/'
+
     try:
         wrapper = rba_wrapper.Wrapper()
         wrapper.set_path(request.session['newdir'])
@@ -120,61 +123,57 @@ def simulate(request):
 
     try:
         # create CSV files, save em, and create links to download
-        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        try: os.mkdir(prepath + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-
         csv_files = wrapper.get_csvs()
         for cf_key in csv_files:
             csv_file = csv_files[cf_key]
-            csv_path = 'simulator/static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key)
+            csv_path = pre_path + '%s/%s' %(request.session['rbafilename'][:-4], cf_key)
+            current_paths = request.session['csv_paths']
+            current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key)) # THIS ONE LOOKS FISHY!
             f = open(csv_path, 'w+')
             f.write(csv_file)
             f.close()
-            current_paths = request.session['csv_paths']
-            current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
             request.session['csv_paths'] = current_paths
     except: request.session['error_code'].append('Could not create CSV output.')
    
     try:
         # create Escher map file, save it, and create link to download
-        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        emap_path = 'simulator/static/results/%s/eschermap.json' %request.session['rbafilename'][:-4]
+        emap_path = pre_path + '%s/eschermap.json' %request.session['rbafilename'][:-4]
         emap_content = wrapper.get_eschermap()
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
-        request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4]
+        request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4] # THIS ONE LOOKS FISHY!
     except:
         request.session['error_code'].append('Could not create Escher Map for this model.')
    
     try:
         # create Proteomap file, save it, and create link to download
-        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        proteomap_path = 'simulator/static/results/%s/proteomap.tsv' %request.session['rbafilename'][:-4]
+        proteomap_path = pre_path + '%s/proteomap.tsv' %request.session['rbafilename'][:-4]
         proteomap_content = wrapper.get_proteomap()
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
-        request.session['proteomap_path'] = '../static/results/%s/proteomap.json'%request.session['rbafilename'][:-4]
+        request.session['proteomap_path'] = '../static/results/%s/proteomap.tsv'%request.session['rbafilename'][:-4]  # THIS ONE LOOKS FISHY!
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
    
     try:
         # create SBtab Document, save it, and create link to download
         # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
-        try: os.mkdir('simulator/static/results/%s'%(request.session['rbafilename'][:-4]))
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        sbtab_path = 'simulator/static/results/%s/sbtab.tsv' %request.session['rbafilename'][:-4]
+        sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
         sbtab_content = wrapper.get_sbtab()
         f = open(sbtab_path, 'w+')
         f.write(sbtab_content.to_str())
         f.close()
-        request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+        request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]  # THIS ONE LOOKS FISHY!
     except:
         request.session['error_code'].append('Could not create SBtab for this model.')
     

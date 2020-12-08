@@ -31,7 +31,7 @@ class Wrapper:
         
     def get_eschermap(self):
         ## Export results as Escher Map ##
-        self.Simulation.SimulationData.exportEscherMap(type='investment')
+        self.Simulation.SimulationData.exportEscherMap(type='fluxes')
         em = self.Simulation.SimulationData.getEscherMap()
 
         return em
