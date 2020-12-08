@@ -11,6 +11,7 @@ import os
 import shutil
 import zipfile
 import json
+import socket
 
 from .static.python.rbatools import rba_wrapper
 
@@ -72,8 +73,7 @@ def clearsession(request):
     clears all session variables
     '''
     # delete current project directory (only if it was an uploaded model)
-    if not request.session['newdir'].startswith('simulator/static/python/models/'):
-        print(request.session['newdir'])
+    if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
         try: shutil.rmtree(request.session['newdir'])
         except: print('Cannot delete %s' %request.session['newdir'])
 
@@ -94,7 +94,8 @@ def loadmodel(request):
     load an existing model from server
     '''
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
-    request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
+    if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
+    else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     return HttpResponse('ok')
 
@@ -103,8 +104,12 @@ def simulate(request):
     '''
     Simulate model
     '''
-    if settings.DEV: pre_path = 'simulator/static/results/'
-    else: pre_path = '/home/TimoSan/rba/static/'
+    if socket.gethostname() == 'timputer':
+        pre_path = 'simulator/static/results/'
+        mode = 'dev'
+    else:
+        pre_path = '/home/TimoSan/rba/static/'
+        mode = 'prod'
 
     try:
         wrapper = rba_wrapper.Wrapper()
@@ -130,7 +135,8 @@ def simulate(request):
             csv_file = csv_files[cf_key]
             csv_path = pre_path + '%s/%s' %(request.session['rbafilename'][:-4], cf_key)
             current_paths = request.session['csv_paths']
-            current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key)) # THIS ONE LOOKS FISHY!
+            if mode == 'dev': current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
+            else: current_paths.append('../static/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
             f = open(csv_path, 'w+')
             f.write(csv_file)
             f.close()
@@ -146,7 +152,8 @@ def simulate(request):
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
-        request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4] # THIS ONE LOOKS FISHY!
+        if mode == 'dev': request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4]
+        else: request.session['emap_path'] = '../static/%s/eschermap.json'%request.session['rbafilename'][:-4]        
     except:
         request.session['error_code'].append('Could not create Escher Map for this model.')
    
@@ -159,13 +166,13 @@ def simulate(request):
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
-        request.session['proteomap_path'] = '../static/results/%s/proteomap.tsv'%request.session['rbafilename'][:-4]  # THIS ONE LOOKS FISHY!
+        if mode == 'dev': request.session['proteomap_path'] = '../static/results/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
+        else: request.session['proteomap_path'] = '../static/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
    
     try:
         # create SBtab Document, save it, and create link to download
-        # print(settings.DEV) #A RE THESE PATHS ALSO OK IN PRODUCTION?
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
@@ -173,7 +180,8 @@ def simulate(request):
         f = open(sbtab_path, 'w+')
         f.write(sbtab_content.to_str())
         f.close()
-        request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]  # THIS ONE LOOKS FISHY!
+        if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+        else: request.session['sbtab_path'] = '../static/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
     except:
         request.session['error_code'].append('Could not create SBtab for this model.')
     
