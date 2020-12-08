@@ -972,7 +972,7 @@ def determineInvestment(SimData, rxn, run):
         prots = SimData.StructuralInformation.EnzymeInfo.Elements[enzy]['Subunits']
         enzymeCost = 0
         for pr in list(prots.items()):
-            SF = int(pr[1]['StochFac'])
+            SF = int(pr[1])
             AAnum = SimData.StructuralInformation.ProteinInfo.Elements[pr[0]]['AAnumber']
             if numpy.isnan(AAnum):
                 continue
