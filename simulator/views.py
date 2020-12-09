@@ -12,6 +12,7 @@ import shutil
 import zipfile
 import json
 import socket
+import cplex
 
 from .static.python.rbatools import rba_wrapper
 
@@ -117,9 +118,14 @@ def simulate(request):
     except: print('Could not create RBA wrapper.\n')
 
     try: wrapper.create_simulation()
-    except: request.session['error_code'].append('The simulation cannot be initialised. Is the model valid?')
+    except cplex.exceptions.errors.CplexSolverError as err:
+        request.session['error_code'].append(str(err))
+        request.session['status'] = True
+        request.session.modified = True
+    finally:
+        request.session['error_code'].append('The simulation cannot be initialised.')
+        return HttpResponse('ok')
 
-    wrapper.set_default_parameters()
     try: wrapper.set_default_parameters()
     except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     
