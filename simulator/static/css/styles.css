@@ -3,12 +3,13 @@
         font-size: 14px;
         font-family: Arial, sans-serif;
     }
-
+    
     .module {
         padding: 2rem;
     }
 
     .content {
+        margin:8px;
         background-color: #ffffff;
         color: #404040;
     }
@@ -17,18 +18,22 @@
         width: 100%;
     }
 
+    hr {
+        margin-bottom: 16px;
+    }
+
     a {
         text-decoration: none;
         color: #6961fa;
     }
 
+    a:hover {
+        color:#9999ff;
+    }
+
     p {
         color: #404040;
         text-align: justify;
-    }
-
-    .pp {
-
     }
 
     .errors {
