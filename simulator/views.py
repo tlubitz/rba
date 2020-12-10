@@ -122,7 +122,6 @@ def simulate(request):
     try: wrapper.create_simulation()
     except cplex.exceptions.errors.CplexSolverError as err:
         request.session['error_code'].append(str(err))
-        request.session['status'] = True
         request.session.modified = True
         cplex_error = True
     finally:
@@ -195,7 +194,7 @@ def simulate(request):
         request.session['error_code'].append('Could not create SBtab for this model.')
     
     if mode == 'dev': request.session['dl_path'] = '../static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
-    else: request.session['dl_path'] = '/home/TimoSan/rba/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
+    else: request.session['dl_path'] = '/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
 
     request.session['status'] = True
     request.session.modified = True
