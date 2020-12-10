@@ -28,19 +28,19 @@
 
     <article class="module modelchoice">
         <div class="row">
-            <div class="db-models col-md-6">
-                <h4>Choose an existing model...</h4>
+            <div class="db-models col-md-12">
+                <h4>Choose a model</h4>
                 <button class="btn btn-primary" onclick="load_model('louis.zip')">Louis</button>
                 <button class="btn btn-primary" onclick="load_model('ecoli.zip')">Ecoli</button>
             </div>
-            <div class="uploadform col-md-6">
+            <!--div class="uploadform col-md-6">
                 <h4>...or upload a new model</h4>
                 <form name="form" enctype="multipart/form-data" action="{% url "index" %}" method="post">
                     {% csrf_token %}
                     {{ form }}
                     <input type="submit" value="OK">
                 </form>
-            </div>
+            </div-->
         </div>
 
         <hr>
@@ -62,6 +62,12 @@
     <hr>
         <article class="module results">
             <h4>Simulation Results</h4>
+            <div class="sublist">
+                <div class="bold">Download model</div>
+                {% if dl_path %}
+                    <a href="{{ dl_path }}" target="_blank">Download Model</a><br>
+                {% endif %}
+            </div>
             <div class="sublist">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}

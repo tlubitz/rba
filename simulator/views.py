@@ -22,7 +22,7 @@ def index(request):
     main page handling rba file upload and fine tuning parameters
     '''
     # create essential variables
-    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path', 'status', 'errors']:
+    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path', 'dl_path', 'status', 'errors']:
         if not request.session.get(var, None):
             request.session[var] = False
     for var in ['error_code', 'csv_paths']:
@@ -66,7 +66,8 @@ def index(request):
                                           'emap_path': request.session['emap_path'],
                                           'proteomap_path': request.session['proteomap_path'],
                                           'csv_paths': request.session['csv_paths'],
-                                          'sbtab_path': request.session['sbtab_path']})
+                                          'sbtab_path': request.session['sbtab_path'],
+                                          'dl_path': request.session['dl_path']})
 
 
 def clearsession(request):
@@ -79,7 +80,7 @@ def clearsession(request):
         except: print('Cannot delete %s' %request.session['newdir'])
 
     # delete session variables
-    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path', 'status', 'errors']
+    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path', 'dl_path', 'status', 'errors']
     for key in keys:
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
@@ -105,6 +106,7 @@ def simulate(request):
     '''
     Simulate model
     '''
+    cplex_error = False
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -122,9 +124,10 @@ def simulate(request):
         request.session['error_code'].append(str(err))
         request.session['status'] = True
         request.session.modified = True
+        cplex_error = True
     finally:
-        request.session['error_code'].append('The simulation cannot be initialised.')
-        return HttpResponse('ok')
+        if cplex_error:
+            return HttpResponse('ok')
 
     try: wrapper.set_default_parameters()
     except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
@@ -191,6 +194,9 @@ def simulate(request):
     except:
         request.session['error_code'].append('Could not create SBtab for this model.')
     
+    if mode == 'dev': request.session['dl_path'] = '../static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
+    else: request.session['dl_path'] = '/home/TimoSan/rba/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
+
     request.session['status'] = True
     request.session.modified = True
 
