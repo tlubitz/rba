@@ -1,0 +1,59 @@
+<RBAEnzymes>
+	<listOfEnzymes>
+		<enzyme id="R_transport_enzyme" reaction="R_transport" forward_efficiency="k_transporter_efficiency_foreward" backward_efficiency="k_transporter_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_membrane" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_UpperGlycolysis_enzyme" reaction="R_UpperGlycolysis" forward_efficiency="k_UpperGlycolysis_efficiency_foreward" backward_efficiency="k_UpperGlycolysis_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_CitratCycle_enzyme" reaction="R_CitratCycle" forward_efficiency="k_CitratCycle_efficiency_foreward" backward_efficiency="k_CitratCycle_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_AA_synthesis_enzyme" reaction="R_AA_synthesis" forward_efficiency="k_AA_synthesis_efficiency_foreward" backward_efficiency="k_AA_synthesis_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_fermentation_NAD_regeneration_enzyme" reaction="R_fermentation_NAD_regeneration" forward_efficiency="k_fermentation_NAD_regeneration_efficiency_foreward" backward_efficiency="k_fermentation_NAD_regeneration_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_fermentation_ATP_generation_enzyme" reaction="R_fermentation_ATP_generation" forward_efficiency="k_fermentation_ATP_generation_efficiency_foreward" backward_efficiency="k_fermentation_ATP_generation_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_respiration_enzyme" reaction="R_respiration" forward_efficiency="k_respiration_efficiency_foreward" backward_efficiency="k_respiration_efficiency_backward" zeroCost="false">
+			<machineryComposition>
+				<listOfReactants>
+					<speciesReference species="Protein_standard_cytoplasm" stoichiometry="1.0"/>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+		<enzyme id="R_maintenance_atp_enzyme" reaction="R_maintenance_atp" forward_efficiency="k_maintenance_atp_efficiency_foreward" backward_efficiency="k_maintenance_atp_efficiency_backward" zeroCost="true">
+			<machineryComposition>
+				<listOfReactants>
+				</listOfReactants>
+			</machineryComposition>
+		</enzyme>
+	</listOfEnzymes>
+</RBAEnzymes>

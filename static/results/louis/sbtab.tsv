@@ -1,0 +1,73 @@
+!!!SBtab Document='rbatools_SimulationData_withLinks' SBtabVersion='1.0' Date='2020-12-10' DocumentName='RBA data' DocumentType='rba-simulation-data'
+!!SBtab TableID='run_information' TableType='QuantityMatrix' TableName='Run Information' Text='Growth rates and values of cellular objectives (by default minimisation of enzymatic protein) for the simulation runs (table columns).'
+!VariableID	!Glucose
+Obj_Val	12.0873276086
+Mu	0.0769195557
+
+!!SBtab TableID='reaction_flux' TableType='QuantityMatrix' TableName='Reaction flux' Unit='mmol/(h*gDW)' QuantityType='reaction_flux' Text='Reaction rates obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+R_fermentation_ATP_generation	0.0001089852
+R_fermentation_NAD_regeneration	0.0
+R_transport	2.1976860211
+R_maintenance_atp	15.3839111328
+R_respiration	4.3953720422
+R_CitratCycle	0.0
+R_UpperGlycolysis	2.1976860211
+R_AA_synthesis	1.098788518
+
+!!SBtab TableID='enzyme_concentration' TableType='QuantityMatrix' TableName='Enzyme concentration' Unit='mmol/gDW' QuantityType='enzyme_concentration' Text='Enzyme concentrations obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+R_transport_enzyme	4.3953720422
+R_AA_synthesis_enzyme	1.098788518
+R_CitratCycle_enzyme	0.0
+R_respiration_enzyme	4.3953720422
+R_UpperGlycolysis_enzyme	2.1976860211
+R_fermentation_ATP_generation_enzyme	0.0001089852
+R_fermentation_NAD_regeneration_enzyme	0.0
+
+!!SBtab TableID='machine_concentration' TableType='QuantityMatrix' TableName='Machine concentration' Unit='mmol/gDW' QuantityType='machine_concentration' Text='Macromolecular machine concentrations obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+P_TA_machinery	1.098788518
+
+!!SBtab TableID='protein_concentration' TableType='QuantityMatrix' TableName='Protein concentration' Unit='mmol/gDW' QuantityType='protein_concentration' Text='Protein concentrations obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+Protein_target	0.0
+Protein_standard_cytoplasm	8.7907440844
+Protein_standard_membrane	5.4941605601
+
+!!SBtab TableID='metabolite_mass_balance_dual' TableType='QuantityMatrix' TableName='Metabolite mass-balance dual value' QuantityType='lagrange_multiplier' Text='Lagrange multipliers, related to metabolite mass-balance constraints obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+M_NAD_c	-0.9166643052
+M_ADP_c	-0.7857122616
+M_G6P_c	2.0952326976
+M_NADH_c	0.0
+M_pyr_c	-0.2619040872
+M_ATP_c	0.0
+M_AA_c	0.5238081744
+
+!!SBtab TableID='density_constraint_dual' TableType='QuantityMatrix' TableName='Compartment density dual value' QuantityType='lagrange_multiplier' Text='Lagrange multipliers, related to density constraints obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+Membrane_density	0
+Cytoplasm_density	0
+
+!!SBtab TableID='enzyme_capacity_dual' TableType='QuantityMatrix' TableName='Enzyme capacity dual value' QuantityType='lagrange_multiplier' Text='Lagrange multipliers, related to enzyme-capacity constraints obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+R_fermentation_ATP_generation_enzyme_forward_capacity	-1.0476163488
+R_fermentation_ATP_generation_enzyme_backward_capacity	0.0
+R_UpperGlycolysis_enzyme_forward_capacity	-1.0476163488
+R_AA_synthesis_enzyme_backward_capacity	0.0
+R_fermentation_NAD_regeneration_enzyme_backward_capacity	0.0
+R_transport_enzyme_backward_capacity	0.0
+R_fermentation_NAD_regeneration_enzyme_forward_capacity	0.0
+R_CitratCycle_enzyme_forward_capacity	-3.9285613081
+R_AA_synthesis_enzyme_forward_capacity	-1.0476163488
+R_UpperGlycolysis_enzyme_backward_capacity	0.0
+R_respiration_enzyme_forward_capacity	-1.0476163488
+R_respiration_enzyme_backward_capacity	0.0
+R_transport_enzyme_forward_capacity	-2.0952326976
+R_CitratCycle_enzyme_backward_capacity	0.0
+
+!!SBtab TableID='machine_capacity_dual' TableType='QuantityMatrix' TableName='Machine capacity dual value' QuantityType='lagrange_multiplier' Text='Lagrange multipliers, related to machine-capacity constraints obtained in the simulation runs (table columns).'
+!VariableID	!Glucose
+P_TA_capacity	-0.0952326976
+

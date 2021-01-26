@@ -1,0 +1,7 @@
+,Glucose
+R_respiration_enzyme_forward_capacity,-1.03014
+R_CitratCycle_enzyme_forward_capacity,-2.82001
+R_fermentation_ATP_generation_enzyme_forward_capacity,-1.03014
+R_UpperGlycolysis_enzyme_forward_capacity,-1.03014
+R_transport_enzyme_forward_capacity,-1.13316
+R_AA_synthesis_enzyme_forward_capacity,-1.03014
