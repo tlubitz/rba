@@ -11,7 +11,8 @@ import collections
 import json
 
 # package imports
-import rba
+#import rba
+from . import rba
 from .rba_SimulationData import RBA_SimulationData
 from .rba_SimulationParameters import RBA_SimulationParameters
 from .rba_ModelStructure import RBA_ModelStructure

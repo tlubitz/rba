@@ -15,6 +15,7 @@ import socket
 import cplex
 
 from .static.python.rbatools import rba_wrapper
+from .static.python.rbatools import rba_websimulator_interface
 
 
 def index(request):
@@ -25,6 +26,7 @@ def index(request):
     for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path', 'dl_path', 'status', 'errors']:
         if not request.session.get(var, None):
             request.session[var] = False
+
     for var in ['error_code', 'csv_paths']:
         if not request.session.get(var, None):
             request.session[var] = []
@@ -95,9 +97,17 @@ def loadmodel(request):
     '''
     load an existing model from server
     '''
+    # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
     if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
     else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
+
+    # load model and prepare parameters for change
+    web_wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
+    mps = web_wrapper.get_changeable_model_parameters()
+    mss = web_wrapper.get_changeable_medium_species()
+
+    print(mps)
 
     return HttpResponse('ok')
 

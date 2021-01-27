@@ -10,14 +10,6 @@ function delete_session() {
     });
 }
 
-function simulate() {
-    $.get('/simulator/simulate', function(data) {
-        console.log('Simulating...');
-        if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-        else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
-    });
-}
-
 function load_model(modelname) {
     var model_name_dict = {'modelname': modelname}
 
@@ -27,5 +19,12 @@ function load_model(modelname) {
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
         else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
     });
+}
 
+function simulate() {
+    $.get('/simulator/simulate', function(data) {
+        console.log('Simulating...');
+        if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
+        else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+    });
 }

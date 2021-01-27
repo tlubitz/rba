@@ -1,5 +1,5 @@
 import pandas
-import rba
+from . import rba
 import math
 import numpy
 import os
