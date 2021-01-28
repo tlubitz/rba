@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="content">
+<div class="rba-content">
     <h1>
         <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/index.html">
             <img src="{% static 'images/main.jpg' %}" width="180" class="logoresize"></a>&nbsp;&nbsp;
@@ -44,7 +44,6 @@
         </div>
 
         <hr>
-
         {% if rbafilename %}
             <div class="row uploaded">
                 <div class="col-md-12">
@@ -55,6 +54,31 @@
                     </div>
                 </div>
             </div>
+
+            {% if model_parameters_list %}
+                <hr>
+                <button type="button" class="collapsible">Click here if you want to change model parameter values (for advanced users)</button>
+                <div class="ps parameters content">
+                    <div class="ps-title bold center row">Parameter Values</div>
+                    {% for parameter in model_parameters_list %}
+                        <div class="parameter col-md-12">
+                            <input type="text" class="ps-input" id="{{ parameter.0 }}" placeholder="{{ parameter.1 }}">{{ parameter.0 }}<br>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% if model_species_list %}
+                <button type="button" class="collapsible">Click here if you want to change the medium compound concentrations (for advanced users)</button>
+                <div class="ps specieses content">
+                    <div class="ps-title bold center row">Medium Component Concentrations</div>
+                    {% for species in model_species_list %}
+                        <div class="species col-md-12">
+                            <input type="text" class="ps-input" id="{{ species.0 }}" placeholder="1.0">{{ species.0 }}<br>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         {% endif %}
     </article>
 

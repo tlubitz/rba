@@ -2,6 +2,21 @@
 if (window.location.href.substr(0,10) === 'http://127') { var mode = 'dev'; }
 else { var mode = 'prod'; }
 
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+}
+
 function delete_session() {
     $.get('/simulator/clearsession', function(data) {
         console.log('Deleting session');
@@ -22,7 +37,34 @@ function load_model(modelname) {
 }
 
 function simulate() {
-    $.get('/simulator/simulate', function(data) {
+
+    var parameters_species = {}
+    var parameters = {}
+    var species = {}
+
+    // first collect available parameters
+    var parameter_container = document.querySelector('.parameters');
+    var p_inputs = parameter_container.querySelectorAll('input');
+    for (var i=0; i<p_inputs.length; i++) {
+        var v = p_inputs[i].value;
+        if (v == '') { v = p_inputs[i].placeholder; }
+        parameters[p_inputs[i].id] = v;
+    }
+    parameters_species['parameters'] = parameters;
+
+    // then the species concentrations
+    var species_container = document.querySelector('.specieses');
+    var s_inputs = species_container.querySelectorAll('input');
+    for (var i=0; i<s_inputs.length; i++) {
+        var v = s_inputs[i].value;
+        if (v == '') { v = s_inputs[i].placeholder; }
+        species[s_inputs[i].id] = v;
+    }
+    parameters_species['species'] = species;
+
+    console.log(parameters_species);
+
+    $.post('/simulator/simulate/', JSON.stringify(parameters_species), function(data) {
         console.log('Simulating...');
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
         else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }

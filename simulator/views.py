@@ -23,7 +23,16 @@ def index(request):
     main page handling rba file upload and fine tuning parameters
     '''
     # create essential variables
-    for var in ['rbafilezip', 'rbafilename', 'emap_path', 'proteomap_path', 'sbtab_path', 'dl_path', 'status', 'errors']:
+    for var in ['rbafilezip',
+                'rbafilename',
+                'emap_path',
+                'proteomap_path',
+                'sbtab_path',
+                'dl_path',
+                'status',
+                'errors',
+                'model_parameters_list',
+                'model_species_list']:
         if not request.session.get(var, None):
             request.session[var] = False
 
@@ -69,7 +78,9 @@ def index(request):
                                           'proteomap_path': request.session['proteomap_path'],
                                           'csv_paths': request.session['csv_paths'],
                                           'sbtab_path': request.session['sbtab_path'],
-                                          'dl_path': request.session['dl_path']})
+                                          'dl_path': request.session['dl_path'],
+                                          'model_parameters_list': request.session['model_parameters_list'],
+                                          'model_species_list': request.session['model_species_list']})
 
 
 def clearsession(request):
@@ -82,7 +93,7 @@ def clearsession(request):
         except: print('Cannot delete %s' %request.session['newdir'])
 
     # delete session variables
-    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path', 'dl_path', 'status', 'errors']
+    keys = ['rbafilezip', 'rbafilename', 'newdir', 'error_code', 'emap_path', 'proteomap_path', 'csv_paths', 'sbtab_path', 'dl_path', 'status', 'errors', 'model_parameters_list', 'model_species_list']
     for key in keys:
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
@@ -104,14 +115,30 @@ def loadmodel(request):
 
     # load model and prepare parameters for change
     web_wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
-    mps = web_wrapper.get_changeable_model_parameters()
-    mss = web_wrapper.get_changeable_medium_species()
+    parameter_values = web_wrapper.current_parameter_values
 
-    print(mps)
+    # parameters
+    mpl = []
+    for p in parameter_values:
+        df = parameter_values[p]
+        for i,j in df.iterrows():
+            mpl.append([p, j[p]])
+            break
+    request.session['model_parameters_list'] = mpl
+
+    # medium species
+    mss = web_wrapper.get_changeable_medium_species()
+    msl = []
+    for i,j in mss.iterrows():
+        msl.append([j['Parameter'], j['Type']])
+    request.session['model_species_list'] = msl
+    
+    request.session.modified = True
 
     return HttpResponse('ok')
 
 
+@csrf_exempt
 def simulate(request):
     '''
     Simulate model
@@ -125,10 +152,19 @@ def simulate(request):
         mode = 'prod'
 
     try:
-        wrapper = rba_wrapper.Wrapper()
-        wrapper.set_path(request.session['newdir'])
+        parameters = json.loads(list(request.POST.items())[0][0])['parameters']
+        species = json.loads(list(request.POST.items())[0][0])['species']
+    except:
+        parameters = {}
+        species = {}
+
+    try:
+        #wrapper = rba_wrapper.Wrapper()
+        #wrapper.set_path(request.session['newdir'])
+        wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
     except: print('Could not create RBA wrapper.\n')
 
+    '''
     try: wrapper.create_simulation()
     except cplex.exceptions.errors.CplexSolverError as err:
         request.session['error_code'].append(str(err))
@@ -137,10 +173,19 @@ def simulate(request):
     finally:
         if cplex_error:
             return HttpResponse('ok')
+    '''
 
-    try: wrapper.set_default_parameters()
-    except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
-    
+    if parameters == {} and species == {}:
+        try: wrapper.set_default_parameters()
+        except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
+    else:
+        for s in species:
+            wrapper.set_medium_component(s, species[s])
+        
+
+
+
+
     try: wrapper.write_results()
     except: request.session['error_code'].append('Model could not be simulated.')
 

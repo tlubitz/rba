@@ -1,10 +1,13 @@
-
 @media screen and (max-width: 767px) {
     body {
         margin-left:6px;
     }
-    
-    .content {
+
+    .center {
+        text-align: center;
+    }
+
+    .rba-content {
         margin:8px;
     }
     
@@ -16,6 +19,11 @@
 
     p {
         font-size:0.8em;
+    }
+
+    .ps-title {
+        padding-left: 15px;
+        margin-bottom: .5rem;
     }
 
     .pp {
@@ -57,6 +65,13 @@
     h4 {
         font-size:0.9em;
     }
+
+    .ps-input {
+        width: 2rem;
+        margin-right: 1rem;
+        margin-bottom: .5rem;
+    }
+
 }
 
 
@@ -65,12 +80,48 @@
         font-size: 14px;
         font-family: Arial, sans-serif;
     }
+
+    .collapsible {
+        background-color: #eee;
+        color: #444;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        margin-bottom: 1rem;
+    }
+  
+    .active, .collapsible:hover {
+        background-color: #ccc;
+    }
+    
+    .content {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+    }
+
+    .ps-title {
+        padding-left: 15px;
+        margin-bottom: .5rem;
+    }
+
+    .ps-input {
+        width: 3rem;
+        margin-right: 1rem;
+        margin-bottom: .5rem;
+    }
     
     .module {
         padding: 2rem;
     }
 
-    .content {
+    .rba-content {
         margin:8px;
         background-color: #ffffff;
         color: #404040;
@@ -138,7 +189,7 @@
         font-size: 14px;
     }
 
-    .content {
+    .rba-content {
         margin-top: 30px;
         margin-left: auto;
         margin-right: auto;
