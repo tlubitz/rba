@@ -93,6 +93,12 @@
                 {% endif %}
             </div>
             <div class="sublist">
+                <div class="bold">Download Logfile</div>
+                {% if log_path %}
+                    <a href="{{ log_path }}" target="_blank">Download Logfile</a><br>
+                {% endif %}
+            </div>
+            <div class="sublist">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}
                     <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>

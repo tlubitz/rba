@@ -29,6 +29,7 @@ def index(request):
                 'proteomap_path',
                 'sbtab_path',
                 'dl_path',
+                'log_path',
                 'status',
                 'errors',
                 'model_parameters_list',
@@ -77,6 +78,7 @@ def index(request):
                                           'emap_path': request.session['emap_path'],
                                           'proteomap_path': request.session['proteomap_path'],
                                           'csv_paths': request.session['csv_paths'],
+                                          'log_path': request.session['log_path'],
                                           'sbtab_path': request.session['sbtab_path'],
                                           'dl_path': request.session['dl_path'],
                                           'model_parameters_list': request.session['model_parameters_list'],
@@ -180,20 +182,26 @@ def simulate(request):
         except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     else:
         for s in species:
-            wrapper.set_medium_component(s, species[s])
-        
+            wrapper.set_medium_component(s, new_value=float(species[s]))
+        for p in parameters:
+            wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]))
+            wrapper.determine_parameter_values(model_parameter=p, x_min=0, x_max=1, intervals=100)
 
-
-
-
-    try: wrapper.write_results()
-    except: request.session['error_code'].append('Model could not be simulated.')
+    try:
+        wrapper.rba_session.findMaxGrowthRate()
+        wrapper.rba_session.recordResults('Glucose')
+        wrapper.rba_session.writeResults(session_name='Test')
+    except:
+        print('FAIL')
+        request.session['error_code'].append('Model could not be simulated.')
 
     try:
         # create CSV files, save em, and create links to download
         try: os.mkdir(prepath + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        csv_files = wrapper.get_csvs()
+        #csv_files = wrapper.get_csvs()
+        wrapper.rba_session.SimulationData.exportCSV()
+        csv_files = wrapper.rba_session.SimulationData.getCSVFiles()
         for cf_key in csv_files:
             csv_file = csv_files[cf_key]
             csv_path = pre_path + '%s/%s' %(request.session['rbafilename'][:-4], cf_key)
@@ -205,13 +213,30 @@ def simulate(request):
             f.close()
             request.session['csv_paths'] = current_paths
     except: request.session['error_code'].append('Could not create CSV output.')
+
+    try:
+        # get logfile, save it, and create link to download
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        logfile_content = wrapper.get_change_log()
+        if mode == 'dev': 
+            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode='a')
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+        else:
+            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode='a')
+            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+    except:
+        request.session['error_code'].append('Could not create Logfile for this model.')
    
     try:
         # create Escher map file, save it, and create link to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         emap_path = pre_path + '%s/eschermap.json' %request.session['rbafilename'][:-4]
-        emap_content = wrapper.get_eschermap()
+        #emap_content = wrapper.get_eschermap()
+        wrapper.rba_session.SimulationData.exportEscherMap(type='investment')
+        emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
@@ -225,7 +250,9 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         proteomap_path = pre_path + '%s/proteomap.tsv' %request.session['rbafilename'][:-4]
-        proteomap_content = wrapper.get_proteomap()
+        #proteomap_content = wrapper.get_proteomap()
+        wrapper.rba_session.SimulationData.exportProteoMap()
+        proteomap_content = wrapper.rba_session.SimulationData.getProteoMap()   
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
@@ -239,7 +266,9 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
-        sbtab_content = wrapper.get_sbtab()
+        #sbtab_content = wrapper.get_sbtab()
+        wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
+        sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
         f = open(sbtab_path, 'w+')
         f.write(sbtab_content.to_str())
         f.close()
