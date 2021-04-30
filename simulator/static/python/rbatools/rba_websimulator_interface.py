@@ -103,16 +103,20 @@ class RBA_websimulator_interface(object):
     # ok
     def undo_last_change(self):
         if self.change_log.shape[0] > 0:
+            print(self.change_log.iloc[-1, :])
             old_value = self.change_log.iloc[-1, :]['old_value']
+            #print(old_value)
             model_parameter = self.change_log.iloc[-1, :]['model_parameter']
+            #print(model_parameter)
             function_parameter = self.change_log.iloc[-1, :]['function_parameter']
+            #print(function_parameter)
             parameter_type = self.change_log.iloc[-1, :]['parameter_type']
+            #print(parameter_type)
             remark = self.change_log.iloc[-1, :]['remark']
             if parameter_type != 'medium_composition':
                 if remark == 'multiplicative change':
-                    self.set_parameter_multiplier(model_parameter.split('_multiplier')[
-                                                  0], parameter_type='', new_value=old_value, logging=False)
-
+                    self.set_parameter_multiplier(model_parameter.split('_multiplier')[0], parameter_type='', new_value=old_value, logging=True)
+                    #self.set_parameter_multiplier('ribosome_capacity', parameter_type='', new_value=9, logging=True)
                 else:
                     self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
                                              function_parameter=function_parameter, new_value=old_value, logging=False)
@@ -200,7 +204,11 @@ class RBA_websimulator_interface(object):
         plt.xlabel(list(df.columns)[0])
         plt.ylabel(model_parameter)
         plt.show()
-
+        plt.close()
+    
+    def get_plot_values(self, model_parameter):
+        df = self.get_parameter_values_as_DataFrame(model_parameter)
+        return(df)
 
 def evaluate_expression(expression_dictionary, independent_variable):
     if type(independent_variable) is list:

@@ -72,6 +72,9 @@
         margin-bottom: .5rem;
     }
 
+    .old-results {
+        display: none;
+    }
 }
 
 
@@ -211,4 +214,11 @@
         width: 900px;
     }
 
+    .old-results {
+        display: none;
+    }
+
+    .plot-list .button-row {
+        display: inline;
+    }
 }

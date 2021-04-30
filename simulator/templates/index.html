@@ -50,6 +50,9 @@
                     Good job! You have uploaded the file {{ rbafilename }}<br>
                     <div class="button-row">
                         <button type="button" class="btn btn-primary" onclick="simulate()">Simulate!</button>
+                        {% if status %}
+                            <button type="button" class="btn btn-primary" onclick="undo_last()">Undo Last Simulation</button>
+                        {% endif %}
                         <button type="button" class="btn btn-primary" onclick="delete_session()">Delete Session</button>
                     </div>
                 </div>
@@ -87,7 +90,7 @@
         <article class="module results">
             <h4>Simulation Results</h4>
             <div class="sublist">
-                <div class="bold">Download model</div>
+                <div class="bold">Download Model</div>
                 {% if dl_path %}
                     <a href="{{ dl_path }}" target="_blank">Download Model</a><br>
                 {% endif %}
@@ -95,10 +98,10 @@
             <div class="sublist">
                 <div class="bold">Download Logfile</div>
                 {% if log_path %}
-                    <a href="{{ log_path }}" target="_blank">Download Logfile</a><br>
+                    <a href="{{ log_path }}">Download Logfile</a><br>
                 {% endif %}
             </div>
-            <div class="sublist">
+            <div class="sublist old-results">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}
                     <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
@@ -111,13 +114,31 @@
                 {% endif %}
             </div>
             {% if csv_paths %}
-                <div class="sublist">
+                <div class="sublist old-results">
                     <div class="bold">CSV files</div>
                     {% for path in csv_paths %}
                         <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>
                     {% endfor %}
                 </div>
             {% endif %}
+            <div class="sublist plot-list">
+                <div class="bold">Plot Parameters</div>
+
+                <select name="Test" id="select_parameter">
+                    {% for parameter in model_parameters_list %}
+                        <option value="{{ parameter.0 }}">{{ parameter.0 }}</option>
+                    {% endfor %}
+                </select>
+                <div class="button-row">
+                    <button type="button" class="btn btn-primary" onclick="plot_parameter()">Plot!</button>
+                </div>
+                <div class="plot-result" id="plot-path">
+                    {% if plot_path %}
+                        <img src="{{ plot_path }}">
+                   {% endif %}
+                </div>
+
+            </div>
         </article>
     {% endif %}
 

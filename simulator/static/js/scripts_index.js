@@ -17,6 +17,7 @@ for (i = 0; i < coll.length; i++) {
   });
 }
 
+
 function delete_session() {
     $.get('/simulator/clearsession', function(data) {
         console.log('Deleting session');
@@ -24,6 +25,7 @@ function delete_session() {
         else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
     });
 }
+
 
 function load_model(modelname) {
     var model_name_dict = {'modelname': modelname}
@@ -36,8 +38,8 @@ function load_model(modelname) {
     });
 }
 
-function simulate() {
 
+function simulate() {
     var parameters_species = {}
     var parameters = {}
     var species = {}
@@ -62,11 +64,31 @@ function simulate() {
     }
     parameters_species['species'] = species;
 
-    console.log(parameters_species);
-
     $.post('/simulator/simulate/', JSON.stringify(parameters_species), function(data) {
         console.log('Simulating...');
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
         else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
     });
+}
+
+
+function undo_last() {
+  $.get('/simulator/undolast/', function(data) {
+      console.log('Undo last step');
+      if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
+      else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+  });
+}
+
+
+function plot_parameter() {
+  var select_box = document.querySelector('#select_parameter');
+  parameter = {};
+  parameter['plot_parameter'] = select_box.value;
+
+  $.post('/simulator/plot/', JSON.stringify(parameter), function(data) {
+    console.log('Plotting...');
+    if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator#plot-path"; }
+    else { window.location.href="https://timosan.pythonanywhere.com/simulator#plot-path"; }
+  });
 }
