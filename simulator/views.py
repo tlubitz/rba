@@ -99,9 +99,9 @@ def clearsession(request):
     '''
     clears all session variables
     '''
-    global wrapper
-    try: del wrapper
-    except: pass
+    #global wrapper
+    #try: del wrapper
+    #except: pass
 
     # delete current project directory (only if it was an uploaded model)
     if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
@@ -182,7 +182,7 @@ def simulate(request):
         #wrapper.set_path(request.session['newdir']) xxx
         #wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
     except: print('Could not create RBA wrapper.\n')
-
+    global wrapper
     '''
     try: wrapper.create_simulation()
     except cplex.exceptions.errors.CplexSolverError as err:
@@ -377,7 +377,11 @@ def plot(request):
         plt.title(parameter)
         plt.xlabel(list(df.columns)[0])
         plt.ylabel(parameter)
-        plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
+        if mode == 'dev':
+            plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
+        else:
+            plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
+        try: os.mkdir(plot_path)
         except: print('Could not create new directory for plot results.')
         '''import pickle
         pickle.dump(fig, open(plot_path + '/FigureObject.fig.pickle', 'wb'))
@@ -386,9 +390,9 @@ def plot(request):
         if mode == 'dev':
             request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
         else:
-            request.session['plot_path'] = '../static/%s/plot.png'%request.session['rbafilename'][:-4]
-        #plt.show()
-        #plt.close()
+            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+            #plt.show()
+            #plt.close()
     except:
         request.session['error_code'].append('Parameter could not be plotted.')
 
