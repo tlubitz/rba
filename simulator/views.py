@@ -21,8 +21,10 @@ import matplotlib.pyplot as plt
 
 from .static.python.rbatools import rba_wrapper
 from .static.python.rbatools import rba_websimulator_interface
+from simulator.serializers import WrapperSerializer
 
 global wrapper
+wrapper = False
 
 def index(request):
     '''
@@ -119,12 +121,14 @@ def clearsession(request):
     return HttpResponse('ok')
 
 
+
+
 @csrf_exempt
 def loadmodel(request):
     '''
     load an existing model from server
     '''
-    global wrapper
+    #global wrapper
     request.session['csv_mode'] = 'w'
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
@@ -132,7 +136,13 @@ def loadmodel(request):
     else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     # load model and prepare parameters for change xxx
+    global wrapper 
     wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
+    #dschinn = json.JSONEncoder(wrapper)
+    #request.session['wrapper'] = {'pete':dschinn}
+    #request.session['wrapper'] = model_to_dict(wrapper)
+    #pete = WrapperSerializer(wrapper)
+    #request.session['wrapper'] = pete
     parameter_values = wrapper.current_parameter_values
 
     # parameters
@@ -176,10 +186,7 @@ def simulate(request):
         parameters = {}
         species = {}
 
-    try:
-        global wrapper
-    except: print('Could not create RBA wrapper.\n')
- 
+    global wrapper
     if parameters == {} and species == {}:
         try: wrapper.set_default_parameters()
         except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
@@ -226,8 +233,6 @@ def undolast(request):
     '''
     Undo the last simulation step
     '''
-    global wrapper
-
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -235,6 +240,7 @@ def undolast(request):
         pre_path = '/home/TimoSan/rba/static/'
         mode = 'prod'
 
+    global wrapper
     try:
         wrapper.undo_last_change()
     except: request.session['error_code'].append('Could not undo last change')
@@ -266,7 +272,6 @@ def plot(request):
     '''
     Plot a parameter
     '''
-    global wrapper
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -279,36 +284,37 @@ def plot(request):
         request.session['error_code'].append('Parameter was not submitted succesfully.')
         parameter = None
 
-    try:
-        df = wrapper.get_plot_values(model_parameter=parameter)
-        #fig = plt.figure(1)
-        fig,ax = plt.subplots()
+    global wrapper
+    #try:
+    df = wrapper.get_plot_values(model_parameter=parameter)
+    #fig = plt.figure(1)
+    fig,ax = plt.subplots()
 
-        plt.plot(df[list(df.columns)[0]], df['Original values'])
-        plt.plot(df[list(df.columns)[0]], df['Current values'])
-        plt.legend(['Original', 'Current'])
-        plt.title(parameter)
-        plt.xlabel(list(df.columns)[0])
-        plt.ylabel(parameter)
-        if mode == 'dev':
-            plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
-        else:
-            plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
-        
-        try: os.mkdir(plot_path)
-        except: print('Could not create new directory for plot results.')
-        '''import pickle
-        pickle.dump(fig, open(plot_path + '/FigureObject.fig.pickle', 'wb'))
-        request.session['plot_path'] = '../static/results/%s/FigureObject.fig.pickle'%request.session['rbafilename'][:-4]'''
-        plt.savefig(plot_path + '/plot.png')
-        if mode == 'dev':
-            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
-        else:
-            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
-            #plt.show()
-            #plt.close()
-    except:
-        request.session['error_code'].append('Parameter could not be plotted.')
+    plt.plot(df[list(df.columns)[0]], df['Original values'])
+    plt.plot(df[list(df.columns)[0]], df['Current values'])
+    plt.legend(['Original', 'Current'])
+    plt.title(parameter)
+    plt.xlabel(list(df.columns)[0])
+    plt.ylabel(parameter)
+    if mode == 'dev':
+        plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
+    else:
+        plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
+    
+    try: os.mkdir(plot_path)
+    except: print('Could not create new directory for plot results.')
+    '''import pickle
+    pickle.dump(fig, open(plot_path + '/FigureObject.fig.pickle', 'wb'))
+    request.session['plot_path'] = '../static/results/%s/FigureObject.fig.pickle'%request.session['rbafilename'][:-4]'''
+    plt.savefig(plot_path + '/plot.png')
+    if mode == 'dev':
+        request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+    else:
+        request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+        #plt.show()
+        #plt.close()
+    #except:
+    #    request.session['error_code'].append('Parameter could not be plotted.')
 
     request.session.modified = True
 
