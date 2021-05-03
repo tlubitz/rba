@@ -103,27 +103,28 @@ class RBA_websimulator_interface(object):
     # ok
     def undo_last_change(self):
         if self.change_log.shape[0] > 0:
-            print(self.change_log.iloc[-1, :])
-            old_value = self.change_log.iloc[-1, :]['old_value']
-            #print(old_value)
-            model_parameter = self.change_log.iloc[-1, :]['model_parameter']
-            #print(model_parameter)
-            function_parameter = self.change_log.iloc[-1, :]['function_parameter']
-            #print(function_parameter)
-            parameter_type = self.change_log.iloc[-1, :]['parameter_type']
-            #print(parameter_type)
-            remark = self.change_log.iloc[-1, :]['remark']
-            if parameter_type != 'medium_composition':
-                if remark == 'multiplicative change':
-                    self.set_parameter_multiplier(model_parameter.split('_multiplier')[0], parameter_type='', new_value=old_value, logging=True)
-                    #self.set_parameter_multiplier('ribosome_capacity', parameter_type='', new_value=9, logging=True)
-                else:
-                    self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
-                                             function_parameter=function_parameter, new_value=old_value, logging=False)
-            elif parameter_type == 'medium_composition':
-                self.set_medium_component(species=model_parameter,
-                                          new_value=old_value, logging=False)
-            self.change_log = self.change_log.iloc[:-1, :]
+            for item in self.change_log.transpose().items():
+                model_parameter = item[1]['model_parameter']
+                old_value = item[1]['old_value']
+                function_parameter = item[1]['function_parameter']
+                parameter_type = item[1]['parameter_type']
+                remark = item[1]['remark']
+                #old_value = self.change_log.iloc[-1, :]['old_value']
+                #model_parameter = self.change_log.iloc[-1, :]['model_parameter']
+                #function_parameter = self.change_log.iloc[-1, :]['function_parameter']
+                #parameter_type = self.change_log.iloc[-1, :]['parameter_type']
+                #remark = self.change_log.iloc[-1, :]['remark']
+                if parameter_type != 'medium_composition':
+                    if remark == 'multiplicative change':
+                        self.set_parameter_multiplier(model_parameter.split('_multiplier')[0], parameter_type='', new_value=old_value, logging=True)
+                        #self.set_parameter_multiplier('ribosome_capacity', parameter_type='', new_value=9, logging=True)
+                    else:
+                        self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
+                                                function_parameter=function_parameter, new_value=old_value, logging=True)
+                elif parameter_type == 'medium_composition':
+                    self.set_medium_component(species=model_parameter,
+                                            new_value=old_value, logging=True)
+                #self.change_log = self.change_log.iloc[:-1, :]
 
     # ok
     def get_change_log(self):
