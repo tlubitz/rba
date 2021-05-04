@@ -116,8 +116,6 @@ def clearsession(request):
     return HttpResponse('ok')
 
 
-
-
 @csrf_exempt
 def loadmodel(request):
     '''
