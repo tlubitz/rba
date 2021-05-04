@@ -290,8 +290,8 @@ def plot(request):
     else:
         plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
     
-    try: os.mkdir(plot_path)
-    except: print('Could not create new directory for plot results.')
+    #try: os.mkdir(plot_path)
+    #except: print('Could not create new directory for plot results.')
     '''import pickle
     pickle.dump(fig, open(plot_path + '/FigureObject.fig.pickle', 'wb'))
     request.session['plot_path'] = '../static/results/%s/FigureObject.fig.pickle'%request.session['rbafilename'][:-4]'''
