@@ -22,10 +22,7 @@ import matplotlib.pyplot as plt
 from .static.python.rbatools import rba_wrapper
 from .static.python.rbatools import rba_websimulator_interface
 
-#from django_globals import globals
 global wrapper
-GLOBAL_Entry = None
-#wrapper = False
 
 def index(request):
     '''
@@ -100,10 +97,8 @@ def clearsession(request):
     '''
     clears all session variables
     '''
-    global wrapper, GLOBAL_Entry
+    global wrapper
     del wrapper
-    #try: del wrapper
-    #except: pass
 
     # delete current project directory (only if it was an uploaded model)
     if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
@@ -135,17 +130,8 @@ def loadmodel(request):
     else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     # load model and prepare parameters for change xxx
-    global wrapper, GLOBAL_Entry
+    global wrapper
     wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
-    #GLOBAL_Entry = Entry.objects
-    #globals.request['wrapper'] = wrapper
-    #print(globals.request)
-    
-    #dschinn = json.JSONEncoder(wrapper)
-    #request.session['wrapper'] = {'pete':dschinn}
-    #request.session['wrapper'] = model_to_dict(wrapper)
-    #pete = WrapperSerializer(wrapper)
-    #request.session['wrapper'] = pete
     parameter_values = wrapper.current_parameter_values
 
     # parameters
@@ -174,6 +160,7 @@ def simulate(request):
     '''
     Simulate model
     '''
+    global wrapper
     cplex_error = False
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
@@ -189,7 +176,6 @@ def simulate(request):
         parameters = {}
         species = {}
 
-    global wrapper, GLOBAL_Entry
     if parameters == {} and species == {}:
         try: wrapper.set_default_parameters()
         except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
@@ -243,7 +229,7 @@ def undolast(request):
         pre_path = '/home/TimoSan/rba/static/'
         mode = 'prod'
 
-    global wrapper, GLOBAL_Entry
+    global wrapper
     try:
         wrapper.undo_last_change()
     except: request.session['error_code'].append('Could not undo last change')
@@ -287,7 +273,7 @@ def plot(request):
         request.session['error_code'].append('Parameter was not submitted succesfully.')
         parameter = None
 
-    global wrapper, GLOBAL_Entry
+    global wrapper
     #try:
     df = wrapper.get_plot_values(model_parameter=parameter)
     #fig = plt.figure(1)
