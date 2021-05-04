@@ -27,7 +27,7 @@ global wrapper
 def index(request):
     '''
     main page handling rba file upload and fine tuning parameters
-    '''    
+    '''
     # create essential variables
     for var in ['rbafilezip',
                 'rbafilename',
@@ -40,7 +40,8 @@ def index(request):
                 'errors',
                 'model_parameters_list',
                 'model_species_list',
-                'plot_path']:
+                'plot_path',
+                'wrapper']:
         if not request.session.get(var, None):
             request.session[var] = False
 
@@ -98,8 +99,11 @@ def clearsession(request):
     clears all session variables
     '''
     global wrapper
-    wrapper = sag('get')
-    del wrapper
+    while request.session['wrapper'] == True:
+        try:
+            wrapper = False
+            request.session['wrapper'] = False
+        except: pass
 
     # delete current project directory (only if it was an uploaded model)
     if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
@@ -131,6 +135,7 @@ def loadmodel(request):
     # load model and prepare parameters for change xxx
     global wrapper
     wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
+    request.session['wrapper'] = True
     parameter_values = wrapper.current_parameter_values
 
     # parameters
@@ -150,16 +155,7 @@ def loadmodel(request):
     request.session['model_species_list'] = msl
     
     request.session.modified = True
-    sag('set', wrapper)
     return HttpResponse('ok')
-    
-
-def sag(term, wrapper_b=None):
-    global wrapper
-    if term == 'set':
-        wrapper = wrapper_b
-    elif term == 'get':
-        return wrapper
 
 
 @csrf_exempt
@@ -168,7 +164,6 @@ def simulate(request):
     Simulate model
     '''
     global wrapper
-    wrapper = sag('get')
     cplex_error = False
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
@@ -185,8 +180,9 @@ def simulate(request):
         species = {}
 
     if parameters == {} and species == {}:
-        try: wrapper.set_default_parameters()
-        except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
+        while request.session['wrapper'] == True:
+            try: wrapper.set_default_parameters()
+            except: pass #request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     else:
         for s in species:
             wrapper.set_medium_component(s, new_value=float(species[s]))
