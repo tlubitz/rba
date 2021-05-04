@@ -180,8 +180,11 @@ def simulate(request):
         species = {}
 
     if parameters == {} and species == {}:
-        while request.session['wrapper'] == True:
-            try: wrapper.set_default_parameters()
+        set_defaults = False
+        while set_defaults == False:
+            try:
+                wrapper.set_default_parameters()
+                set_defaults = True
             except: pass #request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     else:
         for s in species:
