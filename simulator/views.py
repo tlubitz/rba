@@ -149,8 +149,16 @@ def loadmodel(request):
     request.session['model_species_list'] = msl
     
     request.session.modified = True
-
+    sag('set', wrapper)
     return HttpResponse('ok')
+    
+
+def sag(term, wrapper_b=None):
+    global wrapper
+    if term == 'set':
+        wrapper = wrapper_b
+    elif term == 'get':
+        return wrapper
 
 
 @csrf_exempt
@@ -159,6 +167,7 @@ def simulate(request):
     Simulate model
     '''
     global wrapper
+    wrapper = sag('get')
     cplex_error = False
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
