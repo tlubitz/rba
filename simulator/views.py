@@ -98,6 +98,7 @@ def clearsession(request):
     clears all session variables
     '''
     global wrapper
+    wrapper = sag('get')
     del wrapper
 
     # delete current project directory (only if it was an uploaded model)
