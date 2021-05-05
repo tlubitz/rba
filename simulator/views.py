@@ -93,8 +93,7 @@ def index(request):
                                           'dl_path': request.session['dl_path'],
                                           'plot_path': request.session['plot_path'],
                                           'model_parameters_list': request.session['model_parameters_list'],
-                                          'model_species_list': request.session['model_species_list'],
-                                          'first_sim': request.session['first_sim']})
+                                          'model_species_list': request.session['model_species_list']})
 
 
 def clearsession(request):
@@ -188,7 +187,7 @@ def simulate(request):
             if mode == 'dev':
                 success,path = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
             else:
-                success,path = wrapper.replay_from_logfile(file_path = '/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success,path = wrapper.replay_from_logfile(file_path = 'rba/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
             if success:
                 request.session['error_code'].append('Replayed!')
             else:
