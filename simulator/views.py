@@ -185,13 +185,10 @@ def simulate(request):
     if not request.session['first_sim']:
         try:
             if mode == 'dev':
-                success,path = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
-            else:
-                success,path = wrapper.replay_from_logfile(file_path = 'rba/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
-            if success:
-                request.session['error_code'].append('Replayed!')
-            else:
-                request.session['error_code'].append('No good file! %s'%path)
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            elif mode == 'prod':
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
 
@@ -219,7 +216,7 @@ def simulate(request):
             request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
@@ -252,7 +249,14 @@ def undolast(request):
 
     try:    
         wrapper = load_local(request.session['newdir'])
-        wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+        try:
+            if mode == 'dev':
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            elif mode == 'prod':
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
+        except:
+            request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
     except:
         request.session['error_code'].append('Could not regenerate model wrapper for plotting.')
 
@@ -271,7 +275,7 @@ def undolast(request):
             request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
    
@@ -302,7 +306,14 @@ def plot(request):
 
     try:    
         wrapper = load_local(request.session['newdir'])
-        wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+        try:
+            if mode == 'dev':
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            elif mode == 'prod':
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
+        except:
+            request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
     except:
         request.session['error_code'].append('Could not regenerate model wrapper for plotting.')
 

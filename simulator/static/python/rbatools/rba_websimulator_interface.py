@@ -178,7 +178,6 @@ class RBA_websimulator_interface(object):
                     if remark == 'multiplicative change':
                         self.set_parameter_multiplier(model_parameter.split('_multiplier')[
                                                       0], parameter_type='', new_value=new_value, logging=True)
-
                     else:
                         self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
                                                  function_parameter=function_parameter, new_value=new_value, logging=True)
@@ -186,9 +185,9 @@ class RBA_websimulator_interface(object):
                 elif parameter_type == 'medium_composition':
                     self.set_medium_component(species=model_parameter,
                                               new_value=new_value, logging=True)
-            return True, os.getcwd()
+            return True
         else:
-            return False, os.getcwd()
+            return False
 
     def get_parameter_values_as_DataFrame(self, model_parameter):
         out = pandas.DataFrame(columns=[list(self.original_parameter_values[model_parameter].columns)[
