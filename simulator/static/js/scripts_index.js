@@ -33,6 +33,8 @@ function load_model(modelname) {
     // send the modelname to the view
     $.post('/simulator/loadmodel/', JSON.stringify(model_name_dict), function(data) {
         console.log('Choosing model from DB');
+        //console.log(data);
+        
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
         else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
     });
@@ -67,7 +69,7 @@ function simulate() {
     $.post('/simulator/simulate/', JSON.stringify(parameters_species), function(data) {
         console.log('Simulating...');
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-        else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+        else { window.location.href="https://timosan.pythonanywhere.com/simulator"; }
     });
 }
 
