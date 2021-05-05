@@ -93,7 +93,8 @@ def index(request):
                                           'dl_path': request.session['dl_path'],
                                           'plot_path': request.session['plot_path'],
                                           'model_parameters_list': request.session['model_parameters_list'],
-                                          'model_species_list': request.session['model_species_list']})
+                                          'model_species_list': request.session['model_species_list'],
+                                          'first_sim': request.session['first_sim']})
 
 
 def clearsession(request):
