@@ -44,7 +44,10 @@ def index(request):
             request.session[var] = False
 
     if not request.session.get('first_sim', None):
-        if not request.session['first_sim'] == False:
+        try:
+            if not request.session['first_sim'] == False:
+                request.session['first_sim'] = True
+        except:
             request.session['first_sim'] = True
 
     for var in ['error_code', 'csv_paths']:
