@@ -185,9 +185,14 @@ def simulate(request):
     wrapper = load_local(request.session['newdir'])
     if not request.session['first_sim']:
         try:
-            wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
-            request.session['error_code'].append('Replayed!')
-
+            if mode == 'dev':
+                success,path = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            else:
+                success,path = wrapper.replay_from_logfile(file_path = '/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+            if success:
+                request.session['error_code'].append('Replayed!')
+            else:
+                request.session['error_code'].append('No good file! %s'%path)
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
 
