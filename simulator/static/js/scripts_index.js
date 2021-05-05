@@ -29,6 +29,8 @@ function delete_session() {
 
 function load_model(modelname) {
     var model_name_dict = {'modelname': modelname}
+    var loading_gif = document.querySelector('#loading-gif');
+    loading_gif.style.display = 'block';
 
     // send the modelname to the view
     $.post('/simulator/loadmodel/', JSON.stringify(model_name_dict), function(data) {
@@ -42,6 +44,8 @@ function load_model(modelname) {
 
 
 function simulate() {
+    var loading_gif = document.querySelector('#loading-gif');
+    loading_gif.style.display = 'block';
     var parameters_species = {}
     var parameters = {}
     var species = {}
@@ -75,6 +79,8 @@ function simulate() {
 
 
 function undo_last() {
+  var loading_gif = document.querySelector('#loading-gif');
+  loading_gif.style.display = 'block';
   $.get('/simulator/undolast/', function(data) {
       console.log('Undo last step');
       if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
@@ -84,6 +90,8 @@ function undo_last() {
 
 
 function plot_parameter() {
+  var loading_gif = document.querySelector('#loading-gif');
+  loading_gif.style.display = 'block';
   var select_box = document.querySelector('#select_parameter');
   parameter = {};
   parameter['plot_parameter'] = select_box.value;

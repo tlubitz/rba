@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 from .static.python.rbatools import rba_wrapper
 from .static.python.rbatools import rba_websimulator_interface
 
-global wrapper
 
 def index(request):
     '''
@@ -40,10 +39,13 @@ def index(request):
                 'errors',
                 'model_parameters_list',
                 'model_species_list',
-                'plot_path',
-                'wrapper']:
+                'plot_path']:
         if not request.session.get(var, None):
             request.session[var] = False
+
+    if not request.session.get('first_sim', None):
+        if not request.session['first_sim'] == False:
+            request.session['first_sim'] = True
 
     for var in ['error_code', 'csv_paths']:
         if not request.session.get(var, None):
@@ -98,13 +100,6 @@ def clearsession(request):
     '''
     clears all session variables
     '''
-    global wrapper
-    while request.session['wrapper'] == True:
-        try:
-            wrapper = False
-            request.session['wrapper'] = False
-        except: pass
-
     # delete current project directory (only if it was an uploaded model)
     if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
         try: shutil.rmtree(request.session['newdir'])
@@ -116,6 +111,7 @@ def clearsession(request):
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
 
+    request.session['first_sim'] = True
     request.session.modified = True
 
     return HttpResponse('ok')
@@ -126,16 +122,15 @@ def loadmodel(request):
     '''
     load an existing model from server
     '''
+    request.session['error_code'] = []    
     request.session['csv_mode'] = 'w'
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
     if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
     else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
-    # load model and prepare parameters for change xxx
-    global wrapper
-    wrapper = rba_websimulator_interface.RBA_websimulator_interface(request.session['newdir'])
-    request.session['wrapper'] = True
+    # load model and prepare parameters for change
+    wrapper = load_local(request.session['newdir'])
     parameter_values = wrapper.current_parameter_values
 
     # parameters
@@ -158,12 +153,19 @@ def loadmodel(request):
     return HttpResponse('ok')
 
 
+def load_local(path):
+    '''
+    loads wrapper model
+    '''
+    return rba_websimulator_interface.RBA_websimulator_interface(path)
+
+
 @csrf_exempt
 def simulate(request):
     '''
     Simulate model
     '''
-    global wrapper
+    request.session['error_code'] = []    
     cplex_error = False
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
@@ -179,24 +181,23 @@ def simulate(request):
         parameters = {}
         species = {}
 
+    wrapper = load_local(request.session['newdir'])
+    if not request.session['first_sim']:
+        print(os.getcwd())
+        wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+
     if parameters == {} and species == {}:
-        set_defaults = False
-        while set_defaults == False:
-            try:
-                wrapper.set_default_parameters()
-                set_defaults = True
-            except: pass #request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
+        try: wrapper.set_default_parameters()
+        except: request.session['error_code'].append('The default parameters could not be set. Is the model valid?')
     else:
         for s in species:
             wrapper.set_medium_component(s, new_value=float(species[s]))
         for p in parameters:
-            wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]))
+            wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]), logging=True)
             wrapper.determine_parameter_values(model_parameter=p, x_min=0, x_max=1, intervals=100)
 
-    wrapper.rba_session.findMaxGrowthRate()
-    try: wrapper.rba_session.recordResults('Glucose')
-    except: pass
-    wrapper.rba_session.writeResults(session_name='Test')
+    try: wrapper.rba_session.findMaxGrowthRate()
+    except: request.session['error_code'].append('Growth rate of model could not be determined.')
 
     try:
         # get logfile, save it, and create link to download
@@ -205,17 +206,20 @@ def simulate(request):
         log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
         logfile_content = wrapper.get_change_log()
         if mode == 'dev': 
-            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode=request.session['csv_mode'])
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
             request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         else:
-            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode=request.session['csv_mode'])
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
             request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
-   
+
     if mode == 'dev': request.session['dl_path'] = '../static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
     else: request.session['dl_path'] = '/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
+
+    if request.session['first_sim']:
+        request.session['first_sim'] = False
 
     request.session['plot_path'] = False
     request.session['status'] = True
@@ -229,6 +233,7 @@ def undolast(request):
     '''
     Undo the last simulation step
     '''
+    request.session['error_code'] = []
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -236,7 +241,12 @@ def undolast(request):
         pre_path = '/home/TimoSan/rba/static/'
         mode = 'prod'
 
-    global wrapper
+    try:    
+        wrapper = load_local(request.session['newdir'])
+        wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+    except:
+        request.session['error_code'].append('Could not regenerate model wrapper for plotting.')
+
     try:
         wrapper.undo_last_change()
     except: request.session['error_code'].append('Could not undo last change')
@@ -248,10 +258,10 @@ def undolast(request):
         log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
         logfile_content = wrapper.get_change_log()
         if mode == 'dev': 
-            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode=request.session['csv_mode'])
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
             request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         else:
-            logfile_content.to_csv(log_path, header=None, index=None, sep=',', mode=request.session['csv_mode'])
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
             request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
@@ -268,6 +278,7 @@ def plot(request):
     '''
     Plot a parameter
     '''
+    request.session['error_code'] = []    
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -280,37 +291,36 @@ def plot(request):
         request.session['error_code'].append('Parameter was not submitted succesfully.')
         parameter = None
 
-    global wrapper
-    #try:
-    df = wrapper.get_plot_values(model_parameter=parameter)
-    #fig = plt.figure(1)
-    fig,ax = plt.subplots()
+    try:    
+        wrapper = load_local(request.session['newdir'])
+        wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+    except:
+        request.session['error_code'].append('Could not regenerate model wrapper for plotting.')
 
-    plt.plot(df[list(df.columns)[0]], df['Original values'])
-    plt.plot(df[list(df.columns)[0]], df['Current values'])
-    plt.legend(['Original', 'Current'])
-    plt.title(parameter)
-    plt.xlabel(list(df.columns)[0])
-    plt.ylabel(parameter)
-    if mode == 'dev':
-        plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
-    else:
-        plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
-    
-    #try: os.mkdir(plot_path)
-    #except: print('Could not create new directory for plot results.')
-    '''import pickle
-    pickle.dump(fig, open(plot_path + '/FigureObject.fig.pickle', 'wb'))
-    request.session['plot_path'] = '../static/results/%s/FigureObject.fig.pickle'%request.session['rbafilename'][:-4]'''
-    plt.savefig(plot_path + '/plot.png')
-    if mode == 'dev':
-        request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
-    else:
-        request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+    try:
+        df = wrapper.get_plot_values(model_parameter=parameter)
+        fig,ax = plt.subplots()
+
+        plt.plot(df[list(df.columns)[0]], df['Original values'])
+        plt.plot(df[list(df.columns)[0]], df['Current values'])
+        plt.legend(['Original', 'Current'])
+        plt.title(parameter)
+        plt.xlabel(list(df.columns)[0])
+        plt.ylabel(parameter)
+        if mode == 'dev':
+            plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
+        else:
+            plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
+        
+        plt.savefig(plot_path + '/plot.png')
+        if mode == 'dev':
+            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+        else:
+            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
         #plt.show()
         #plt.close()
-    #except:
-    #    request.session['error_code'].append('Parameter could not be plotted.')
+    except:
+        request.session['error_code'].append('Parameter could not be plotted.')
 
     request.session.modified = True
 

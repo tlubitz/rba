@@ -6,4 +6,4 @@ simulator/static/results/*
 simulator/static/python/rbatools/__pychache__/
 db.sqlite3
 misc/
-static/
+.static/
