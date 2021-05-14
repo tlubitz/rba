@@ -44,12 +44,8 @@ def index(request):
             request.session[var] = False
 
     if not request.session.get('first_sim', None):
-        try:
-            if not request.session['first_sim'] == False:
-                request.session['first_sim'] = True
-        except:
-            request.session['first_sim'] = True
-
+        request.session['first_sim'] = True
+          
     for var in ['error_code', 'csv_paths']:
         if not request.session.get(var, None):
             request.session[var] = []
@@ -114,7 +110,7 @@ def clearsession(request):
         try: del request.session[key]
         except: print('Cannot delete %s' %(key))
 
-    request.session['first_sim'] = True
+    request.session['first_sim'] = 'Yes'
     request.session.modified = True
 
     return HttpResponse('ok')
@@ -214,7 +210,7 @@ def simulate(request):
         species = {}
 
     wrapper = load_local(request.session['newdir'])
-    if not request.session['first_sim']:
+    if request.session['first_sim'] == 'Nope':
         try:
             if mode == 'dev':
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
@@ -237,8 +233,8 @@ def simulate(request):
     try: wrapper.rba_session.findMaxGrowthRate()
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
 
-    if request.session['first_sim']:
-        request.session['first_sim'] = False
+    if request.session['first_sim'] == 'Yes':
+        request.session['first_sim'] = 'Nope'
 
     request.session['plot_path'] = False
     request.session['status'] = True
