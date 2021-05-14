@@ -121,13 +121,11 @@ def loadmodel(request):
     '''
     load an existing model from server
     '''
-    import os
-    print(os.getcwd())
     if socket.gethostname() == 'timputer':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = '/home/TimoSan/rba/static/'
+        pre_path = os.getcwd() + '/rba/static/'
         mode = 'prod'
 
     request.session['error_code'] = []    
@@ -135,7 +133,7 @@ def loadmodel(request):
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
     if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
-    else: request.session['newdir'] = '/home/TimoSan/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
+    else: request.session['newdir'] = os.getcwd() + '/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     # load model and prepare parameters for change
     wrapper = load_local(request.session['newdir'])
@@ -199,7 +197,7 @@ def simulate(request):
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = '/home/TimoSan/rba/static/'
+        pre_path = os.getcwd() + '/rba/static/'
         mode = 'prod'
 
     try:
@@ -233,6 +231,22 @@ def simulate(request):
     try: wrapper.rba_session.findMaxGrowthRate()
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
 
+    try:
+        # get logfile, save it, and create link to download
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        logfile_content = wrapper.get_change_log()
+        if mode == 'dev': 
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+        else:
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
+            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+        request.session['csv_mode'] = 'w'
+    except:
+        request.session['error_code'].append('Could not create Logfile for this model.')
+
     if request.session['first_sim'] == 'Yes':
         request.session['first_sim'] = 'Nope'
 
@@ -253,7 +267,7 @@ def undolast(request):
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = '/home/TimoSan/rba/static/'
+        pre_path = os.getcwd() + '/rba/static/'
         mode = 'prod'
 
     try:    
@@ -305,7 +319,7 @@ def plot(request):
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = '/home/TimoSan/rba/static/'
+        pre_path = os.getcwd() + '/rba/static/'
         mode = 'prod'
 
     try: parameter = json.loads(list(request.POST.items())[0][0])['plot_parameter']
@@ -339,7 +353,7 @@ def plot(request):
         if mode == 'dev':
             plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
         else:
-            plot_path = '/home/TimoSan/rba/static/results/%s'%request.session['rbafilename'][:-4]
+            plot_path = os.getcwd() '/rba/static/results/%s'%request.session['rbafilename'][:-4]
         
         plt.savefig(plot_path + '/plot.png')
         if mode == 'dev':

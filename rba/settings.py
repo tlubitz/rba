@@ -32,10 +32,7 @@ else:
     print('*>>>>> You are working in PRODUCTION mode <<<<<*')
     DEBUG = False
 
-# SECURITY WARNING: don't run with debug turned on in production!
-
 ALLOWED_HOSTS = ['127.0.0.1', 'timosan.pythonanywhere.com']
-
 
 # Application definition
 
