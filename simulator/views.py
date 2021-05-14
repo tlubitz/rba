@@ -125,6 +125,15 @@ def loadmodel(request):
     '''
     load an existing model from server
     '''
+    import os
+    print(os.getcwd())
+    if socket.gethostname() == 'timputer':
+        pre_path = 'simulator/static/results/'
+        mode = 'dev'
+    else:
+        pre_path = '/home/TimoSan/rba/static/'
+        mode = 'prod'
+
     request.session['error_code'] = []    
     request.session['csv_mode'] = 'w'
     # identify model and set directory
@@ -135,6 +144,26 @@ def loadmodel(request):
     # load model and prepare parameters for change
     wrapper = load_local(request.session['newdir'])
     parameter_values = wrapper.current_parameter_values
+
+    try:
+        # get logfile, save it, and create link to download
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        logfile_content = wrapper.get_change_log()
+        if mode == 'dev': 
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+        else:
+            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
+            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+        request.session['csv_mode'] = 'w'
+    except:
+        request.session['error_code'].append('Could not create Logfile for this model.')
+
+    # model download path
+    if mode == 'dev': request.session['dl_path'] = '../static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
+    else: request.session['dl_path'] = '/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
 
     # parameters
     mpl = []
@@ -207,25 +236,6 @@ def simulate(request):
 
     try: wrapper.rba_session.findMaxGrowthRate()
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
-
-    try:
-        # get logfile, save it, and create link to download
-        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
-        except: pass
-        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
-        logfile_content = wrapper.get_change_log()
-        if mode == 'dev': 
-            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
-        else:
-            logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
-        request.session['csv_mode'] = 'w'
-    except:
-        request.session['error_code'].append('Could not create Logfile for this model.')
-
-    if mode == 'dev': request.session['dl_path'] = '../static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
-    else: request.session['dl_path'] = '/static/python/models/%s/%s' %(request.session['rbafilename'][:-4], request.session['rbafilename'])
 
     if request.session['first_sim']:
         request.session['first_sim'] = False

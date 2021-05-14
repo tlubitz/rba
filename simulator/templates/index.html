@@ -82,6 +82,20 @@
                     {% endfor %}
                 </div>
             {% endif %}
+            
+            <div class="sublist">
+                <div class="bold">Download Model</div>
+                {% if dl_path %}
+                    <a href="{{ dl_path }}" target="_blank">Download Model</a><br>
+                {% endif %}
+            </div>
+            
+            <div class="sublist">
+                <div class="bold">Download Logfile</div>
+                {% if log_path %}
+                    <a href="{{ log_path }}">Download Logfile</a><br>
+                {% endif %}
+            </div>
         {% endif %}
     </article>
 
@@ -89,22 +103,11 @@
         <img src="{% static 'images/loading.gif' %}" id="loading-gif">
     </div>
 
+
     {% if status %}
     <hr>
         <article class="module results">
             <h4>Simulation Results</h4>
-            <div class="sublist">
-                <div class="bold">Download Model</div>
-                {% if dl_path %}
-                    <a href="{{ dl_path }}" target="_blank">Download Model</a><br>
-                {% endif %}
-            </div>
-            <div class="sublist">
-                <div class="bold">Download Logfile</div>
-                {% if log_path %}
-                    <a href="{{ log_path }}">Download Logfile</a><br>
-                {% endif %}
-            </div>
             <div class="sublist old-results">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}
