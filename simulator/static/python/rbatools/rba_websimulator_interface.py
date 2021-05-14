@@ -109,22 +109,15 @@ class RBA_websimulator_interface(object):
                 function_parameter = item[1]['function_parameter']
                 parameter_type = item[1]['parameter_type']
                 remark = item[1]['remark']
-                #old_value = self.change_log.iloc[-1, :]['old_value']
-                #model_parameter = self.change_log.iloc[-1, :]['model_parameter']
-                #function_parameter = self.change_log.iloc[-1, :]['function_parameter']
-                #parameter_type = self.change_log.iloc[-1, :]['parameter_type']
-                #remark = self.change_log.iloc[-1, :]['remark']
                 if parameter_type != 'medium_composition':
                     if remark == 'multiplicative change':
                         self.set_parameter_multiplier(model_parameter.split('_multiplier')[0], parameter_type='', new_value=old_value, logging=True)
-                        #self.set_parameter_multiplier('ribosome_capacity', parameter_type='', new_value=9, logging=True)
                     else:
                         self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
                                                 function_parameter=function_parameter, new_value=old_value, logging=True)
                 elif parameter_type == 'medium_composition':
                     self.set_medium_component(species=model_parameter,
                                             new_value=old_value, logging=True)
-                #self.change_log = self.change_log.iloc[:-1, :]
 
     # ok
     def get_change_log(self):
@@ -213,6 +206,10 @@ class RBA_websimulator_interface(object):
         df = self.get_parameter_values_as_DataFrame(model_parameter)
         return(df)
 
+    def get_csvs(self):
+        return self.rba_session.SimulationData.getCSVFiles()
+
+
 def evaluate_expression(expression_dictionary, independent_variable):
     if type(independent_variable) is list:
         x_vals = independent_variable
@@ -264,3 +261,4 @@ def check_var_bounds(v, v_min, v_max):
         return(v_min)
     else:
         return(v)
+

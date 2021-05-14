@@ -228,9 +228,12 @@ def simulate(request):
             wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]), logging=True)
             wrapper.determine_parameter_values(model_parameter=p, x_min=0, x_max=1, intervals=100)
 
-    try: wrapper.rba_session.findMaxGrowthRate()
+    try:
+        wrapper.rba_session.findMaxGrowthRate()
+        wrapper.rba_session.recordResults('Glucose')
+        wrapper.rba_session.writeResults(session_name='Test')
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
-
+    
     try:
         # get logfile, save it, and create link to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
@@ -246,6 +249,73 @@ def simulate(request):
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
+
+    try:
+        # create CSV files, save em, and create links to download
+        try: os.mkdir(prepath + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        wrapper.rba_session.SimulationData.exportCSV()
+        csv_files = wrapper.rba_session.SimulationData.getCSVFiles()
+        for cf_key in csv_files:
+            csv_file = csv_files[cf_key]
+            csv_path = pre_path + '%s/%s' %(request.session['rbafilename'][:-4], cf_key)
+            current_paths = request.session['csv_paths']
+            if mode == 'dev': current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
+            else: current_paths.append('../static/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
+            f = open(csv_path, 'w+')
+            f.write(csv_file)
+            f.close()
+            request.session['csv_paths'] = current_paths
+    except: request.session['error_code'].append('Could not create CSV output.')
+
+    try:
+        # create Escher map file, save it, and create link to download
+        # currently broken (in Olivers code)
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        emap_path = pre_path + '%s/eschermap.json' %request.session['rbafilename'][:-4]
+        wrapper.rba_session.SimulationData.exportEscherMap(etype='investment')
+        emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
+        f = open(emap_path, 'w+')
+        f.write(emap_content)
+        f.close()
+        if mode == 'dev': request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4]
+        else: request.session['emap_path'] = '../static/%s/eschermap.json'%request.session['rbafilename'][:-4]        
+    except:
+        request.session['error_code'].append('Could not create Escher Map for this model.')
+
+    try:
+        # create Proteomap file, save it, and create link to download
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        proteomap_path = pre_path + '%s/proteomap.tsv' %request.session['rbafilename'][:-4]
+        wrapper.rba_session.SimulationData.exportProteoMap()
+        proteomap_content = wrapper.rba_session.SimulationData.getProteoMap()
+        f = open(proteomap_path, 'w+')
+        f.write(proteomap_content)
+        f.close()
+        if mode == 'dev': request.session['proteomap_path'] = '../static/results/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
+        else: request.session['proteomap_path'] = '../static/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
+    except:
+        request.session['error_code'].append('Could not create Proteomap for this model.')
+
+    try:
+        # create SBtab Document, save it, and create link to download
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
+        sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
+        wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
+        sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
+        f = open(sbtab_path, 'w+')
+        f.write(sbtab_content.to_str())
+        f.close()
+        if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+        else: request.session['sbtab_path'] = '../static/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+    except:
+        request.session['error_code'].append('Could not create SBtab for this model.')
+
+
+
 
     if request.session['first_sim'] == 'Yes':
         request.session['first_sim'] = 'Nope'

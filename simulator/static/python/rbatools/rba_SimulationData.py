@@ -758,7 +758,7 @@ class RBA_SimulationData(object):
     def getCSVFiles(self):
         return self.csvs
 
-    def exportEscherMap(self, type='fluxes'):
+    def exportEscherMap(self, etype='fluxes'):
         """
         Exports input file for generation of Escher maps.
 
@@ -772,11 +772,14 @@ class RBA_SimulationData(object):
 
         Parameters
         ----------
-        type: str ('fluxes' or 'investment')
+        etype: str ('fluxes' or 'investment')
         Default: 'fluxes'
         """
-
-        if type is 'fluxes':
+        # PROBLEM HERE:
+        # self.uniqueReactionData is empty (created by fromSimulationResults?)
+        # --> thus, calling list(self.uniqueReactionData.Elements.keys())[0]
+        #     further down crashes the function
+        if etype is 'fluxes':
             IDs = [id[2:] for id in list(self.uniqueReactionData.Elements.keys())]
             for run in self.uniqueReactionData.Elements[list(self.uniqueReactionData.Elements.keys())[0]]:
                 Values = [rxn[run] for rxn in list(self.uniqueReactionData.Elements.values())]
@@ -789,7 +792,7 @@ class RBA_SimulationData(object):
                     filename = 'RBA_Eschermap_fluxes_'+run+'.json'
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionFluxes, indent=4))
-        if type is 'investment':
+        if etype is 'investment':
             IDs = list(self.uniqueReactionData.Elements.keys())
             for run in self.uniqueReactionData.Elements[list(self.uniqueReactionData.Elements.keys())[0]]:
                 Fluxes = [rxn[run] for rxn in list(self.uniqueReactionData.Elements.values())]
@@ -809,14 +812,14 @@ class RBA_SimulationData(object):
     def getEscherMap(self):
         return self.eschermap
 
-    def exportProteoMap(self, type='proto'):
+    def exportProteoMap(self, ptype='proto'):
         """
         Exports input file for the generation of Proteo maps from
         simulation data.
 
         https://www.proteomaps.net
         """
-        if type == 'isoforms':
+        if ptype == 'isoforms':
             IDs = list(self.ProteinData.Elements.keys())
             for run in self.ProteinData.Elements[list(self.ProteinData.Elements.keys())[0]]:
                 Values = [protein[run] for protein in list(self.ProteinData.Elements.values())]
@@ -830,7 +833,7 @@ class RBA_SimulationData(object):
                 with open(filename, 'w') as fout:
                     self.proteomap = '\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]) 
                     fout.write(self.proteomap)
-        if type == 'proto':
+        if ptype == 'proto':
             IDs = list(self.ProtoProteinData.Elements.keys())
             for run in self.ProtoProteinData.Elements[list(self.ProtoProteinData.Elements.keys())[0]]:
                 Values = [protein[run] for protein in list(self.ProtoProteinData.Elements.values())]

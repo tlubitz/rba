@@ -108,7 +108,7 @@
     <hr>
         <article class="module results">
             <h4>Simulation Results</h4>
-            <div class="sublist old-results">
+            <div class="sublist">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}
                     <a href="{{ emap_path }}" target="_blank">Download Escher Map</a><br>
@@ -121,7 +121,7 @@
                 {% endif %}
             </div>
             {% if csv_paths %}
-                <div class="sublist old-results">
+                <div class="sublist">
                     <div class="bold">CSV files</div>
                     {% for path in csv_paths %}
                         <a href="{{ path }}" target="_blank">Download {{ path }}</a><br>
