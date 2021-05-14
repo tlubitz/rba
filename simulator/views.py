@@ -152,7 +152,7 @@ def loadmodel(request):
             request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')

@@ -26,12 +26,13 @@ if SECRET_KEY == None:
     DEV = True
     SECRET_KEY = '5y!f&1s2-)eju@8j_)cj1b1wl7+c!-v%xb*1+q295t!57ul0^$' #dev
     print('*>>>>> You are working in DEVELOPMENT mode <<<<<*')
+    DEBUG = True
 else:
     DEV = False
     print('*>>>>> You are working in PRODUCTION mode <<<<<*')
+    DEBUG = False
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'timosan.pythonanywhere.com']
 
