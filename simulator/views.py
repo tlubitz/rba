@@ -353,7 +353,7 @@ def plot(request):
         if mode == 'dev':
             plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
         else:
-            plot_path = os.getcwd() '/rba/static/results/%s'%request.session['rbafilename'][:-4]
+            plot_path = os.getcwd() + '/rba/static/results/%s'%request.session['rbafilename'][:-4]
         
         plt.savefig(plot_path + '/plot.png')
         if mode == 'dev':
