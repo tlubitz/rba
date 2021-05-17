@@ -100,7 +100,7 @@ def clearsession(request):
     clears all session variables
     '''
     # delete current project directory (only if it was an uploaded model)
-    if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith('/home/TimoSan/'):
+    if not request.session['newdir'].startswith('simulator/static/python/models/') and not request.session['newdir'].startswith(os.getcwd()):
         try: shutil.rmtree(request.session['newdir'])
         except: print('Cannot delete %s' %request.session['newdir'])
 
