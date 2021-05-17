@@ -304,7 +304,7 @@ def simulate(request):
     try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
     except: pass
     sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
-    wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
+    wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
     sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
     f = open(sbtab_path, 'w+')
     f.write(sbtab_content.to_str())

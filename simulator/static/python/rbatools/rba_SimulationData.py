@@ -281,7 +281,7 @@ class RBA_SimulationData(object):
         m = ET.tostring(root, 'utf-8')
         return(m)
 
-    def exportSBtab(self, filename=None, add_links=False):
+    def exportSBtab(self, filename=None, add_links=False, rba=False):
         """
         Exports simulation data in one single sbtab file
         """
@@ -427,30 +427,22 @@ class RBA_SimulationData(object):
                 '(!'+'Enzyme/'+entry+'!)') for entry in list(EnzymeConstraintDataTable.to_data_frame()['ID'])], position=1)
             filename_SBtab += '_HTML'
         else:
-            #print(ReactionDataTable)
-            #print(ReactionDataTable.table_id)
-            #print(ReactionDataTable.value_rows)
-            #print(ReactionDataTable.table)
-            #print(ReactionDataTable.to_data_frame())
-            #print(type(ReactionDataTable.to_data_frame()))
-            #print(list(ReactionDataTable.to_data_frame()))
-            #print(list(ReactionDataTable.to_data_frame())['ID'])
             ReactionDataTable.add_column(
-                column_list=['!ElementID']+list(ReactionDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(ReactionDataTable.to_data_frame(rba=rba)['ID']), position=1)
             ProcessDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(ProcessDataTable.to_data_frame(rba=rba)['ID']), position=1)
             EnzymeDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame(rba=rba)['ID']), position=1)
             ProteinDataTable.add_column(
-                column_list=['!ElementID']+list(ProteinDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(ProteinDataTable.to_data_frame(rba=rba)['ID']), position=1)
             MetaboliteConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame(rba=rba)['ID']), position=1)
             DensityConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame(rba=rba)['ID']), position=1)
             ProcessConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame(rba=rba)['ID']), position=1)
             EnzymeConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
+                column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame(rba=rba)['ID']), position=1)
 
         ReactionDataTable.remove_column(position=2)
         ProcessDataTable.remove_column(position=2)
