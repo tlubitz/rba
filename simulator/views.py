@@ -299,20 +299,20 @@ def simulate(request):
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
 
-    try:
-        # create SBtab Document, save it, and create link to download
-        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
-        except: pass
-        sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
-        wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
-        sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
-        f = open(sbtab_path, 'w+')
-        f.write(sbtab_content.to_str())
-        f.close()
-        if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
-        else: request.session['sbtab_path'] = '../static/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
-    except:
-        request.session['error_code'].append('Could not create SBtab for this model.')
+    #try:
+    # create SBtab Document, save it, and create link to download
+    try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+    except: pass
+    sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
+    wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
+    sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
+    f = open(sbtab_path, 'w+')
+    f.write(sbtab_content.to_str())
+    f.close()
+    if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+    else: request.session['sbtab_path'] = '../static/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
+    #except:
+    #    request.session['error_code'].append('Could not create SBtab for this model.')
 
 
 
