@@ -290,8 +290,10 @@ class RBA_SimulationData(object):
         GeneralRunInfoTable.filename = 'RunInfo.tsv'
         GeneralRunInfoTable.change_attribute(
             'Text', 'Growth rates mu and cellular objective values (by default: minimisation of total enzyme concentration).')
-        GeneralRunInfoTable.unset_attribute('Date')
-        GeneralRunInfoTable.unset_attribute('SBtabVersion')
+        try: GeneralRunInfoTable.unset_attribute('Date')
+        except: pass
+        try: GeneralRunInfoTable.unset_attribute('SBtabVersion')
+        except: pass
 
         ObjectiveFunctionDataTable = self.ObjectiveFunctionInfo.toSBtab(
             table_id='objective_coefficients', table_type='QuantityMatrix', table_name='Linear objective')
@@ -300,8 +302,10 @@ class RBA_SimulationData(object):
         ObjectiveFunctionDataTable.change_attribute('QuantityType', 'objective_coefficient')
         ObjectiveFunctionDataTable.change_attribute(
             'Text', 'Coefficients in objective function (<0 : maximisation , >0 : minimisation)')
-        ObjectiveFunctionDataTable.unset_attribute('Date')
-        ObjectiveFunctionDataTable.unset_attribute('SBtabVersion')
+        try:
+            ObjectiveFunctionDataTable.unset_attribute('Date')
+            ObjectiveFunctionDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         ReactionDataTable = self.ReactionData.toSBtab(
             table_id='reaction_flux', table_type='QuantityMatrix', table_name='Reaction fluxes')
@@ -310,8 +314,10 @@ class RBA_SimulationData(object):
         ReactionDataTable.change_attribute('QuantityType', 'reaction_flux')
         ReactionDataTable.change_attribute(
             'Text', 'Reaction fluxes obtained in the simulation runs (table columns).')
-        ReactionDataTable.unset_attribute('Date')
-        ReactionDataTable.unset_attribute('SBtabVersion')
+        try:
+            ReactionDataTable.unset_attribute('Date')
+            ReactionDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         EnzymeDataTable = self.EnzymeData.toSBtab(
             table_id='enzyme_concentration', table_type='QuantityMatrix', table_name='Enzyme concentration')
@@ -320,8 +326,10 @@ class RBA_SimulationData(object):
         EnzymeDataTable.change_attribute('QuantityType', 'enzyme_concentration')
         EnzymeDataTable.change_attribute(
              'Text', 'Enzyme concentrations obtained in the simulation runs (table columns).')
-        EnzymeDataTable.unset_attribute('Date')
-        EnzymeDataTable.unset_attribute('SBtabVersion')
+        try:
+            EnzymeDataTable.unset_attribute('Date')
+            EnzymeDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         ProcessDataTable = self.ProcessData.toSBtab(
              table_id='machine_concentration', table_type='QuantityMatrix', table_name='Machine concentrations')
@@ -330,8 +338,10 @@ class RBA_SimulationData(object):
         ProcessDataTable.change_attribute('QuantityType', 'machine_concentration')
         ProcessDataTable.change_attribute(
             'Text', 'Macromolecular machine concentrations obtained in the simulation runs (table columns).')
-        ProcessDataTable.unset_attribute('Date')
-        ProcessDataTable.unset_attribute('SBtabVersion')
+        try: 
+            ProcessDataTable.unset_attribute('Date')
+            ProcessDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         ProteinDataTable = self.ProteinData.toSBtab(
             table_id='protein_concentration', table_type='QuantityMatrix', table_name='Protein concentrations')
@@ -340,8 +350,10 @@ class RBA_SimulationData(object):
         ProteinDataTable.change_attribute('QuantityType', 'protein_concentration')
         ProteinDataTable.change_attribute(
             'Text', 'Protein concentrations obtained in the simulation runs (table columns).')
-        ProteinDataTable.unset_attribute('Date')
-        ProteinDataTable.unset_attribute('SBtabVersion')
+        try:
+            ProteinDataTable.unset_attribute('Date')
+            ProteinDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         MetaboliteConstraintDataTable = self.MetaboliteConstraintData.toSBtab(
             table_id='metabolite_mass_balance_dual', table_type='QuantityMatrix', table_name='Metabolite mass-balance dual values')
@@ -350,8 +362,10 @@ class RBA_SimulationData(object):
         MetaboliteConstraintDataTable.change_attribute('QuantityType', 'lagrange_multiplier')
         MetaboliteConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the metabolite mass-balance constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        MetaboliteConstraintDataTable.unset_attribute('Date')
-        MetaboliteConstraintDataTable.unset_attribute('SBtabVersion')
+        try:
+            MetaboliteConstraintDataTable.unset_attribute('Date')
+            MetaboliteConstraintDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         DensityConstraintDataTable = self.DensityConstraintData.toSBtab(
             table_id='density_constraint_dual', table_type='QuantityMatrix', table_name='Compartment density dual values')
@@ -360,8 +374,10 @@ class RBA_SimulationData(object):
         DensityConstraintDataTable.change_attribute('Unit', '')
         DensityConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the density constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        DensityConstraintDataTable.unset_attribute('Date')
-        DensityConstraintDataTable.unset_attribute('SBtabVersion')
+        try:
+            DensityConstraintDataTable.unset_attribute('Date')
+            DensityConstraintDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         EnzymeConstraintDataTable = self.EnzymeConstraintData.toSBtab(
             table_id='enzyme_capacity_dual', table_type='QuantityMatrix', table_name='Enzyme capacity dual values')
@@ -370,8 +386,10 @@ class RBA_SimulationData(object):
         EnzymeConstraintDataTable.change_attribute('Unit', '')        
         EnzymeConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the enzyme-capacity constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        EnzymeConstraintDataTable.unset_attribute('Date')
-        EnzymeConstraintDataTable.unset_attribute('SBtabVersion')
+        try:
+            EnzymeConstraintDataTable.unset_attribute('Date')
+            EnzymeConstraintDataTable.unset_attribute('SBtabVersion')
+        except: pass
         
         ProcessConstraintDataTable = self.ProcessConstraintData.toSBtab(
             table_id='machine_capacity_dual', table_type='QuantityMatrix', table_name='Machine capacity dual values')
@@ -380,8 +398,10 @@ class RBA_SimulationData(object):
         ProcessConstraintDataTable.change_attribute('Unit', '')        
         ProcessConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the machine-capacity constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        ProcessConstraintDataTable.unset_attribute('Date')
-        ProcessConstraintDataTable.unset_attribute('SBtabVersion')
+        try:
+            ProcessConstraintDataTable.unset_attribute('Date')
+            ProcessConstraintDataTable.unset_attribute('SBtabVersion')
+        except: pass
 
         if filename is not None:
             filename_SBtab = filename
@@ -406,24 +426,31 @@ class RBA_SimulationData(object):
             EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+[str(
                 '(!'+'Enzyme/'+entry+'!)') for entry in list(EnzymeConstraintDataTable.to_data_frame()['ID'])], position=1)
             filename_SBtab += '_HTML'
-
         else:
+            #print(ReactionDataTable)
+            #print(ReactionDataTable.table_id)
+            #print(ReactionDataTable.value_rows)
+            #print(ReactionDataTable.table)
+            #print(ReactionDataTable.to_data_frame())
+            #print(type(ReactionDataTable.to_data_frame()))
+            #print(list(ReactionDataTable.to_data_frame()))
+            #print(list(ReactionDataTable.to_data_frame())['ID'])
             ReactionDataTable.add_column(
-                column_list=['!ElementID']+list(ReactionDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(ReactionDataTable.to_data_frame(rba=True)['ID']), position=1)
             ProcessDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(ProcessDataTable.to_data_frame(rba=True)['ID']), position=1)
             EnzymeDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame(rba=True)['ID']), position=1)
             ProteinDataTable.add_column(
-                column_list=['!ElementID']+list(ProteinDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(ProteinDataTable.to_data_frame(rba=True)['ID']), position=1)
             MetaboliteConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
             DensityConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
             ProcessConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
             EnzymeConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame()['ID']), position=1)
+                column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame(rba=True)['ID']), position=1)
 
         ReactionDataTable.remove_column(position=2)
         ProcessDataTable.remove_column(position=2)
@@ -449,7 +476,7 @@ class RBA_SimulationData(object):
         self.Out.change_attribute('DocumentName', 'RBA data')
         self.Out.name = filename
         self.Out.change_attribute('DocumentType', 'rba-simulation-data')
-        self.Out.write()
+        #self.Out.write()
     
     def getSBtabDoc(self):
         return self.Out

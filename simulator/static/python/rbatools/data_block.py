@@ -96,7 +96,8 @@ class DataBlock(InformationBlock):
         DF = self.toDataFrame(Col_list=Col_list)
         DF.reset_index(drop=False, inplace=True)
         DF.rename(columns={'index': 'ID'}, inplace=True)
-        return(SBtab.SBtabTable.from_data_frame(df=DF, table_id=table_id, table_type=table_type, document_name=document_name, table_name=table_name, document=document, unit=unit, sbtab_version='1.0'))
+        sbtab = SBtab.SBtabTable.from_data_frame(df=DF, table_id=table_id, table_type=table_type, table_name=table_name)
+        return(sbtab)
 
 
 def JSON_Int64_compensation(o):
