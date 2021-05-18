@@ -45,7 +45,10 @@ def index(request):
 
     if not request.session.get('first_sim', None):
         request.session['first_sim'] = True
-          
+
+    if not request.session.get('session_id', None):
+        request.session['session_id'] = random.randint(0,1000)
+
     for var in ['error_code', 'csv_paths']:
         if not request.session.get(var, None):
             request.session[var] = []
@@ -72,7 +75,6 @@ def index(request):
                 except: request.session['error_code'].append('Could not unzip file. Is it valid?')
                 
                 return HttpResponseRedirect('/simulator')
-
     else:
         form = UploadFileForm()
 
@@ -111,6 +113,7 @@ def clearsession(request):
         except: print('Cannot delete %s' %(key))
 
     request.session['first_sim'] = 'Yes'
+    request.session['session_id'] = None
     request.session.modified = True
 
     return HttpResponse('ok')
@@ -130,6 +133,7 @@ def loadmodel(request):
 
     request.session['error_code'] = []    
     request.session['csv_mode'] = 'w'
+
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
     if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
@@ -143,14 +147,14 @@ def loadmodel(request):
         # get logfile, save it, and create link to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        log_path = pre_path + '%s/changelog_%s.csv' %(request.session['rbafilename'][:-4], request.session['session_id'])
         logfile_content = wrapper.get_change_log()
         if mode == 'dev': 
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
@@ -211,9 +215,9 @@ def simulate(request):
     if request.session['first_sim'] == 'Nope':
         try:
             if mode == 'dev':
-                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
@@ -238,30 +242,30 @@ def simulate(request):
         # get logfile, save it, and create link to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        log_path = pre_path + '%s/changelog_%s.csv' %(request.session['rbafilename'][:-4], request.session['session_id'])
         logfile_content = wrapper.get_change_log()
         if mode == 'dev': 
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
         request.session['csv_mode'] = 'w'
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
 
     try:
         # create CSV files, save em, and create links to download
-        try: os.mkdir(prepath + '%s'%(request.session['rbafilename'][:-4]))
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         wrapper.rba_session.SimulationData.exportCSV()
         csv_files = wrapper.rba_session.SimulationData.getCSVFiles()
         for cf_key in csv_files:
             csv_file = csv_files[cf_key]
-            csv_path = pre_path + '%s/%s' %(request.session['rbafilename'][:-4], cf_key)
+            csv_path = pre_path + '%s/%s_%s' %(request.session['rbafilename'][:-4], request.session['session_id'], cf_key)
             current_paths = request.session['csv_paths']
-            if mode == 'dev': current_paths.append('../static/results/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
-            else: current_paths.append('../static/%s/%s' %(request.session['rbafilename'][:-4], cf_key))
+            if mode == 'dev': current_paths.append('../static/results/%s/%s_%s' %(request.session['rbafilename'][:-4], request.session['session_id'], cf_key))
+            else: current_paths.append('../static/%s/%s_%s' %(request.session['rbafilename'][:-4], request.session['session_id'], cf_key))
             f = open(csv_path, 'w+')
             f.write(csv_file)
             f.close()
@@ -273,14 +277,14 @@ def simulate(request):
         # currently broken (in Olivers code)
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        emap_path = pre_path + '%s/eschermap.json' %request.session['rbafilename'][:-4]
+        emap_path = pre_path + '%s/eschermap_%s.json' %(request.session['rbafilename'][:-4],request.session['session_id'])
         wrapper.rba_session.SimulationData.exportEscherMap(etype='investment')
         emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
-        if mode == 'dev': request.session['emap_path'] = '../static/results/%s/eschermap.json'%request.session['rbafilename'][:-4]
-        else: request.session['emap_path'] = '../static/%s/eschermap.json'%request.session['rbafilename'][:-4]        
+        if mode == 'dev': request.session['emap_path'] = '../static/results/%s/eschermap_%s.json'%(request.session['rbafilename'][:-4], request.session['session_id'])
+        else: request.session['emap_path'] = '../static/%s/eschermap_%s.json'%(request.session['rbafilename'][:-4], request.session['session_id'])
     except:
         request.session['error_code'].append('Could not create Escher Map for this model.')
 
@@ -288,34 +292,31 @@ def simulate(request):
         # create Proteomap file, save it, and create link to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        proteomap_path = pre_path + '%s/proteomap.tsv' %request.session['rbafilename'][:-4]
+        proteomap_path = pre_path + '%s/proteomap_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
         wrapper.rba_session.SimulationData.exportProteoMap()
         proteomap_content = wrapper.rba_session.SimulationData.getProteoMap()
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
-        if mode == 'dev': request.session['proteomap_path'] = '../static/results/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
-        else: request.session['proteomap_path'] = '../static/%s/proteomap.tsv'%request.session['rbafilename'][:-4]
+        if mode == 'dev': request.session['proteomap_path'] = '../static/results/%s/proteomap_%s.tsv'%(request.session['rbafilename'][:-4], request.session['session_id'])
+        else: request.session['proteomap_path'] = '../static/%s/proteomap_%s.tsv'%(request.session['rbafilename'][:-4], request.session['session_id'])
     except:
         request.session['error_code'].append('Could not create Proteomap for this model.')
 
-    #try:
-    # create SBtab Document, save it, and create link to download
-    try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
-    except: pass
-    sbtab_path = pre_path + '%s/sbtab.tsv' %request.session['rbafilename'][:-4]
-    wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
-    sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
-    f = open(sbtab_path, 'w+')
-    f.write(sbtab_content.to_str())
-    f.close()
-    if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
-    else: request.session['sbtab_path'] = '../static/%s/sbtab.tsv'%request.session['rbafilename'][:-4]
-    #except:
-    #    request.session['error_code'].append('Could not create SBtab for this model.')
-
-
-
+    try:
+        # create SBtab Document, save it, and create link to download
+        #try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        #except: pass
+        sbtab_path = pre_path + '%s/sbtab_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
+        wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
+        sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
+        f = open(sbtab_path, 'w+')
+        f.write(sbtab_content.to_str())
+        f.close()
+        if mode == 'dev': request.session['sbtab_path'] = '../static/results/%s/sbtab_%s.tsv'%(request.session['rbafilename'][:-4], request.session['session_id'])
+        else: request.session['sbtab_path'] = '../static/%s/sbtab_%s.tsv'%(request.session['rbafilename'][:-4], request.session['session_id'])
+    except:
+        request.session['error_code'].append('Could not create SBtab for this model.')
 
     if request.session['first_sim'] == 'Yes':
         request.session['first_sim'] = 'Nope'
@@ -344,9 +345,9 @@ def undolast(request):
         wrapper = load_local(request.session['newdir'])
         try:
             if mode == 'dev':
-                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
@@ -359,16 +360,14 @@ def undolast(request):
     
     try:
         # get logfile, save it, and create link to download
-        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
-        except: pass
-        log_path = pre_path + '%s/changelog.csv' %request.session['rbafilename'][:-4]
+        log_path = pre_path + '%s/changelog_%s.csv' %(request.session['rbafilename'][:-4], request.session['session_id'])
         logfile_content = wrapper.get_change_log()
         if mode == 'dev': 
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/results/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
         else:
             logfile_content.to_csv(log_path, index=None, sep=',', mode=request.session['csv_mode'])
-            request.session['log_path'] = '../static/%s/changelog.csv'%request.session['rbafilename'][:-4]
+            request.session['log_path'] = '../static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id'])
     except:
         request.session['error_code'].append('Could not create Logfile for this model.')
    
@@ -401,9 +400,9 @@ def plot(request):
         wrapper = load_local(request.session['newdir'])
         try:
             if mode == 'dev':
-                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog.csv'%request.session['rbafilename'][:-4])
+                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
@@ -427,9 +426,9 @@ def plot(request):
         
         plt.savefig(plot_path + '/plot.png')
         if mode == 'dev':
-            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+            request.session['plot_path'] = '../static/results/%s/plot_%s.png'%(request.session['rbafilename'][:-4], request.session['session_id'])
         else:
-            request.session['plot_path'] = '../static/results/%s/plot.png'%request.session['rbafilename'][:-4]
+            request.session['plot_path'] = '../static/results/%s/plot_%s.png'%(request.session['rbafilename'][:-4], request.session['session_id'])
         #plt.show()
         #plt.close()
     except:
