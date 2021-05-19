@@ -79,6 +79,7 @@ def index(request):
         form = UploadFileForm()
 
     if request.session['error_code'] != []: request.session['errors'] = True
+    else:  request.session['errors'] = False
     request.session.modified = True
 
     return render(request, 'index.html', {'form': form,
@@ -396,20 +397,23 @@ def plot(request):
         request.session['error_code'].append('Parameter was not submitted succesfully.')
         parameter = None
 
-    try:    
+    try:
         wrapper = load_local(request.session['newdir'])
-        try:
+        # Simulation does not seem to be necessary
+        '''try:
             if mode == 'dev':
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             elif mode == 'prod':
                 success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
-            request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
+            request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())'''
     except:
         request.session['error_code'].append('Could not regenerate model wrapper for plotting.')
 
     try:
+        try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
+        except: pass
         df = wrapper.get_plot_values(model_parameter=parameter)
         fig,ax = plt.subplots()
 
@@ -424,7 +428,7 @@ def plot(request):
         else:
             plot_path = os.getcwd() + '/rba/static/results/%s'%request.session['rbafilename'][:-4]
         
-        plt.savefig(plot_path + '/plot.png')
+        plt.savefig(plot_path + '/plot_%s.png'%request.session['session_id'])
         if mode == 'dev':
             request.session['plot_path'] = '../static/results/%s/plot_%s.png'%(request.session['rbafilename'][:-4], request.session['session_id'])
         else:

@@ -82,6 +82,10 @@
         width: 8rem;
         padding-top: 3rem;
     }
+
+    .btn-label {
+        padding-top: .5rem;
+    }
 }
 
 
@@ -89,6 +93,10 @@
     html {
         font-size: 14px;
         font-family: Arial, sans-serif;
+    }
+
+    .btn-label {
+        padding-top: .5rem;
     }
 
     #loading-gif {
