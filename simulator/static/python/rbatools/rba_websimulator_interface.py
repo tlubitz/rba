@@ -202,6 +202,9 @@ class RBA_websimulator_interface(object):
         plt.ylabel(model_parameter)
         plt.show()
 
+    def get_plot_values(self, model_parameter):
+        df = self.get_parameter_values_as_DataFrame(model_parameter)
+        return(df)
 
 def evaluate_expression(expression_dictionary, independent_variable):
     if type(independent_variable) is list:
