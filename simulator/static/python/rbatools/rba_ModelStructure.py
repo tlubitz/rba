@@ -15,8 +15,7 @@ import libsbml
 # package imports
 import rba
 from .rba.core.constraint_blocks import ConstraintBlocks
-from .rba.core.constraint_matrix import ConstraintMatrix
-from .rba.model import RbaModel
+from .rba import RbaModel, ConstraintMatrix
 
 from .infoMatrices import InfoMatrices
 from .description_block import DescriptionBlock
@@ -325,19 +324,19 @@ class RBA_ModelStructure(object):
         add_links : str
             Wheter to implement entry-format, which allows links between table-elements.
         """
-        GeneralInfoTable = self.GeneralInfo.toSBtab(table_id='ModelMetadata', table_type='ModelMetadata', table_name='Model information', Col_list=[
-                                                            'Measure', 'Value'], NameList=['Element', 'Value'])
+        GeneralInfoTable = self.GeneralInfo.toSBtab(table_id='ModelMetadata', table_type='Quantity', table_name='Model information', Col_list=[
+                                                    'Measure', 'Value'], NameList=['Element', 'Value'])
         GeneralInfoTable.remove_row(position=2)
         GeneralInfoTable.filename = 'ModelMetadata.tsv'
         GeneralInfoTable.change_attribute('Text', 'Model metadata')
-        GeneralInfoTable.unset_attribute('Date')
+        #GeneralInfoTable.unset_attribute('Date')
         GeneralInfoTable.unset_attribute('SBtabVersion')
 
         StatsTable = self.ModelStatistics.toSBtab(
-            table_id='ModelElements', table_type='ModelElements', table_name='Model size', Col_list=['Measure', 'Value'], NameList=['Element', 'Number'])
+            table_id='ModelElements', table_type='Quantity', table_name='Model size', Col_list=['Measure', 'Value'], NameList=['Element', 'Number'])
         StatsTable.filename = 'ModelElements.tsv'
         StatsTable.change_attribute('Text', 'Numbers of cell elements and constraints')
-        StatsTable.unset_attribute('Date')
+        #StatsTable.unset_attribute('Date')
         StatsTable.unset_attribute('SBtabVersion')
 
         MetaboliteBlock_forChanges = copy.deepcopy(self.MetaboliteInfo)
@@ -359,7 +358,7 @@ class RBA_ModelStructure(object):
         MetaboliteTable.filename = 'Compound.tsv'
         MetaboliteTable.change_attribute(
             'Text', 'Metabolite species are localised in cell compartments and are associated with metabolite mass balance constraints.')
-        MetaboliteTable.unset_attribute('Date')
+        #MetaboliteTable.unset_attribute('Date')
         MetaboliteTable.unset_attribute('SBtabVersion')
 
         ReactionBlock_forChanges = copy.deepcopy(self.ReactionInfo)
@@ -402,12 +401,12 @@ class RBA_ModelStructure(object):
                         ReactionBlock_forChanges.Elements[k]['OtherIDs'][id] = str('(!identifiers:'+id+'/'+str(
                             ReactionBlock_forChanges.Elements[k]['OtherIDs'][id])+'|'+str(ReactionBlock_forChanges.Elements[k]['OtherIDs'][id])+'!)')
 
-        ReactionTable = ReactionBlock_forChanges.toSBtab(table_id='Reaction', table_type='Reaction', table_name='Reactions', Col_list=[
-                         'ID', 'Reaction', 'IdenticalEnzymes', 'Subunits', 'EnzymeCompartment', 'OtherIDs', 'Isozymes'], NameList=['ID', 'CatalysedReaction', 'OtherEnzymaticActivities', 'Subunits', 'Compartment', 'Annotation', 'Isoenzymes'])
+        ReactionTable = ReactionBlock_forChanges.toSBtab(table_id='Reaction', table_type='Reaction', table_name='Reactions', Col_list=['ID', 'Name', 'Type', 'Reversible', 'Formula', 'Enzyme', 'Compartment_Machinery', 'Twins', 'Compartment_Species', 'OtherIDs'], NameList=[
+            'ID', 'Name', 'Type', 'IsReversible', 'ReactionFormula', 'Enzyme', 'EnzymeCompartment', 'IsoenzymeReactions', 'ReactionCompartment', 'Annotation'])
         ReactionTable.filename = 'Reaction.tsv'
         ReactionTable.change_attribute(
             'Text', 'Chemical reactions are localised in cell compartments. All reactions are enzyme catalysed.')
-        ReactionTable.unset_attribute('Date')
+        #ReactionTable.unset_attribute('Date')
         ReactionTable.unset_attribute('SBtabVersion')
 
         EnzymeBlock_forChanges = copy.deepcopy(self.EnzymeInfo)
@@ -428,12 +427,12 @@ class RBA_ModelStructure(object):
                     EnzymeBlock_forChanges.Elements[k]['Subunits']['(!'+'Protein'+'/' +
                                                                    id+'!)'] = EnzymeBlock_forChanges.Elements[k]['Subunits'].pop(id)
 
-        EnzymeTable = EnzymeBlock_forChanges.toSBtab(table_id='Enzyme', table_type='Quantity', table_name='Enzymes', Col_list=[
+        EnzymeTable = EnzymeBlock_forChanges.toSBtab(table_id='Enzyme', table_type='Enzyme', table_name='Enzymes', Col_list=[
             'ID', 'Reaction', 'IdenticalEnzymes', 'Subunits', 'EnzymeCompartment', 'OtherIDs', 'Isozymes'], NameList=['ID', 'CatalysedReaction', 'OtherEnzymaticActivities', 'Subunits', 'Compartment', 'Annotation', 'Isoenzymes'])
         EnzymeTable.filename = 'Enzyme.tsv'
         EnzymeTable.change_attribute(
             'Text', 'Enzymes are localised in cell compartments and catalyse specific reactions. To describe multi-functional enzyme, RBA uses multiple enzyme entries. Enzymes are associated with enzyme capacity constraints.')
-        EnzymeTable.unset_attribute('Date')
+        #EnzymeTable.unset_attribute('Date')
         EnzymeTable.unset_attribute('SBtabVersion')
 
         ProteinBlock_forChanges = copy.deepcopy(self.ProteinInfo)
@@ -464,12 +463,12 @@ class RBA_ModelStructure(object):
                                 ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id] = str('(!identifiers:ec-code/'+str(
                                     ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id]).split('EC ')[1]+'|'+str(ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id])+'!)')
 
-        ProteinTable = ProteinBlock_forChanges.toSBtab(table_id='Protein', table_type='Quantity', table_name='Proteins', Col_list=['ID', 'ProtoID', 'Name', 'Compartment', 'SupportsProcess', 'associatedEnzymes', 'associatedReactions', 'AAnumber', 'ProcessRequirements', 'Weight', 'ExternalIDs', 'Function'], NameList=[
+        ProteinTable = ProteinBlock_forChanges.toSBtab(table_id='Protein', table_type='Protein', table_name='Proteins', Col_list=['ID', 'ProtoID', 'Name', 'Compartment', 'SupportsProcess', 'associatedEnzymes', 'associatedReactions', 'AAnumber', 'ProcessRequirements', 'Weight', 'ExternalIDs', 'Function'], NameList=[
             'ID', 'ProtoID', 'Name', 'Compartment', 'ContributesToProcess', 'EnzymaticActivity', 'CatalysedReaction', 'ChainLength', 'RequiresProcess', 'MolecularWeight', 'Annotation', 'Function'])
         ProteinTable.filename = 'Protein.tsv'
         ProteinTable.change_attribute(
             'Text', 'Proteins are localised in cell compartments and can be (or be part of) metabolic enzymes.')
-        ProteinTable.unset_attribute('Date')
+        #ProteinTable.unset_attribute('Date')
         ProteinTable.unset_attribute('SBtabVersion')
 
         MacromoleculeBlock_forChanges = copy.deepcopy(self.MacromoleculeInfo)
@@ -485,12 +484,12 @@ class RBA_ModelStructure(object):
                     MacromoleculeBlock_forChanges.Elements[k]['ProcessRequirements'][
                         '(!'+'Process'+'/' + id+'!)'] = MacromoleculeBlock_forChanges.Elements[k]['ProcessRequirements'].pop(id)
 
-        MacromoleculeTable = MacromoleculeBlock_forChanges.toSBtab(table_id='Macromolecule', table_type='Quantity', table_name='Macromolecules', Col_list=[
+        MacromoleculeTable = MacromoleculeBlock_forChanges.toSBtab(table_id='Macromolecule', table_type='Quantity', table_name='Other macromolecules', Col_list=[
                                                                    'ID', 'ProtoID', 'Type', 'Compartment', 'SupportsProcess', 'ProcessRequirements'], NameList=['ID', 'ProtoID', 'Type', 'Compartment', 'ContributesToProcess', 'RequiresProcess'])
         MacromoleculeTable.filename = 'Macromolecules.tsv'
         MacromoleculeTable.change_attribute(
             'Text', 'Like proteins, other macromolecules are localised in cell compartments and can be part of cellular machines or serve other functions in the cell.')
-        MacromoleculeTable.unset_attribute('Date')
+        #MacromoleculeTable.unset_attribute('Date')
         MacromoleculeTable.unset_attribute('SBtabVersion')
 
         CompartmentBlock_forChanges = copy.deepcopy(self.CompartmentInfo)
@@ -507,12 +506,12 @@ class RBA_ModelStructure(object):
                         index] = '(!' + 'Protein'+'/'+id+'!)'
 
         CompartmentTable = CompartmentBlock_forChanges.toSBtab(table_id='Compartment', table_type='Compartment', table_name='Cell compartments', Col_list=[
-                                                                'ID', 'associatedProteins', 'associatedEnzymes', 'associatedReactions'], NameList=['ID', 'Proteins', 'Enzymes', 'Reactions'])
+                                                               'ID', 'associatedProteins', 'associatedEnzymes', 'associatedReactions'], NameList=['ID', 'Proteins', 'Enzymes', 'Reactions'])
 
         CompartmentTable.filename = 'Compartment.tsv'
         CompartmentTable.change_attribute(
             'Text', 'Cell compartments are used to describe the localisation of proteins, enzymes, and reactions and are associated with density constraints.')
-        CompartmentTable.unset_attribute('Date')
+        #CompartmentTable.unset_attribute('Date')
         CompartmentTable.unset_attribute('SBtabVersion')
 
         ModuleBlock_forChanges = copy.deepcopy(self.ModuleInfo)
@@ -532,11 +531,12 @@ class RBA_ModelStructure(object):
                         ModuleBlock_forChanges.Elements[k]['Members'][index] = '(!' + \
                             'Compartment'+'/'+id+'!)'
 
-        ModuleTable = ModuleBlock_forChanges.toSBtab(table_id='CellModule', table_type='CellModule', table_name='Cell modules', Col_list=[
-                                                    'ID', 'Name', 'Members'], NameList=['ID', 'Name', 'Contains'])
+        ModuleTable = ModuleBlock_forChanges.toSBtab(table_id='CellModule', table_type='Quantity', table_name='Cell modules', Col_list=[
+                                                     'ID', 'Name', 'Members'], NameList=['ID', 'Name', 'Contains'])
         ModuleTable.filename = 'Module.tsv'
-        ModuleTable.change_attribute('Text', 'Information on Modules in RBAmodel')
-        ModuleTable.unset_attribute('Date')
+        ModuleTable.change_attribute(
+            'Text', 'Modules are sets of model elements, typically used to describe functional subsystems such as metabolic pathways.')
+        #ModuleTable.unset_attribute('Date')
         ModuleTable.unset_attribute('SBtabVersion')
 
         ProcessBlock_forChanges = copy.deepcopy(self.ProcessInfo)
@@ -564,12 +564,12 @@ class RBA_ModelStructure(object):
                         ProcessBlock_forChanges.Elements[k]['Composition']['(!'+'Compound'+'/' +
                                                                            id+'!)'] = ProcessBlock_forChanges.Elements[k]['Composition'].pop(id)
 
-        ProcessTable = ProcessBlock_forChanges.toSBtab(table_id='Process', table_type='Process', table_name='Macromolecular processes', Col_list=[
+        ProcessTable = ProcessBlock_forChanges.toSBtab(table_id='Process', table_type='Quantity', table_name='Macromolecular processes', Col_list=[
             'ID', 'Name', 'Composition', 'Components', 'Initiation'], NameList=['ID', 'Name', 'MachineSubunits', 'ProcessComponents', 'InitiationCofactors'])
         ProcessTable.filename = 'Process.tsv'
         ProcessTable.change_attribute(
             'Text', 'Macromolecular machines catalyse the processes that produce, modify, and degrade macromolecules. They are associated with machine capacity constraints.')
-        ProcessTable.unset_attribute('Date')
+        #ProcessTable.unset_attribute('Date')
         ProcessTable.unset_attribute('SBtabVersion')
 
         MetaboliteConstraintsBlock_forChanges = copy.deepcopy(self.MetaboliteConstraintsInfo)
@@ -579,12 +579,12 @@ class RBA_ModelStructure(object):
                 MetaboliteConstraintsBlock_forChanges.Elements[k][
                     'AssociatedMetabolite'] = '(!' + 'Compound'+'/'+oldMet+'!)'
 
-        MetaboliteConstraintTable = MetaboliteConstraintsBlock_forChanges.toSBtab(table_id='MetaboliteConstraint', table_type='MetaboliteConstraint', table_name='Metabolite mass-balance constraints', Col_list=[
+        MetaboliteConstraintTable = MetaboliteConstraintsBlock_forChanges.toSBtab(table_id='MetaboliteConstraint', table_type='Quantity', table_name='Metabolite mass-balance constraints', Col_list=[
                                                                                   'ID', 'AssociatedMetabolite', 'Type'], NameList=['ID', 'Metabolite', 'Type'])
         MetaboliteConstraintTable.filename = 'MetaboliteConstraint.tsv'
         MetaboliteConstraintTable.change_attribute(
             'Text', 'Metabolite mass balance constraints ensure mass balance and stationary fluxes in metabolism.')
-        MetaboliteConstraintTable.unset_attribute('Date')
+        #MetaboliteConstraintTable.unset_attribute('Date')
         MetaboliteConstraintTable.unset_attribute('SBtabVersion')
 
         CompartmentConstraintsBlock_forChanges = copy.deepcopy(self.DensityConstraintsInfo)
@@ -594,11 +594,12 @@ class RBA_ModelStructure(object):
                 CompartmentConstraintsBlock_forChanges.Elements[k][
                     'AssociatedCompartment'] = '(!' + 'Compartment'+'/'+oldComp+'!)'
 
-        DensityConstraintTable = CompartmentConstraintsBlock_forChanges.toSBtab(table_id='DensityConstraint', table_type='DensityConstraint', table_name='Density constraints', Col_list=[                                                                                'ID', 'AssociatedCompartment', 'Type', 'CapacityParameter'], NameList=['ID', 'Compartment', 'Type', 'Formula'])
+        DensityConstraintTable = CompartmentConstraintsBlock_forChanges.toSBtab(table_id='DensityConstraint', table_type='Quantity', table_name='Density constraints', Col_list=[
+                                                                                'ID', 'AssociatedCompartment', 'Type', 'CapacityParameter'], NameList=['ID', 'Compartment', 'Type', 'Formula'])
         DensityConstraintTable.filename = 'DensityConstraint.tsv'
         DensityConstraintTable.change_attribute(
             'Text', 'Density constraints put an upper bound on the sum of macromolecule concentrations in a given compartment. The capacity parameter defines this bound in units corresponding to amino acids (contained in proteins), or one third of nucleotides (contained in RNA).')
-        DensityConstraintTable.unset_attribute('Date')
+        #DensityConstraintTable.unset_attribute('Date')
         DensityConstraintTable.unset_attribute('SBtabVersion')
 
         ProcessConstraintsBlock_forChanges = copy.deepcopy(self.ProcessConstraintsInfo)
@@ -608,11 +609,12 @@ class RBA_ModelStructure(object):
                 ProcessConstraintsBlock_forChanges.Elements[k]['AssociatedProcess'] = '(!' + \
                     'Process'+'/'+oldComp+'!)'
 
-        ProcessConstraintTable = ProcessConstraintsBlock_forChanges.toSBtab(table_id='MachineryCapacityConstraint', table_type='MachineryCapacityConstraint', table_name='Machinery-capacity constraints', Col_list=[            'ID', 'AssociatedProcess', 'Type', 'CapacityParameter'], NameList=['ID', 'Process', 'Type', 'Formula'])
+        ProcessConstraintTable = ProcessConstraintsBlock_forChanges.toSBtab(table_id='MachineryCapacityConstraint', table_type='Quantity', table_name='Machinery-capacity constraints', Col_list=[
+            'ID', 'AssociatedProcess', 'Type', 'CapacityParameter'], NameList=['ID', 'Process', 'Type', 'Formula'])
         ProcessConstraintTable.filename = 'MachineryConstraint.tsv'
         ProcessConstraintTable.change_attribute(
             'Text', 'A machinery capacity constraint states that the rate of a macromolecular process is proportional to the concentration of the catalysing machine. The proportionality constant  (capacity parameter) can be a constant or a function of model parameters such as the growth rate.')
-        ProcessConstraintTable.unset_attribute('Date')
+        #ProcessConstraintTable.unset_attribute('Date')
         ProcessConstraintTable.unset_attribute('SBtabVersion')
 
         EnzymeConstraintsBlock_forChanges = copy.deepcopy(self.EnzymeConstraintsInfo)
@@ -622,11 +624,12 @@ class RBA_ModelStructure(object):
                 EnzymeConstraintsBlock_forChanges.Elements[k]['AssociatedEnzyme'] = '(!' + \
                     'Enzyme'+'/'+oldComp+'!)'
 
-        EnzymeConstraintTable = EnzymeConstraintsBlock_forChanges.toSBtab(table_id='EnzymeCapacityConstraint', table_type='EnzymeCapacityConstraint', table_name='Enzyme-capacity constraints', Col_list=[            'ID', 'AssociatedEnzyme', 'AssociatedReaction', 'Direction', 'Type', 'CapacityParameter'], NameList=['ID', 'Enzyme', 'Reaction', 'Direction', 'Type', 'Formula'])
+        EnzymeConstraintTable = EnzymeConstraintsBlock_forChanges.toSBtab(table_id='EnzymeCapacityConstraint', table_type='Quantity', table_name='Enzyme-capacity constraints', Col_list=[
+            'ID', 'AssociatedEnzyme', 'AssociatedReaction', 'Direction', 'Type', 'CapacityParameter'], NameList=['ID', 'Enzyme', 'Reaction', 'Direction', 'Type', 'Formula'])
         EnzymeConstraintTable.filename = 'EnzymeConstraint.tsv'
         EnzymeConstraintTable.change_attribute(
             'Text', 'An enzyme capacity constraint states that a reaction rate is proportional to the concentration of the catalysing enzyme. The proportionality constant (capacity parameter) can be a constant or a function of model parameters such as the growth rate.')
-        EnzymeConstraintTable.unset_attribute('Date')
+        #EnzymeConstraintTable.unset_attribute('Date')
         EnzymeConstraintTable.unset_attribute('SBtabVersion')
 
         TargetBlock_forChanges = copy.deepcopy(self.TargetInfo)
@@ -646,12 +649,12 @@ class RBA_ModelStructure(object):
                     TargetBlock_forChanges.Elements[k]['TargetEntity'] = '(!' + \
                         'Macromolecule'+'/'+oldTargSpec+'!)'
 
-        TargetTable = TargetBlock_forChanges.toSBtab(table_id='CellTarget', table_type='CellTarget', table_name='Cell targets', Col_list=[
+        TargetTable = TargetBlock_forChanges.toSBtab(table_id='CellTarget', table_type='Quantity', table_name='Cell targets', Col_list=[
             'ID', 'Group', 'Type', 'TargetEntity', 'TargetValue'], NameList=['ID', 'TargetGroup', 'TargetType', 'TargetEntity', 'TargetParameter'])
         TargetTable.filename = 'Target.tsv'
         TargetTable.change_attribute(
             'Text', 'Cell targets are biochemical variables (fluxes or concentrations) that need to remain below or above a certain threshold value to ensure a viable cell. They define constraints in the RBA model.')
-        TargetTable.unset_attribute('Date')
+        #TargetTable.unset_attribute('Date')
         TargetTable.unset_attribute('SBtabVersion')
 
         if not add_links:
@@ -671,7 +674,6 @@ class RBA_ModelStructure(object):
             ProcessConstraintTable.unset_attribute('Text')
             EnzymeConstraintTable.unset_attribute('Text')
 
-
         if filename is not None:
             filename_SBtab = filename
         else:
@@ -682,7 +684,7 @@ class RBA_ModelStructure(object):
 
         Out = SBtab.SBtabDocument(name='rbatools_withLinks', sbtab_init=None,
                                   filename=str(filename_SBtab+'.tsv'))
-        Out.change_attribute('Author', self.GeneralInfo.Elements['Author'])                                  
+        Out.change_attribute('Author', self.GeneralInfo.Elements['Author'])
         Out.add_sbtab(GeneralInfoTable)
         Out.add_sbtab(StatsTable)
         Out.add_sbtab(MetaboliteTable)

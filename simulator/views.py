@@ -19,7 +19,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from .static.python.rbatools import rba_wrapper
 from .static.python.rbatools import rba_websimulator_interface
 
 
@@ -37,8 +36,6 @@ def index(request):
                 'log_path',
                 'status',
                 'errors',
-                'model_parameters_list',
-                'model_species_list',
                 'plot_path']:
         if not request.session.get(var, None):
             request.session[var] = False
@@ -49,7 +46,7 @@ def index(request):
     if not request.session.get('session_id', None):
         request.session['session_id'] = random.randint(0,1000)
 
-    for var in ['error_code', 'csv_paths']:
+    for var in ['error_code', 'csv_paths', 'model_species_list', 'model_parameters_list']:
         if not request.session.get(var, None):
             request.session[var] = []
 
@@ -222,6 +219,8 @@ def simulate(request):
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
+    else: request.session['first_sim'] = 'Nope'
+
 
     if parameters == {} and species == {}:
         try: wrapper.set_default_parameters()
@@ -229,13 +228,16 @@ def simulate(request):
     else:
         for s in species:
             wrapper.set_medium_component(s, new_value=float(species[s]))
+        #valid = ['k_UpperGlycolysis_efficiency_foreward', 'k_CitratCycle_efficiency_foreward', 'k_AA_synthesis_efficiency_foreward', 'Membrane_density', 'Cytoplasm_density',
+        #'nonenzymatic_proteins_Cytoplasm', 'k_fermentation_ATP_generation_efficiency_foreward', 'k_respiration_efficiency_foreward', 'k_fermentation_NAD_regeneration_efficiency_foreward', 'ribosome_capacity', 'maintenance_atp']
         for p in parameters:
-            wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]), logging=True)
+            wrapper.set_parameter_multiplier(p, new_value=float(parameters[p]))
             wrapper.determine_parameter_values(model_parameter=p, x_min=0, x_max=1, intervals=100)
+            
 
     try:
         wrapper.rba_session.findMaxGrowthRate()
-        wrapper.rba_session.recordResults('Glucose')
+        wrapper.rba_session.recordResults('M_Glucose')
         wrapper.rba_session.writeResults(session_name='Test')
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
     
@@ -275,11 +277,10 @@ def simulate(request):
 
     try:
         # create Escher map file, save it, and create link to download
-        # currently broken (in Olivers code)
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         emap_path = pre_path + '%s/eschermap_%s.json' %(request.session['rbafilename'][:-4],request.session['session_id'])
-        wrapper.rba_session.SimulationData.exportEscherMap(etype='investment')
+        wrapper.rba_session.SimulationData.exportEscherMap()
         emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
         f = open(emap_path, 'w+')
         f.write(emap_content)
@@ -306,8 +307,6 @@ def simulate(request):
 
     try:
         # create SBtab Document, save it, and create link to download
-        #try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
-        #except: pass
         sbtab_path = pre_path + '%s/sbtab_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
         wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
         sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()

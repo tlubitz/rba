@@ -120,7 +120,7 @@ def determineCompartment(subunits, model, enzymes):
     out = []
     if len(subunits.keys()) > 0:
         for s in subunits.keys():
-            try: 
+            try:
                 ind = enzymes.index(s)
                 out.append(model.proteins.macromolecules._elements[ind].__dict__['compartment'])
             except:

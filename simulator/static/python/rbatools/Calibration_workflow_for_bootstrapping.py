@@ -1,5 +1,5 @@
 import numpy
-from rbatools.rba_Session import RBA_Session
+from .rba_Session import RBA_Session
 import pandas
 
 

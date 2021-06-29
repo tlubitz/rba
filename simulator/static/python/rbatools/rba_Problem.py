@@ -94,7 +94,7 @@ class RBA_Problem(object):
     BuildClassicMatrix(Mu)
         Builds standard RBA-matrix according to growth-rate
 
-    solveLP(feasibleStatuses=[1, 2, 5, 6])
+    solveLP(feasibleStatuses=[1, 6])
         Solves Linear RBA problem.
 
     setMu(Mu, keepParameters=None)
@@ -127,7 +127,7 @@ class RBA_Problem(object):
     setRighthandSideValue(inputDict)
         Set coefficients of the problems' RHS (b-vector).
 
-    calculateLefthandSideValue(*constraints)
+    calculateLefthandSideValue(constraints)
         Calculates value of problem's lefthand side
         (after multiplying with solution-vector).
 
@@ -276,7 +276,7 @@ class RBA_Problem(object):
         self.Mu = Mu
         self.ClassicRBAmatrix.build_matrices(Mu)
 
-    def solveLP(self, feasibleStatuses=[1, 2, 5, 6], logging=True):
+    def solveLP(self, feasibleStatuses=[1, 6], logging=True):
         """
         Solves Linear RBA problem.
 
@@ -290,7 +290,7 @@ class RBA_Problem(object):
         feasibleStatuses : list of int
             List with identifiers of acceptable solution statuses.
             (consult ILOG-CPLEX documentation for information on them).
-            Default: feasibleStatuses=[1, 2, 5, 6]
+            Default: feasibleStatuses=[1, 6]
         logging : bool
             Wheter to write change to log-file or not
         """
@@ -312,7 +312,7 @@ class RBA_Problem(object):
                 zip(self.LP.col_names, self.LP.cplexLP.solution.get_values()))
             self.DualValues = dict(
                 zip(self.LP.row_names, self.LP.cplexLP.solution.get_dual_values()))
-            self.SolutionType = 'Normal'
+        self.SolutionType = 'Normal'
 
     def updateMu(self, Mu, keepParameters=None, logging=True, ModifiedProblem=False):
         """
@@ -516,7 +516,6 @@ class RBA_Problem(object):
             elif isinstance(variables, str):
                 vrs = [variables]
             vls = []
-
             for v in vrs:
                 vls.append(self.LP.cplexLP.objective.get_linear()[
                            numpy.where(numpy.array(self.LP.col_names) == v)[0][0]])
@@ -602,6 +601,7 @@ class RBA_Problem(object):
             Dictionary with constraint-IDs as keys and
             RHS-values as values.
         """
+
         if constraints is None:
             names = self.Problem.LP.row_names
         else:
@@ -660,6 +660,7 @@ class RBA_Problem(object):
                 names = constraints
             elif isinstance(constraints, str):
                 names = [constraints]
+
         Sol = numpy.array(list(self.SolutionValues.values()))
         Amat = self.LP.A.toarray()
         multRes = Amat.dot(Sol)
@@ -750,9 +751,9 @@ class RBA_Problem(object):
             names = self.Problem.LP.col_names
         else:
             if isinstance(variables, list):
-                names = constraints
+                names = variables
             elif isinstance(variables, str):
-                names = [constraints]
+                names = [variables]
         bound = [self.LP.cplexLP.variables.get_upper_bounds(
             self.LP.colIndicesMap[v]) for v in names]
         return(dict(zip(names, bound)))
@@ -775,13 +776,14 @@ class RBA_Problem(object):
             Dictionary with variable-IDs as keys and
             lower bounds as values.
         """
+
         if variables is None:
             names = self.Problem.LP.col_names
         else:
             if isinstance(variables, list):
                 names = constraints
             elif isinstance(variables, str):
-                names = [constraints]
+                names = [variables]
         bound = [self.LP.cplexLP.variables.get_lower_bounds(
             self.LP.colIndicesMap[v]) for v in names]
         return(dict(zip(names, bound)))
@@ -940,7 +942,7 @@ class RBA_Problem(object):
                 CompartmentsInQuestion = compartments
             elif isinstance(compartments, str):
                 CompartmentsInQuestion = [compartments]
-            CompartmentsInQuestion = self.CompartmentDensities
+
         out = {i: self.LP.b[self.LP.rowIndicesMap[i]] for i in CompartmentsInQuestion}
         return(out)
 

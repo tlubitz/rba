@@ -45,13 +45,13 @@ class RBA_SimulationParameters(object):
         self.EnzymeCapacities_BW = ParameterBlock()
         self.ProcessCapacities = ParameterBlock()
         self.CompartmentCapacities = ParameterBlock()
-        self.TargetValues = ParameterBlock()      
+        self.TargetValues = ParameterBlock()
         self.Media = ParameterBlock()
         self.EnzymeCapacities_FW.fromDict({})
         self.EnzymeCapacities_BW.fromDict({})
         self.ProcessCapacities.fromDict({})
         self.CompartmentCapacities.fromDict({})
-        self.Media.fromDict({})        
+        self.Media.fromDict({})
         self.TargetValues.fromDict({})
 
     def fromSimulationResults(self, Controller):
@@ -61,6 +61,7 @@ class RBA_SimulationParameters(object):
                 self.EnzymeCapacities_FW.Elements.update({effi: {}})
             self.EnzymeCapacities_FW.Elements[effi].update({'ID': effi})
             for run in list(Controller.Parameters['EnzymeEfficiencies_FW']):
+                #self.EnzymeCapacities_FW.Elements[effi].update({run: json.dumps(Controller.Parameters['EnzymeEfficiencies_FW'].loc[effi, run])})
                 self.EnzymeCapacities_FW.Elements[effi].update(
                     {run: Controller.Parameters['EnzymeEfficiencies_FW'].loc[effi, run]})
 
@@ -69,6 +70,7 @@ class RBA_SimulationParameters(object):
                 self.EnzymeCapacities_BW.Elements.update({effi: {}})
             self.EnzymeCapacities_BW.Elements[effi].update({'ID': effi})
             for run in list(Controller.Parameters['EnzymeEfficiencies_BW']):
+                #self.EnzymeCapacities_BW.Elements[effi].update({run: json.dumps(Controller.Parameters['EnzymeEfficiencies_BW'].loc[effi, run])})
                 self.EnzymeCapacities_BW.Elements[effi].update(
                     {run: Controller.Parameters['EnzymeEfficiencies_BW'].loc[effi, run]})
 
@@ -77,6 +79,8 @@ class RBA_SimulationParameters(object):
                 self.ProcessCapacities.Elements.update({procapa: {}})
             self.ProcessCapacities.Elements[procapa].update({'ID': procapa})
             for run in list(Controller.Parameters['ProcessEfficiencies']):
+                # self.ProcessCapacities.Elements[procapa].update(
+                #    {run: json.dumps(Controller.Parameters['ProcessEfficiencies'].loc[procapa, run])})
                 self.ProcessCapacities.Elements[procapa].update(
                     {run: Controller.Parameters['ProcessEfficiencies'].loc[procapa, run]})
 
@@ -85,9 +89,11 @@ class RBA_SimulationParameters(object):
                 self.CompartmentCapacities.Elements.update({compcap: {}})
             self.CompartmentCapacities.Elements[compcap].update({'ID': compcap})
             for run in list(Controller.Parameters['CompartmentCapacities']):
+                # self.CompartmentCapacities.Elements[compcap].update(
+                #    {run: json.dumps(Controller.Parameters['CompartmentCapacities'].loc[compcap, run])})
                 self.CompartmentCapacities.Elements[compcap].update(
                     {run: Controller.Parameters['CompartmentCapacities'].loc[compcap, run]})
-        
+
         for species in list(Controller.Parameters['Medium'].index):
             if species not in self.Media.Elements:
                 self.Media.Elements.update({species: {}})
@@ -95,16 +101,16 @@ class RBA_SimulationParameters(object):
             for run in list(Controller.Parameters['Medium']):
                 self.Media.Elements[species].update(
                     {run: Controller.Parameters['Medium'].loc[species, run]})
-        
+
         for targetvalue in list(Controller.Parameters['TargetValues'].index):
             if targetvalue not in self.TargetValues.Elements:
                 self.TargetValues.Elements.update({targetvalue: {}})
             self.TargetValues.Elements[targetvalue].update({'ID': targetvalue})
             for run in list(Controller.Parameters['TargetValues']):
                 self.TargetValues.Elements[targetvalue].update(
-                    {run: Controller.Parameters['TargetValues'].loc[targetvalue, run]})      
+                    {run: Controller.Parameters['TargetValues'].loc[targetvalue, run]})
 
-    def exportSBtab(self, filename_SBtab):
+    def exportSBtab(self, filename, add_links=False):
 
         EnzymeCapacitiesTable_FW = self.EnzymeCapacities_FW.toSBtab(
             table_id='enzyme_forward_capacity', table_type='QuantityMatrix', table_name='Enzyme forward-capacities')
@@ -115,7 +121,7 @@ class RBA_SimulationParameters(object):
         CompartmentCapacitiesTable = self.CompartmentCapacities.toSBtab(
             table_id='compartment_capacity', table_type='QuantityMatrix', table_name='Compartment capacities')
         TargetValuesTable = self.TargetValues.toSBtab(
-            table_id='target_values', table_type='QuantityMatrix', table_name='Target values')            
+            table_id='target_values', table_type='QuantityMatrix', table_name='Target values')
         MediaConcentrationTable = self.Media.toSBtab(
             table_id='medium_composition', table_type='QuantityMatrix', table_name='Medium composition')
 
@@ -189,8 +195,9 @@ class RBA_SimulationParameters(object):
             MediaConcentrationTable.add_column(column_list=['!ElementID']+[str('(!'+'Compound/'+entry+'!)')
                                                                            for entry in list(MediaConcentrationTable.to_data_frame()['ID'])], position=1)
             TargetValuesTable.add_column(column_list=['!ElementID']+[str('(!'+'CellTarget/'+entry+'!)')
-                                                                     for entry in list(TargetValuesTable.to_data_frame()['ID'])], position=1)            
+                                                                     for entry in list(TargetValuesTable.to_data_frame()['ID'])], position=1)
             filename_SBtab += '_HTML'
+
         else:
             EnzymeCapacitiesTable_FW.add_column(
                 column_list=['!ElementID']+list(EnzymeCapacitiesTable_FW.to_data_frame()['ID']), position=1)

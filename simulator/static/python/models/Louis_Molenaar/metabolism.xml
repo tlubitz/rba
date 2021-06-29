@@ -1,0 +1,37 @@
+<RBAMetabolism>
+  <listOfCompartments>
+    <compartment id="Cytoplasm"/>
+    <compartment id="Membrane"/>
+  </listOfCompartments>
+  <listOfSpecies>
+    <species id="M_substrate_e" boundaryCondition="true"/>
+    <species id="M_substrate_c" boundaryCondition="false"/>
+    <species id="M_precursor_c" boundaryCondition="false"/>
+  </listOfSpecies>
+  <listOfReactions>
+    <reaction id="R_transport" reversible="false">
+      <listOfReactants>
+        <speciesReference species="M_substrate_e" stoichiometry="1.0"/>
+      </listOfReactants>
+      <listOfProducts>
+        <speciesReference species="M_substrate_c" stoichiometry="1.0"/>
+      </listOfProducts>
+    </reaction>
+    <reaction id="R_metabolism1" reversible="false">
+      <listOfReactants>
+        <speciesReference species="M_substrate_c" stoichiometry="1.0"/>
+      </listOfReactants>
+      <listOfProducts>
+        <speciesReference species="M_precursor_c" stoichiometry="1.0"/>
+      </listOfProducts>
+    </reaction>
+    <reaction id="R_metabolism2" reversible="false">
+      <listOfReactants>
+        <speciesReference species="M_substrate_c" stoichiometry="1.0"/>
+      </listOfReactants>
+      <listOfProducts>
+        <speciesReference species="M_precursor_c" stoichiometry="0.64"/>
+      </listOfProducts>
+    </reaction>
+  </listOfReactions>
+</RBAMetabolism>

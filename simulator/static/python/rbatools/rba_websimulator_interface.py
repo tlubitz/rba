@@ -1,10 +1,11 @@
 import pandas
-from . import rba
+import rba
 import math
 import numpy
 import os
 import matplotlib.pyplot as plt
 from .rba_Session import RBA_Session
+from .rba import xml
 
 
 class RBA_websimulator_interface(object):
@@ -33,21 +34,21 @@ class RBA_websimulator_interface(object):
                 model_parameter+'_original_definition')
             self.rba_session.model.parameters.functions._elements_by_id[str(
                 model_parameter+'_original_definition')] = self.rba_session.model.parameters.functions._elements_by_id.pop(model_parameter)
-            self.rba_session.model.parameters.functions.append(rba.xml.parameters.Function(
+            self.rba_session.model.parameters.functions.append(xml.parameters.Function(
                 str(model_parameter+'_multiplier'), 'constant', parameters={'CONSTANT': 1.0}, variable=None))
             self.rba_session.model.parameters.functions._elements = list(
                 self.rba_session.model.parameters.functions._elements_by_id.values())
             self.rba_session.model.parameters.aggregates.append(
-                rba.xml.parameters.Aggregate(model_parameter, 'multiplication'))
+                xml.parameters.Aggregate(model_parameter, 'multiplication'))
             self.rba_session.model.parameters.aggregates._elements_by_id[model_parameter].function_references.append(
-                rba.xml.parameters.FunctionReference(str(model_parameter+'_original_definition')))
+                xml.parameters.FunctionReference(str(model_parameter+'_original_definition')))
             self.rba_session.model.parameters.aggregates._elements_by_id[model_parameter].function_references.append(
-                rba.xml.parameters.FunctionReference(str(model_parameter+'_multiplier')))
+                xml.parameters.FunctionReference(str(model_parameter+'_multiplier')))
         elif model_parameter in self.rba_session.model.parameters.aggregates._elements_by_id.keys():
-            self.rba_session.model.parameters.functions.append(rba.xml.parameters.Function(
+            self.rba_session.model.parameters.functions.append(xml.parameters.Function(
                 str(model_parameter+'_multiplier'), 'constant', parameters={'CONSTANT': 1.0}, variable=None))
             self.rba_session.model.parameters.aggregates._elements_by_id[model_parameter].function_references.append(
-                rba.xml.parameters.FunctionReference(str(model_parameter+'_multiplier')))
+                xml.parameters.FunctionReference(str(model_parameter+'_multiplier')))
         self.rba_session.rebuild_from_model()
 
     # ok
@@ -58,7 +59,7 @@ class RBA_websimulator_interface(object):
             model_parameter=model_parameter, x_min=0.0, x_max=2, intervals=100)
 
     # ok
-    def set_parameter_value(self, model_parameter, function_parameter, parameter_type='', change_message='', new_value=None, logging=True):
+    def set_parameter_value(self, model_parameter, function_parameter='CONSTANT', parameter_type='', change_message='', new_value=None, logging=True):
         if new_value is not None:
             if model_parameter in self.rba_session.model.parameters.functions._elements_by_id.keys():
                 old_value = self.rba_session.model.parameters.functions._elements_by_id[
@@ -103,21 +104,23 @@ class RBA_websimulator_interface(object):
     # ok
     def undo_last_change(self):
         if self.change_log.shape[0] > 0:
-            for item in self.change_log.transpose().items():
-                model_parameter = item[1]['model_parameter']
-                old_value = item[1]['old_value']
-                function_parameter = item[1]['function_parameter']
-                parameter_type = item[1]['parameter_type']
-                remark = item[1]['remark']
-                if parameter_type != 'medium_composition':
-                    if remark == 'multiplicative change':
-                        self.set_parameter_multiplier(model_parameter.split('_multiplier')[0], parameter_type='', new_value=old_value, logging=True)
-                    else:
-                        self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
-                                                function_parameter=function_parameter, new_value=old_value, logging=True)
-                elif parameter_type == 'medium_composition':
-                    self.set_medium_component(species=model_parameter,
-                                            new_value=old_value, logging=True)
+            old_value = self.change_log.iloc[-1, :]['old_value']
+            model_parameter = self.change_log.iloc[-1, :]['model_parameter']
+            function_parameter = self.change_log.iloc[-1, :]['function_parameter']
+            parameter_type = self.change_log.iloc[-1, :]['parameter_type']
+            remark = self.change_log.iloc[-1, :]['remark']
+            if parameter_type != 'medium_composition':
+                if remark == 'multiplicative change':
+                    self.set_parameter_multiplier(model_parameter.split('_multiplier')[
+                                                  0], parameter_type='', new_value=old_value, logging=False)
+
+                else:
+                    self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
+                                             function_parameter=function_parameter, new_value=old_value, logging=False)
+            elif parameter_type == 'medium_composition':
+                self.set_medium_component(species=model_parameter,
+                                          new_value=old_value, logging=False)
+            self.change_log = self.change_log.iloc[:-1, :]
 
     # ok
     def get_change_log(self):
@@ -171,6 +174,7 @@ class RBA_websimulator_interface(object):
                     if remark == 'multiplicative change':
                         self.set_parameter_multiplier(model_parameter.split('_multiplier')[
                                                       0], parameter_type='', new_value=new_value, logging=True)
+
                     else:
                         self.set_parameter_value(model_parameter=model_parameter, parameter_type=parameter_type,
                                                  function_parameter=function_parameter, new_value=new_value, logging=True)
@@ -178,9 +182,6 @@ class RBA_websimulator_interface(object):
                 elif parameter_type == 'medium_composition':
                     self.set_medium_component(species=model_parameter,
                                               new_value=new_value, logging=True)
-            return True
-        else:
-            return False
 
     def get_parameter_values_as_DataFrame(self, model_parameter):
         out = pandas.DataFrame(columns=[list(self.original_parameter_values[model_parameter].columns)[
@@ -193,21 +194,13 @@ class RBA_websimulator_interface(object):
 
     def plot_parameter_values(self, model_parameter):
         df = self.get_parameter_values_as_DataFrame(model_parameter)
-        plt.plot(df[list(df.columns)[0]], df['Original values'])
-        plt.plot(df[list(df.columns)[0]], df['Current values'])
+        plt.plot(df[list(df.columns)[0]], df['Original values'], '--', color='k', alpha=0.8)
+        plt.plot(df[list(df.columns)[0]], df['Current values'], '-', color='k', alpha=1)
         plt.legend(['Original', 'Current'])
         plt.title(model_parameter)
         plt.xlabel(list(df.columns)[0])
         plt.ylabel(model_parameter)
         plt.show()
-        plt.close()
-    
-    def get_plot_values(self, model_parameter):
-        df = self.get_parameter_values_as_DataFrame(model_parameter)
-        return(df)
-
-    def get_csvs(self):
-        return self.rba_session.SimulationData.getCSVFiles()
 
 
 def evaluate_expression(expression_dictionary, independent_variable):
@@ -261,4 +254,3 @@ def check_var_bounds(v, v_min, v_max):
         return(v_min)
     else:
         return(v)
-

@@ -1,0 +1,9 @@
+<RBATargets>
+	<listOfTargetGroups>
+		<targetGroup id="translation_targets">
+			<listOfConcentrations>
+				<targetSpecies value="nonenzymatic_proteins_Cytoplasm" species="Protein_target"/>
+			</listOfConcentrations>
+		</targetGroup>
+	</listOfTargetGroups>
+</RBATargets>

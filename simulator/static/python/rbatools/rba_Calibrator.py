@@ -1,7 +1,7 @@
 import rba
 import numpy
 import pandas
-from rbatools.rba_Session import RBA_Session
+from .rba_Session import RBA_Session
 from scipy.stats.mstats import gmean
 
 

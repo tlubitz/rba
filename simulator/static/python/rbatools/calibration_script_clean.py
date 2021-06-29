@@ -6,7 +6,7 @@ import time
 import numpy
 import seaborn
 import matplotlib.pyplot as plt
-from rbatools.rba_Session import RBA_Session
+from .rba_Session import RBA_Session
 from sklearn.linear_model import LinearRegression
 # import matplotlib.pyplot as plt
 
@@ -41,7 +41,9 @@ def build_compartment_annotations(Compartment_Annotations_external, model_protei
     return(Compartment_Annotations)
 
 
-def build_dataset_annotations(input, ID_column, Uniprot, Compartment_Annotations, model_protein_compartment_map):
+def build_dataset_annotations(input, ID_column, Uniprot, Compartment_Annotations, model_protein_compartment_map, ribosomal_proteins):
+    print('riboprots-----------------')
+    print(ribosomal_proteins)
     out = pandas.DataFrame()
     for g in list(input[ID_column]):
         out.loc[g, 'ID'] = g
@@ -394,8 +396,8 @@ def inject_estimated_efficiencies_into_model(rba_session, specific_kapps=None, d
         for i in process_efficiencies.index:
             if process_efficiencies.loc[i, 'Process'] in rba_session.model.processes.processes._elements_by_id.keys():
                 if not pandas.isna(process_efficiencies.loc[i, 'Value']):
-                    rba_session.model.processes.processes._elements_by_id[
-                        i].machinery.capacity.value = process_efficiencies.loc[i, 'Parameter']
+                    rba_session.model.processes.processes._elements_by_id[process_efficiencies.loc[i,
+                                                                                                   'Process']].machinery.capacity.value = process_efficiencies.loc[i, 'Parameter']
                     const = rba.xml.parameters.Function(process_efficiencies.loc[i, 'Parameter'], 'constant', parameters={
                         'CONSTANT': process_efficiencies.loc[i, 'Value']}, variable=None)
                     if process_efficiencies.loc[i, 'Parameter'] not in rba_session.model.parameters.functions._elements_by_id.keys():
@@ -519,6 +521,7 @@ def calibration_workflow(proteome,
 ## parse input-data properly and add Lahtvee information ##
 
 
+print('---------------------START----------------------')
 Input_Data = pandas.read_csv(
     'DataSetsYeastRBACalibration/Calibration_InputDefinition.csv', sep=';', decimal=',', index_col=0)
 Process_Efficiency_Estimation_Input = pandas.read_csv(
@@ -546,11 +549,11 @@ model_protein_compartment_map = build_model_compartment_map(rba_session=Simulati
 
 Compartment_Annotations = build_compartment_annotations(
     Compartment_Annotations_external=Compartment_Annotations_external, model_protein_compartment_map=model_protein_compartment_map)
-
+print('Annotations to data')
 annotations_Lahtvee = build_dataset_annotations(input=Lahtvee_REF, ID_column='Gene', Uniprot=Uniprot,
-                                                Compartment_Annotations=Compartment_Annotations, model_protein_compartment_map=model_protein_compartment_map)
+                                                Compartment_Annotations=Compartment_Annotations, model_protein_compartment_map=model_protein_compartment_map, ribosomal_proteins=ribosomal_proteins)
 annotations_Hackett = build_dataset_annotations(input=Hackett_Clim_FCs, ID_column='Gene', Uniprot=Uniprot,
-                                                Compartment_Annotations=Compartment_Annotations, model_protein_compartment_map=model_protein_compartment_map)
+                                                Compartment_Annotations=Compartment_Annotations, model_protein_compartment_map=model_protein_compartment_map, ribosomal_proteins=ribosomal_proteins)
 full_annotations = build_full_annotations_from_dataset_annotations(
     annotations_list=[annotations_Lahtvee, annotations_Hackett])
 

@@ -1,7 +1,7 @@
 #import pandas
 import matplotlib.pyplot as plt
 import numpy
-from rbatools.rba_Session import RBA_Session
+from .rba_Session import RBA_Session
 
 dirInput2 = 'IND/iMM904_RBA/iMM904_RBA_DefaultKappEstim_Lahtvee'
 targetMu = 0.1
