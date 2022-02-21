@@ -6,7 +6,7 @@ import json
 import pandas
 
 # package imports
-from .information_block import InformationBlock
+from rbatools.information_block import InformationBlock
 
 
 class DescriptionBlock(InformationBlock):

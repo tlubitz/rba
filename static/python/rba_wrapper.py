@@ -45,10 +45,7 @@ class Wrapper:
 
     def get_sbtab(self):
         ## Export results in CSV ##
-        print('a')
         self.Simulation.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen')
-        print('b')        
         sbtab = self.Simulation.SimulationData.getSBtabDoc()
-        print('c')        
         return sbtab
 

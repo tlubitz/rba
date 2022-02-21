@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 # package imports
-from .element_block import ElementBlock
+from rbatools.element_block import ElementBlock
 
 
 class ProcessBlock(ElementBlock):

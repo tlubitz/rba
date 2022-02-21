@@ -30,11 +30,18 @@
         <div class="row">
             <div class="db-models col-md-12">
                 <h4>Choose a model</h4>
-                <button class="btn btn-primary" onclick="load_model('louis.zip')">Louis</button>
-                <div class="btn-label">
-                    <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
+                <div class="model-input">
+                    <button class="btn btn-primary" onclick="load_model('louis.zip')">Louis</button>
+                    <div class="btn-label">
+                        <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
+                    </div>
                 </div>
-                <!--button class="btn btn-primary" onclick="load_model('ecoli.zip')">Ecoli</button-->
+                <div class="model-input">
+                    <button class="btn btn-primary" onclick="load_model('ecoli.zip')">Ecoli</button>
+                    <div class="btn-label">
+                        <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
+                    </div>
+                </div>
             </div>
             <!--div class="uploadform col-md-6">
                 <h4>...or upload a new model</h4>
@@ -96,6 +103,7 @@
             <div class="sublist">
                 <div class="bold">Download Logfile </div>
                 <small>(Values will only be comprised in the logfile after model simulation)</small><br>
+                <!--a href="{% url 'prepare_log' %}">Download Logfile</a-->
                 {% if log_path %}
                     <a href="{{ log_path }}">Download Logfile</a><br>
                 {% endif %}

@@ -5,7 +5,7 @@ import copy
 import json
 import pandas
 
-from .information_block import InformationBlock
+from rbatools.information_block import InformationBlock
 
 
 class StatisticsBlock(InformationBlock):

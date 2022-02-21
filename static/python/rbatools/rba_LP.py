@@ -4,7 +4,7 @@ import scipy
 import cplex
 import copy
 import itertools
-from .rba_Matrix import RBA_Matrix
+from rbatools.rba_Matrix import RBA_Matrix
 
 
 class RBA_LP(RBA_Matrix):

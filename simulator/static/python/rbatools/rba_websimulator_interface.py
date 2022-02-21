@@ -182,6 +182,7 @@ class RBA_websimulator_interface(object):
                 elif parameter_type == 'medium_composition':
                     self.set_medium_component(species=model_parameter,
                                               new_value=new_value, logging=True)
+        return 'ok'
 
     def get_parameter_values_as_DataFrame(self, model_parameter):
         out = pandas.DataFrame(columns=[list(self.original_parameter_values[model_parameter].columns)[

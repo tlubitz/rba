@@ -4,11 +4,9 @@ import math
 import numpy
 import os
 import matplotlib.pyplot as plt
-from .rba_Session import RBA_Session
-
+from rbatools.rba_Session import RBA_Session
 
 class RBA_websimulator_interface(object):
-
     # ok
     def __init__(self, xml_dir, simplified_parameter_changes=True):
         self.rba_session = RBA_Session(xml_dir)
@@ -193,8 +191,8 @@ class RBA_websimulator_interface(object):
 
     def plot_parameter_values(self, model_parameter):
         df = self.get_parameter_values_as_DataFrame(model_parameter)
-        plt.plot(df[list(df.columns)[0]], df['Original values'])
-        plt.plot(df[list(df.columns)[0]], df['Current values'])
+        plt.plot(df[list(df.columns)[0]], df['Original values'], '--', color='k', alpha=0.8)
+        plt.plot(df[list(df.columns)[0]], df['Current values'], '-', color='k', alpha=1)
         plt.legend(['Original', 'Current'])
         plt.title(model_parameter)
         plt.xlabel(list(df.columns)[0])

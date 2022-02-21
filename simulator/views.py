@@ -216,7 +216,7 @@ def simulate(request):
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             elif mode == 'prod':
                 success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
-            if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
+            if success != 'ok': request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
     else: request.session['first_sim'] = 'Nope'
@@ -440,3 +440,11 @@ def plot(request):
     request.session.modified = True
 
     return HttpResponse('ok')
+
+
+@csrf_exempt
+def prepare_log(request):
+    '''
+    Plot a parameter
+    '''
+    return 'ok'

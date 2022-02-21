@@ -8,4 +8,5 @@ urlpatterns = [
     path('loadmodel/', views.loadmodel, name='loadmodel'),
     path('undolast/', views.undolast, name='undolast'),
     path('plot/', views.plot, name='plot'),
+    path('prepare_log/', views.prepare_log, name='prepare_log'),
 ]

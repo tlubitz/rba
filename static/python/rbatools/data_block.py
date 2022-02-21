@@ -6,7 +6,7 @@ import json
 import copy
 import pandas
 import numpy
-from .information_block import InformationBlock
+from rbatools.information_block import InformationBlock
 
 
 class DataBlock(InformationBlock):

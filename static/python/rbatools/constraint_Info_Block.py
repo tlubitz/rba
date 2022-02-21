@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 # package imports
-from .information_block import InformationBlock
+from rbatools.information_block import InformationBlock
 
 
 class ConstraintBlock(InformationBlock):

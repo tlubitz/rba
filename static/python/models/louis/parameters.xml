@@ -9,12 +9,14 @@
 			<listOfParameters>
 				<parameter id="kmax" value="1"/>
 				<parameter id="Km" value="1"/>
+		        <parameter id="Y_MIN" value="0"/>
 			</listOfParameters>
 		</function>
 		<function id="k_transporter_efficiency_backward" type="michaelisMenten" variable="M_Glucose_e">
 			<listOfParameters>
 				<parameter id="kmax" value="1"/>
 				<parameter id="Km" value="1"/>
+		        <parameter id="Y_MIN" value="0"/>
 			</listOfParameters>
 		</function>
 		<function id="k_UpperGlycolysis_efficiency_foreward" type="constant" variable="growth_rate">
@@ -99,7 +101,7 @@
 		</function>
 		<function id="maintenance_atp" type="linear" variable="growth_rate">
 			<listOfParameters>
-				<parameter id="LINEAR_CONSTANT" value="0"/>
+				<parameter id="LINEAR_CONSTANT" value="0.1"/>
 				<parameter id="LINEAR_COEF" value="200"/>
 				<parameter id="X_MIN" value="-inf"/>
 				<parameter id="X_MAX" value="inf"/>

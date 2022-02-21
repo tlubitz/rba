@@ -5,8 +5,8 @@ from __future__ import division, print_function
 import numpy
 import libsbml
 # package imports
-from .rba.core.constraint_blocks import ConstraintBlocks
-from .element_block import ElementBlock
+from rba.core.constraint_blocks import ConstraintBlocks
+from rbatools.element_block import ElementBlock
 
 
 class ModuleBlock(ElementBlock):

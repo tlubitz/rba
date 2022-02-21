@@ -11,8 +11,8 @@ from scipy.sparse import lil_matrix, hstack
 
 
 # package imports
-from .rba.core.constraint_blocks import ConstraintBlocks
-from .element_block import ElementBlock
+from rba.core.constraint_blocks import ConstraintBlocks
+from rbatools.element_block import ElementBlock
 
 
 class ReactionBlock(ElementBlock):

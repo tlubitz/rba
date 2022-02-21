@@ -4,8 +4,8 @@ from __future__ import division, print_function
 # global imports
 import numpy
 # package imports
-from .rba.core.constraint_blocks import ConstraintBlocks
-from .element_block import ElementBlock
+from rba.core.constraint_blocks import ConstraintBlocks
+from rbatools.element_block import ElementBlock
 
 
 class EnzymeBlock(ElementBlock):
@@ -120,7 +120,7 @@ def determineCompartment(subunits, model, enzymes):
     out = []
     if len(subunits.keys()) > 0:
         for s in subunits.keys():
-            try: 
+            try:
                 ind = enzymes.index(s)
                 out.append(model.proteins.macromolecules._elements[ind].__dict__['compartment'])
             except:

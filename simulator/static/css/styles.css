@@ -99,6 +99,11 @@
         padding-top: .5rem;
     }
 
+    .model-input {
+        display: inline-block;
+        margin-right: 2rem;
+    }
+
     #loading-gif {
         display: none;
         margin: auto;

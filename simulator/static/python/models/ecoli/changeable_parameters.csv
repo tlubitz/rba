@@ -1,0 +1,12 @@
+Parameter,Type
+Cell_inner_membrane_density,maximal_densities
+Cytoplasm_density,maximal_densities
+Cell_outer_membrane_density,maximal_densities
+Periplasm_density,maximal_densities
+ribosome_capacity,machine_efficiencies
+maintenance_atp,target_values
+dna_concentration,target_values
+M_glc__D,medium_composition
+M_nh4,medium_composition
+M_o2,medium_composition
+M_pi,medium_composition

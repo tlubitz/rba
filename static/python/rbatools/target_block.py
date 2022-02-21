@@ -4,7 +4,7 @@ from __future__ import division, print_function
 # global imports
 import numpy
 # package imports
-from .element_block import ElementBlock
+from rbatools.element_block import ElementBlock
 
 
 class TargetBlock(ElementBlock):

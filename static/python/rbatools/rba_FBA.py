@@ -3,9 +3,9 @@ import numpy
 import scipy
 import copy
 import cplex
-from .rba_Matrix import RBA_Matrix
-from .rba_LP import RBA_LP
-from .rba_LogBook import RBA_LogBook
+from rbatools.rba_Matrix import RBA_Matrix
+from rbatools.rba_LP import RBA_LP
+from rbatools.rba_LogBook import RBA_LogBook
 
 
 class RBA_FBA(object):
@@ -57,7 +57,7 @@ class RBA_FBA(object):
         self.LP.buildCPLEX_LP()
         self.parsimonious = True
 
-    def solveLP(self, feasibleStatuses=[1, 2, 5, 6]):
+    def solveLP(self, feasibleStatuses=[1]):
         """
         Solves Linear RBA problem.
 
@@ -71,7 +71,7 @@ class RBA_FBA(object):
         feasibleStatuses : list of int
             List with identifiers of acceptable solution statuses.
             (consult ILOG-CPLEX documentation for information on them).
-            Default: feasibleStatuses=[1, 2, 5, 6]
+            Default: feasibleStatuses=[1]
         logging : bool
             Wheter to write change to log-file or not
         """
@@ -94,8 +94,7 @@ class RBA_FBA(object):
                         val = SolVals[i]-SolVals[str('Backward_'+i)]
                     else:
                         val = SolVals[i]
-                    if val != 0:
-                        self.SolutionValues.update({i: val})
+                    self.SolutionValues.update({i: val})
             self.DualValues = dict(
                 zip(self.LP.row_names, self.LP.cplexLP.solution.get_dual_values()))
 

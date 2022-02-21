@@ -5,7 +5,7 @@ from __future__ import division, print_function
 import numpy
 import pandas
 # package imports
-from .element_block import ElementBlock
+from rbatools.element_block import ElementBlock
 
 
 class ProteinBlock(ElementBlock):

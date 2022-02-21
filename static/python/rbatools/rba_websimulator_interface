@@ -1,5 +1,5 @@
 import pandas
-from .rba_Session import RBA_Session
+from rbatools.rba_Session import RBA_Session
 
 
 class RBA_websimulator_interface(object):
