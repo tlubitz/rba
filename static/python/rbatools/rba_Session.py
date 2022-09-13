@@ -1723,36 +1723,50 @@ class SessionRBA(object):
         """
         return(return_enzyme_constraints(model_structure=self.ModelStructure))
 
-    def get_parameter_evolution(self,parameter:str,x_values:dict={}):
-        parameter_definition=self.get_parameter_definition(parameter)
+    def get_parameter_evolution(self,model_parameter:str,x_values:dict={}) -> pandas.core.frame.DataFrame:
+        """
+        Adds reaction to model.
+
+        Parameters
+        ----------
+        model_parameter : str
+            ID of reaction to add.
+        x_values : dict
+            Dictionary with possible independent variables as keys and list of respective values as values
+            Default: {}
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+        """
+        parameter_definition=self.get_parameter_definition(model_parameter)
         medium=self.Medium.copy()
-        if len(parameter_definition[parameter]['Variables'])==1:
-            if parameter_definition[parameter]['Variables'][0] in x_values.keys():
-                if parameter_definition[parameter]['Variables'][0]=="growth_rate":
+        if len(parameter_definition[model_parameter]['Variables'])==1:
+            if parameter_definition[model_parameter]['Variables'][0] in x_values.keys():
+                if parameter_definition[model_parameter]['Variables'][0]=="growth_rate":
                     y_values=[]
                     for mu in x_values["growth_rate"]:
-                        if parameter_definition[parameter]['Type']=='Aggregate':
-                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[parameter]['Multiplicative Terms']]
+                        if parameter_definition[model_parameter]['Type']=='Aggregate':
+                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[model_parameter]['Multiplicative Terms']]
                         else:
                             list_param_definitions_to_evaluate=[parameter_definition]
                         y_values.append(numpy.prod([evaluate_current_function_value(expression_dictionary=i,growth_rate=mu , medium=medium) for i in list_param_definitions_to_evaluate]))
                     out=pandas.DataFrame()
                     out["growth_rate"]=x_values["growth_rate"]
-                    out[parameter]=y_values
+                    out[model_parameter]=y_values
                     return(out)
                 else:
-                    if parameter_definition[parameter]['Variables'][0] in medium.keys():
+                    if parameter_definition[model_parameter]['Variables'][0] in medium.keys():
                         y_values=[]
-                        for i in x_values[parameter_definition[parameter]['Variables'][0]]:
-                            medium[parameter_definition[parameter]['Variables'][0]]=i
-                            if parameter_definition[parameter]['Type']=='Aggregate':
-                                list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[parameter]['Multiplicative Terms']]
+                        for i in x_values[parameter_definition[model_parameter]['Variables'][0]]:
+                            medium[parameter_definition[model_parameter]['Variables'][0]]=i
+                            if parameter_definition[model_parameter]['Type']=='Aggregate':
+                                list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[model_parameter]['Multiplicative Terms']]
                             else:
                                 list_param_definitions_to_evaluate=[parameter_definition]
                             y_values.append(numpy.prod([evaluate_current_function_value(expression_dictionary=i,growth_rate=self.Mu , medium=medium) for i in list_param_definitions_to_evaluate]))
                         out=pandas.DataFrame()
-                        out[str(parameter_definition[parameter]['Variables'][0])]=x_values[parameter_definition[parameter]['Variables'][0]]
-                        out[parameter]=y_values
+                        out[str(parameter_definition[model_parameter]['Variables'][0])]=x_values[parameter_definition[model_parameter]['Variables'][0]]
+                        out[model_parameter]=y_values
                         return(out)
                     else:
                         raise Exception('X variable not found')
@@ -1763,31 +1777,31 @@ class SessionRBA(object):
         else:
             print("WARNING: Parameter dependent on more than one variable")
             input_variable_independent=list(x_values.keys())[0]
-            if input_variable_independent in parameter_definition[parameter]['Variables']:
+            if input_variable_independent in parameter_definition[model_parameter]['Variables']:
                 if input_variable_independent=="growth_rate":
                     y_values=[]
                     for mu in x_values["growth_rate"]:
-                        if parameter_definition[parameter]['Type']=='Aggregate':
-                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[parameter]['Multiplicative Terms']]
+                        if parameter_definition[model_parameter]['Type']=='Aggregate':
+                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[model_parameter]['Multiplicative Terms']]
                         else:
                             list_param_definitions_to_evaluate=[parameter_definition]
                         y_values.append(numpy.prod([evaluate_current_function_value(expression_dictionary=i,growth_rate=mu , medium=medium) for i in list_param_definitions_to_evaluate]))
                     out=pandas.DataFrame()
                     out["growth_rate"]=x_values["growth_rate"]
-                    out[parameter]=y_values
+                    out[model_parameter]=y_values
                     return(out)
                 elif input_variable_independent in medium.keys():
                     y_values=[]
-                    for i in x_values[parameter_definition[parameter]['Variables'][0]]:
-                        medium[parameter_definition[parameter]['Variables'][0]]=i
-                        if parameter_definition[parameter]['Type']=='Aggregate':
-                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[parameter]['Multiplicative Terms']]
+                    for i in x_values[parameter_definition[model_parameter]['Variables'][0]]:
+                        medium[parameter_definition[model_parameter]['Variables'][0]]=i
+                        if parameter_definition[model_parameter]['Type']=='Aggregate':
+                            list_param_definitions_to_evaluate=[self.get_parameter_definition(parameter=i) for i in parameter_definition[model_parameter]['Multiplicative Terms']]
                         else:
                             list_param_definitions_to_evaluate=[parameter_definition]
                         y_values.append(numpy.prod([evaluate_current_function_value(expression_dictionary=i,growth_rate=self.Mu , medium=medium) for i in list_param_definitions_to_evaluate]))
                     out=pandas.DataFrame()
                     out[input_variable_independent]=x_values[input_variable_independent]
-                    out[parameter]=y_values
+                    out[model_parameter]=y_values
                     return(out)
             else:
                 raise Exception('X variable not found')

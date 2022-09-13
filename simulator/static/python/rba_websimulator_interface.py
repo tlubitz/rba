@@ -106,7 +106,7 @@ class WebsimulatorInterfaceRBA(object):
         else:
             independent_variable="growth_rate"
         independent_variable_values=list(numpy.linspace(x_min, x_max, intervals))
-        out=self.rba_session.get_parameter_evolution(parameter=model_parameter,x_values={independent_variable:independent_variable_values})
+        out=self.rba_session.get_parameter_evolution(model_parameter=model_parameter,x_values={independent_variable:independent_variable_values})
         return(out)
 
     # OK
