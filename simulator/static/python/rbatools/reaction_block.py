@@ -11,11 +11,11 @@ from scipy.sparse import lil_matrix, hstack
 
 
 # package imports
-from .rba.core.constraint_blocks import ConstraintBlocks
-from .element_block import ElementBlock
+from rba.core.constraint_blocks import ConstraintBlocks
+from rbatools.information_block import InformationBlock
 
 
-class ReactionBlock(ElementBlock):
+class ReactionBlock(InformationBlock):
     """
     Class holding information on the reactions in the model.
 
@@ -31,13 +31,15 @@ class ReactionBlock(ElementBlock):
            'Formula' : Reaction formula as string (type str)
            'Reactants' : Which metabolites does this reaction consume of and many (type dict)
            'Products' : Which metabolites does this reaction produce of and many (type dict)
+           'Reversible' :  Wheter reaction is reversible (type bool)
            'Type' : Type of reaction ('normal' or 'transport') (type str)
            'Compartment_Species' : Location of the metabolites involved with this reaction (type list)
            'Enzyme' : Enzyme catalysing this reaction (type str)
            'Twins' : Isoreactions of this reactions (catalysed by iso-enzymes) (type list)
+           'AssociatedTarget' :  Wheter reaction has a flux target.
     """
 
-    def fromFiles(self, model, Info, ReactionAnnotations, sbml, metaboliteBlock):
+    def from_files(self, model, Info, ReactionAnnotations, sbml, metaboliteBlock):
         """
         Derive reaction-info from RBA-model.
 
@@ -52,7 +54,7 @@ class ReactionBlock(ElementBlock):
 
         """
         blocks = ConstraintBlocks(model)
-        full_S = build_S(list(blocks.metabolism.external + blocks.metabolism.internal),
+        full_S = _build_stoichiometric_matrix(list(blocks.metabolism.external + blocks.metabolism.internal),
                          model.metabolism.reactions).toarray()
         self.Elements = {}
         self.BiGGids = []
@@ -63,27 +65,27 @@ class ReactionBlock(ElementBlock):
                 sbmlIDMap = [reaction.id for reaction in sbml.model.reactions]
         reconstruction = Info.loc['Reconstruction', 'Value']
         for i in range(len(blocks.metabolism.reactions)):
-            Reactants = associatedReactants(i, blocks, model, full_S)
-            Products = associatedProducts(i, blocks, model, full_S)
-            Reversibility = checkReversibility(i, blocks)
-            CompartmentInfo = findCompartment(
+            Reactants = _associated_reactants(i, blocks, model, full_S)
+            Products = _associated_products(i, blocks, model, full_S)
+            Reversibility = _check_reversibility(i, blocks)
+            CompartmentInfo = _find_compartment(
                 i, blocks, Reactants, Products, Reversibility, metaboliteBlock)
-            Twins = findTwinRxns(i, blocks)
-            protoID = deriveProto_ID(i, blocks, Twins)
+            Twins = _find_twin_rxns(i, blocks)
+            protoID = _derive_proto_id(i, blocks, Twins)
             IDdict = {'ProtoID': protoID}
             reactionName = ' '
             if type(sbml) is not str:
                 if type(sbml.model) is libsbml.Model:
                     if protoID in sbmlIDMap:
-                        IDdict.update(getReactionAnnotationsFromSBML(
+                        IDdict.update(_get_reaction_annotations_from_sbml(
                             sbmlIDMap.index(protoID), sbml))
                         reactionName = sbml.model.reactions[sbmlIDMap.index(protoID)].name
                     elif 'R_'+protoID in sbmlIDMap:
-                        IDdict.update(getReactionAnnotationsFromSBML(
+                        IDdict.update(_get_reaction_annotations_from_sbml(
                             sbmlIDMap.index(str('R_'+protoID)), sbml))
                         reactionName = sbml.model.reactions[sbmlIDMap.index(str('R_'+protoID))].name
             if type(ReactionAnnotations) is pandas.core.frame.DataFrame:
-                IDdict.update(readReactionAnnotations(i, ReactionAnnotations, blocks))
+                IDdict.update(_read_reaction_annotations(i, ReactionAnnotations, blocks))
             self.BiGGids.append(protoID)
             index += 1
             self.Elements[blocks.metabolism.reactions[i]] = {'ID': blocks.metabolism.reactions[i],
@@ -97,8 +99,9 @@ class ReactionBlock(ElementBlock):
                                                              'Reversible': Reversibility['Reversible'],
                                                              'Type': CompartmentInfo['type'],
                                                              'Compartment_Species': CompartmentInfo['comp'],
-                                                             'Enzyme': findAssociatedEnzyme(i, blocks),
-                                                             'Twins': Twins}
+                                                             'Enzyme': _find_associated_enzyme(i, blocks),
+                                                             'Twins': Twins,
+                                                             'AssociatedTarget':''}
 
     def overview(self):
         """
@@ -156,7 +159,7 @@ class ReactionBlock(ElementBlock):
         return(out)
 
 
-def deriveProto_ID(reaction, blocks, Twins):
+def _derive_proto_id(reaction, blocks, Twins):
     """
     Derive BiGG-ID from reactionID.
     Relies on the assumption that reactionID in RBA-model equals an 'R_', followed by the BiGG-ID.
@@ -181,31 +184,7 @@ def deriveProto_ID(reaction, blocks, Twins):
     return(out)
 
 
-def findReactionAnnotations(rx_name, http, reconstruction):
-    #     if not reconstruction is 'GSMM':
-    #        response = http.request('GET', 'http://bigg.ucsd.edu/api/v2/models/' + reconstruction +'/reactions/' + rx_name)
-    if not reconstruction is 'GSMM':
-        response = http.request('GET', 'http://bigg.ucsd.edu/api/v2/models/' +
-                                reconstruction + '/reactions/' + rx_name)
-    else:
-        response = http.request('GET', 'http://bigg.ucsd.edu/api/v2/models/' +
-                                'universal' + '/reactions/' + rx_name)
-    try:
-        x = json.loads(response.data.decode('utf-8'))
-        out = {'BiGG': 'NA', 'KEGG': 'NA', 'BioCyc': 'NA', 'Name': ''}
-        out['BiGG'] = rx_name
-        out['Name'] = x['name']
-        if 'KEGG Reaction' in list(x['database_links'].keys()):
-            out['KEGG'] = x['database_links']['KEGG Reaction'][0]['id']
-            out['BioCyc'] = x['database_links']['BioCyc'][0]['id']
-        return(out)
-    except:
-        return({'BiGG': 'NA', 'KEGG': 'NA', 'BioCyc': 'NA', 'Name': ''})
-#     else:
-#        return('NA')
-
-
-def getReactionAnnotationsFromSBML(index, sbml):
+def _get_reaction_annotations_from_sbml(index, sbml):
     out = {}
     for a in sbml.model.reactions[index].getAnnotationString().split('\n'):
         if 'rdf:resource="http://identifiers.org/' in a:
@@ -215,7 +194,7 @@ def getReactionAnnotationsFromSBML(index, sbml):
     return(out)
 
 
-def readReactionAnnotations(r, ReactionAnnotations, blocks):
+def _read_reaction_annotations(r, ReactionAnnotations, blocks):
     AnnotationKeys = list(ReactionAnnotations)
     AnnotationIDs = [numpy.nan]*len(AnnotationKeys)
     for i in AnnotationKeys:
@@ -225,21 +204,7 @@ def readReactionAnnotations(r, ReactionAnnotations, blocks):
     return(dict(zip(AnnotationKeys, AnnotationIDs)))
 
 
-def findRxnName(rxnid, reactionsBiGG):
-    """
-    Retreive (descriptive) name of reaction from BiGG-file.
-
-    Returns
-    -------
-    String with name (when found), otherwise empty.
-    """
-    if rxnid in list(reactionsBiGG.index):
-        return(str(reactionsBiGG.loc[rxnid]['name']))
-    else:
-        return(str(''))
-
-
-def associatedReactants(i, blocks, model, Sfull):
+def _associated_reactants(i, blocks, model, Sfull):
     """
     Derive information of reactant-side of reaction.
 
@@ -250,7 +215,7 @@ def associatedReactants(i, blocks, model, Sfull):
     """
     rxn = model.metabolism.reactions.get_by_id(blocks.metabolism.reactions[i])
     if rxn is not None:
-        reactants = {i.species: transform_to_int(i.stoichiometry)
+        reactants = {i.species: _transform_to_int(i.stoichiometry)
                      for i in rxn.reactants._elements if i is not None}
         eq = ''
         for i in reactants.keys():
@@ -262,7 +227,7 @@ def associatedReactants(i, blocks, model, Sfull):
     return({'reactants': reactants, 'rSide': eq})
 
 
-def associatedProducts(i, blocks, model, Sfull):
+def _associated_products(i, blocks, model, Sfull):
     """
     Derive information of product-side of reaction.
 
@@ -273,7 +238,7 @@ def associatedProducts(i, blocks, model, Sfull):
     """
     rxn = model.metabolism.reactions.get_by_id(blocks.metabolism.reactions[i])
     if rxn is not None:
-        products = {i.species: transform_to_int(i.stoichiometry)
+        products = {i.species: _transform_to_int(i.stoichiometry)
                     for i in rxn.products._elements if i is not None}
         eq = ''
         for i in products.keys():
@@ -285,7 +250,7 @@ def associatedProducts(i, blocks, model, Sfull):
     return({'products': products, 'pSide': eq})
 
 
-def checkReversibility(rx, blocks):
+def _check_reversibility(rx, blocks):
     """
     Information on default reaction flux-bounds and reversibility.
 
@@ -303,7 +268,7 @@ def checkReversibility(rx, blocks):
     return(out)
 
 
-def findCompartment(rx, blocks, aR, aP, rR, metaboliteBlock):
+def _find_compartment(rx, blocks, aR, aP, rR, metaboliteBlock):
     """
     Derive information on compartment aspects of the reaction.
 
@@ -340,7 +305,7 @@ def findCompartment(rx, blocks, aR, aP, rR, metaboliteBlock):
     return(out)
 
 
-def findAssociatedEnzyme(rx, blocks):
+def _find_associated_enzyme(rx, blocks):
     """
     Return enzyme species, associated with reaction.
 
@@ -355,7 +320,7 @@ def findAssociatedEnzyme(rx, blocks):
         return(str(''))
 
 
-def findTwinRxns(rx, blocks):
+def _find_twin_rxns(rx, blocks):
     """
     Find Twin reactions (identical reactions, catalyzed by different (iso-)enzymes)
 
@@ -381,7 +346,7 @@ def findTwinRxns(rx, blocks):
     return(out)
 
 
-def build_S(metabolites, reactions):
+def _build_stoichiometric_matrix(metabolites, reactions):
     """
     Build stoichiometry matrix from metabolites and reactions.
 
@@ -408,7 +373,7 @@ def build_S(metabolites, reactions):
     return S
 
 
-def transform_to_int(number):
+def _transform_to_int(number):
     if number % 1 == 0:
         return(int(number))
     else:

@@ -2,10 +2,10 @@
 from __future__ import division, print_function
 
 # package imports
-from rbatools.constraint_Info_Block import ConstraintBlock
+from rbatools.information_block import InformationBlock
 
 
-class MetaboliteConstraints(ConstraintBlock):
+class MetaboliteConstraintBlock(InformationBlock):
     """
     Class holding information on the constraints regarding the metabolites in the model.
 
@@ -19,7 +19,7 @@ class MetaboliteConstraints(ConstraintBlock):
            'Type' : Equality or inequality (type dict)
     """
 
-    def fromFiles(self, Cs, matrix):
+    def from_files(self, Cs, matrix):
         index = 0
         self.Elements = {}
         for i in Cs['MetaboliteConsts'].keys():
@@ -30,6 +30,5 @@ class MetaboliteConstraints(ConstraintBlock):
                 cSign = '='
             self.Elements[i] = {'ID': i+'_mass_balance',
                                 'AssociatedMetabolite': i,
-                                'index': index,
                                 'Type': cSign
                                 }

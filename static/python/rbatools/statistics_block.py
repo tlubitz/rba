@@ -16,28 +16,28 @@ class StatisticsBlock(InformationBlock):
 
     Attributes
     ----------
-    Elements : Dictionary different numbers on model.
+    Elements : Dictionary with different numbers on model.
 
     """
 
     def derive(self, Dict):
         self.Elements = Dict
 
-    def toDataFrame(self):
+    def to_data_frame(self):
         Block = self.Elements
         if len(list(Block.keys())) > 0:
             fields = ['Measure', 'Value']
             TableOut = pandas.DataFrame(columns=fields, index=list(Block.keys()))
             for i in list(Block.keys()):
-                Var = json.dumps(i, default=JSON_Int64_compensation)
-                Val = json.dumps(Block[i], default=JSON_Int64_compensation)
+                Var = json.dumps(i, default=_json_int64_compensation)
+                Val = json.dumps(Block[i], default=_json_int64_compensation)
                 TableOut.loc[i, 'Measure'] = Var
                 TableOut.loc[i, 'Value'] = Val
             return TableOut
-        if len(list(Block.keys())) == 0:
+        if not list(Block.keys()):
             return pandas.DataFrame()
 
-    def toDataFrame_SBtabCompatibility(self, NameList=None, Col_list=None):
+    def to_sbtab_compatible_data_frame(self, NameList=None, Col_list=None):
         Block = self.Elements
         if len(list(Block.keys())) > 0:
             if Col_list is None:
@@ -54,24 +54,22 @@ class StatisticsBlock(InformationBlock):
 
             TableOut = pandas.DataFrame(columns=fields, index=list(Block.keys()))
             for i in list(Block.keys()):
-                Var = i
-                Val = json.dumps(Block[i], default=JSON_Int64_compensation)
+                Var = json.dumps(i, default=_json_int64_compensation)
+                Val = json.dumps(Block[i], default=_json_int64_compensation)
                 if "'" in Var:
                     Var = Var.replace("'", "")
                 if "'" in Val:
                     Val = Val.replace("'", "")
                 TableOut.loc[i, 'Measure'] = Var
                 TableOut.loc[i, 'Value'] = Val
-# WORKS                    TableOut.loc[i,'Measure']='"'+Var+'"'
-# WORKS                    TableOut.loc[i,'Value']='"'+Val+'"'
             if len(list(NameList)) == len(list(TableOut)):
                 TableOut.columns = list(NameList)
             return TableOut
-        if len(list(Block.keys())) == 0:
+        if not list(Block.keys()):
             return pandas.DataFrame()
 
 
-def JSON_Int64_compensation(o):
+def _json_int64_compensation(o):
     if isinstance(o, numpy.int64):
         return int(o)
     raise TypeError

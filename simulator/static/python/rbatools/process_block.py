@@ -2,10 +2,11 @@
 from __future__ import division, print_function
 
 # package imports
-from .element_block import ElementBlock
+import numpy
+from rbatools.information_block import InformationBlock
 
 
-class ProcessBlock(ElementBlock):
+class ProcessBlock(InformationBlock):
     """
     Class holding information on the processes in the model.
 
@@ -18,10 +19,11 @@ class ProcessBlock(ElementBlock):
             'Name' : name of process (same as key) (type str)
             'Initiation' : reaction-string of initiation (type list)
             'Composition' : Which proteins the process-machinery is composed of and how many (type dict)
-            'Components' : Substrates to process
+            'Components' : Substrates to process (type dict)
+            'Capacity_Constraint' :  ID of associated capacity constraint
     """
 
-    def fromFiles(self, model, Info):
+    def from_files(self, model, Info):
         """
         Derive reaction-info from RBA-model.
 
@@ -40,14 +42,15 @@ class ProcessBlock(ElementBlock):
         for i in range(len(model.processes.processes._elements)):
             # if i <= len(model.processes.processing_maps._elements)-1:
             if i <= len(model.processes.processing_maps._elements)+1:
-                pc = getProcessInfo(model, i)
+                pc = _get_process_info(model, i)
                 index += 1
                 self.Elements[model.processes.processes._elements[i].name.replace(' ', '_')] = {'ID': model.processes.processes._elements[i].id,
                                                                                                 'Name': model.processes.processes._elements[i].name,
                                                                                                 'Initiation': pc['Initiation'],
                                                                                                 'index': index,
                                                                                                 'Composition': pc['Machinery'],
-                                                                                                'Components': pc['Components']}
+                                                                                                'Components': pc['Components'],
+                                                                                                'Capacity_Constraint':''}
 
     def overview(self):
         """
@@ -63,7 +66,7 @@ class ProcessBlock(ElementBlock):
         return(out)
 
 
-def getProcessInfo(model, i):
+def _get_process_info(model, i):
     machinery = {}
     Processes = model.processes.processes._elements
     for j in range(len(Processes[i].machinery.machinery_composition.reactants._elements)):

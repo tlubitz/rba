@@ -6,9 +6,8 @@ import numpy
 import pandas
 import json
 
-class InfoMatrices(object):
+class InfoMatrix(object):
      """
-     Class holding information on the compartments in the model.
 
      Attributes
      ----------
@@ -45,15 +44,15 @@ class InfoMatrices(object):
                 if Bid is not '':
                      BiGGids.append(Bid)
 
-          self.Reaction_Reaction = makeReaction_Reaction(struct,BiGGids)
-          self.Protein_Enzyme = makeProtein_Enzyme(struct)['Matrix']
-          self.ProteinWeight = makeProtein_Enzyme(struct)['Weight']
-          self.Protein_ProcessMachinery = makeProcessMachinery_Protein(struct)
-          self.Process_Protein = makeProcessRequirements_Protein(struct)
-          self.Compartment_Protein = makeCompartment_Protein(struct)
-          self.S = make_S(struct)
+          self.Reaction_Reaction = _make_reaction_reaction_matrix(struct,BiGGids)
+          self.Protein_Enzyme = _make_protein_enzyme_matrix(struct)['Matrix']
+          self.ProteinWeight = _make_protein_enzyme_matrix(struct)['Weight']
+          self.Protein_ProcessMachinery = _make_process_machinery_protein_matrix(struct)
+          self.Process_Protein = _make_process_requirements_protein_matrix(struct)
+          self.Compartment_Protein = _make_compartment_protein_matrix(struct)
+          self.S = _make_stoichiometric_matrix(struct)
 
-def make_S(input):
+def _make_stoichiometric_matrix(input):
      Mets=input.MetaboliteInfo.toDataFrame()
      InternalMets=sorted(list(Mets[Mets['Type'].apply(json.loads)=='internal']['ID'].apply(json.loads)))
      ExternalMets=sorted(list(Mets[Mets['Type'].apply(json.loads)=='external']['ID'].apply(json.loads)))
@@ -69,13 +68,13 @@ def make_S(input):
                S.loc[j,rx]=json.loads(Rxns.loc[rx]['Products'])[j]
      return(S)
 
-def makeReaction_Reaction(struct,BiGGids):
+def _make_reaction_reaction_matrix(struct,BiGGids):
      R_Matrix=pandas.DataFrame(numpy.zeros((len(numpy.unique(BiGGids)),len(list(struct.ReactionInfo.Elements.keys())))),columns=list(struct.ReactionInfo.Elements.keys()),index=numpy.unique(BiGGids))
      for rx in list(struct.ReactionInfo.Elements.keys()):
           R_Matrix.loc[struct.ReactionInfo.Elements[rx]['OtherIDs']['ProtoID'],rx]=1
      return(R_Matrix)
 
-def makeProtein_Enzyme(struct):
+def _make_protein_enzyme_matrix(struct):
      P_Matrix=pandas.DataFrame(numpy.zeros((len(numpy.unique(list(struct.ProteinInfo.Elements.keys()))),len(numpy.unique(list(struct.EnzymeInfo.Elements.keys()))))),columns=numpy.unique(list(struct.EnzymeInfo.Elements.keys())),index=numpy.unique(list(struct.ProteinInfo.Elements.keys())))
      Pweight=pandas.DataFrame(numpy.zeros((len(numpy.unique(list(struct.ProteinInfo.Elements.keys()))),2)),columns=['AAlength','MolecMass'],index=numpy.unique(list(struct.ProteinInfo.Elements.keys())))
      for i in numpy.unique(list(struct.ProteinInfo.Elements.keys())):
@@ -86,7 +85,7 @@ def makeProtein_Enzyme(struct):
                     P_Matrix.loc[i,j]=struct.EnzymeInfo.Elements[j]['Subunits'][i]['StochFac']
      return({'Matrix': P_Matrix , 'Weight': Pweight})
 
-def makeProcessRequirements_Protein(struct):
+def _make_process_requirements_protein_matrix(struct):
      PM_Matrix=pandas.DataFrame(numpy.zeros((2,len(numpy.unique(list(struct.ProteinInfo.Elements.keys()))))),columns=numpy.unique(list(struct.ProteinInfo.Elements.keys())),index=['P_TA','P_CHP'])
      for i in numpy.unique(list(struct.ProteinInfo.Elements.keys())):
           t=0
@@ -99,7 +98,7 @@ def makeProcessRequirements_Protein(struct):
           PM_Matrix.loc['P_CHP',i]=f
      return(PM_Matrix)
 
-def makeProcessMachinery_Protein(struct):
+def _make_process_machinery_protein_matrix(struct):
      M_Matrix=pandas.DataFrame(numpy.zeros((len(numpy.unique(list(struct.ProteinInfo.Elements.keys()))),2)),columns=['P_TA','P_CHP'],index=numpy.unique(list(struct.ProteinInfo.Elements.keys())))
      for i in numpy.unique(list(struct.ProteinInfo.Elements.keys())):
           if i in list(struct.ProcessInfo.Elements['Translation']['Composition'].keys()):
@@ -108,7 +107,7 @@ def makeProcessMachinery_Protein(struct):
                M_Matrix.loc[i,'P_CHP']=struct.ProcessInfo.Elements['Folding']['Composition'][i]
      return(M_Matrix)
 
-def makeCompartment_Protein(struct):
+def _make_compartment_protein_matrix(struct):
      CP_Matrix=pandas.DataFrame(numpy.zeros((len(numpy.unique(list(struct.CompartmentInfo.Elements.keys()))),len(numpy.unique(list(struct.ProteinInfo.Elements.keys()))))),columns=numpy.unique(list(struct.ProteinInfo.Elements.keys())),index=numpy.unique(list(struct.CompartmentInfo.Elements.keys())))
      for i in numpy.unique(list(struct.CompartmentInfo.Elements.keys())):
           CP_Matrix.loc[i,struct.CompartmentInfo.Elements[i]['associatedProteins']]=1

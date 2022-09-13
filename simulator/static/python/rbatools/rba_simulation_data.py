@@ -1,5 +1,6 @@
 # python 2/3 compatibility
 from __future__ import division, print_function
+
 import sys
 import os.path
 import numpy
@@ -11,18 +12,16 @@ import xml.etree.ElementTree as ET
 import csv
 from sbtab import SBtab
 
-# package imports
 import rba
 from rbatools.data_block import DataBlock
 
 
-class RBA_SimulationData(object):
+class SimulationDataRBA(object):
     """
     Class holding information on simulations with the model.
-
     Attributes
     ----------
-    StructuralInformation : rbatools.rba_ModelStructure RBA_ModelStructure object.
+    StructuralInformation : rbatools.rba_model_structure.ModelStructureRBA object.
          Model description
     SessionName : str
          Name of simulation session
@@ -42,51 +41,17 @@ class RBA_SimulationData(object):
          Simulation information on process-capacity constraints
     EnzymeConstraintData : rbatools.data_block DataBlock object.
          Simulation information on enzyme-efficiency constraints
-
-    Methods
-    ----------
-    __init__(StaticData)
-        Initiates Simulation data object
-
-    fromSimulationResults(Controller, session_name)
-        Imports data from rbatools.RBA_Controler object
-
-    fromJSON(inputString)
-        Imports data from JSON string object
-
-    toXML()
-        Exports xml-file
-
-    toJSON()
-        Returns simulation data as JSON string
-
-    exportSBtab()
-        Exports SBtab files
-
-    exportSBtab_OneFile()
-        Exports simulation data in one single sbtab file
-
-    exportCSV(deleteZerosRows=True)
-        Exports simulation data as csv files
-
-    exportEscherMap(type='fluxes')
-        Exports input file for generation of Escher maps.
-
-    exportProteoMap()
-        Exports input file for the generation of Proteo maps from
-        simulation data.
     """
 
-    def __init__(self, StaticData):
+    def __init__(self, rbaModelStructure):
         """
         Initiates Simulation data object
-
         Parameters
         ----------
-        StaticData : rbatools.RBA_ModelStructure
+        rbaModelStructure : rbatools.rba_model_structure.ModelStructureRBA
         """
 
-        self.StructuralInformation = copy.deepcopy(StaticData)
+        self.StructuralInformation = copy.deepcopy(rbaModelStructure)
 
         self.ProteinData = DataBlock()
         self.ProtoProteinData = DataBlock()
@@ -104,27 +69,26 @@ class RBA_SimulationData(object):
 
         self.SessionName = ''
 
-        self.ProteinData.fromDict({})
-        self.ProtoProteinData.fromDict({})
-        self.ReactionData.fromDict({})
-        self.ExchangeData.fromDict({})
-        self.uniqueReactionData.fromDict({})
-        self.EnzymeData.fromDict({})
-        self.ProcessData.fromDict({})
-        self.MetaboliteConstraintData.fromDict({})
-        self.DensityConstraintData.fromDict({})
-        self.EnzymeConstraintData.fromDict({})
-        self.ProcessConstraintData.fromDict({})
-        self.GeneralRunInfo.fromDict({})
-        self.ObjectiveFunctionInfo.fromDict({})
+        self.ProteinData.from_dict({})
+        self.ProtoProteinData.from_dict({})
+        self.ReactionData.from_dict({})
+        self.ExchangeData.from_dict({})
+        self.uniqueReactionData.from_dict({})
+        self.EnzymeData.from_dict({})
+        self.ProcessData.from_dict({})
+        self.MetaboliteConstraintData.from_dict({})
+        self.DensityConstraintData.from_dict({})
+        self.EnzymeConstraintData.from_dict({})
+        self.ProcessConstraintData.from_dict({})
+        self.GeneralRunInfo.from_dict({})
+        self.ObjectiveFunctionInfo.from_dict({})
 
-    def fromSimulationResults(self, Controller, session_name=''):
+    def from_simulation_results(self, rbaSession, session_name:str=''):
         """
         Imports data from rbatools.RBA_Controler object
-
         Parameters
         ----------
-        Controller : rbatools.RBA_newControler
+        rbaSession : rbatools.RBA_Session
             Defines from which object to extract the data from
         session_name: str
             Defines the name of the session
@@ -132,121 +96,109 @@ class RBA_SimulationData(object):
         """
         self.SessionName = session_name
 
-        self.run_names = list(Controller.Results['ObjectiveValue'])
+        self.run_names = list(rbaSession.Results['ObjectiveValue'])
         ObjDict = {}
-        for run in list(Controller.Results['ObjectiveValue']):
-            ObjDict.update({run: Controller.Results['ObjectiveValue'].loc['ObjectiveValue', run]})
+        for run in list(rbaSession.Results['ObjectiveValue']):
+            ObjDict.update({run: rbaSession.Results['ObjectiveValue'].loc['ObjectiveValue', run]})
 
         SolutionType_Dict = {}
-        for run in list(Controller.Results['SolutionType']):
+        for run in list(rbaSession.Results['SolutionType']):
             SolutionType_Dict.update(
-                {run: Controller.Results['SolutionType'].loc['SolutionType', run]})
+                {run: rbaSession.Results['SolutionType'].loc['SolutionType', run]})
 
         MuDict = {}
-        for run in list(Controller.Results['Mu']):
-            MuDict.update({run: Controller.Results['Mu'].loc['Mu', run]})
+        for run in list(rbaSession.Results['Mu']):
+            MuDict.update({run: rbaSession.Results['Mu'].loc['Mu', run]})
 
-        self.GeneralRunInfo.addEntries({'ProblemType': SolutionType_Dict})
-        self.GeneralRunInfo.addEntries({'Mu': MuDict})
-        self.GeneralRunInfo.addEntries({'Obj_Val': ObjDict})
+        self.GeneralRunInfo.add_entries({'ProblemType': SolutionType_Dict})
+        self.GeneralRunInfo.add_entries({'Mu': MuDict})
+        self.GeneralRunInfo.add_entries({'Obj_Val': ObjDict})
 
-        for var in list(Controller.Results['ObjectiveFunction'].index):
+        for var in list(rbaSession.Results['ObjectiveFunction'].index):
             if var not in self.ObjectiveFunctionInfo.Elements:
                 self.ObjectiveFunctionInfo.Elements.update({var: {}})
-            for run in list(Controller.Results['ObjectiveFunction']):
+            for run in list(rbaSession.Results['ObjectiveFunction']):
                 self.ObjectiveFunctionInfo.Elements[var].update(
-                    {run: Controller.Results['ObjectiveFunction'].loc[var, run]})
+                    {run: rbaSession.Results['ObjectiveFunction'].loc[var, run]})
 
-        for exchange in list(Controller.Results['ExchangeFluxes'].index):
+        for exchange in list(rbaSession.Results['ExchangeFluxes'].index):
             if exchange not in self.ExchangeData.Elements:
                 self.ExchangeData.Elements.update({exchange: {}})
-#            self.ExchangeData.Elements[exchange].update({'ID': exchange})
-            for run in list(Controller.Results['ExchangeFluxes']):
+            for run in list(rbaSession.Results['ExchangeFluxes']):
                 self.ExchangeData.Elements[exchange].update(
-                    {run: Controller.Results['ExchangeFluxes'].loc[exchange, run]})
+                    {run: rbaSession.Results['ExchangeFluxes'].loc[exchange, run]})
 
-        for reaction in list(Controller.Results['Reactions'].index):
+        for reaction in list(rbaSession.Results['Reactions'].index):
             if reaction not in self.ReactionData.Elements:
                 self.ReactionData.Elements.update({reaction: {}})
-#            self.ReactionData.Elements[reaction].update({'ID': reaction})
-            for run in list(Controller.Results['Reactions']):
+            for run in list(rbaSession.Results['Reactions']):
                 self.ReactionData.Elements[reaction].update(
-                    {run: Controller.Results['Reactions'].loc[reaction, run]})
+                    {run: rbaSession.Results['Reactions'].loc[reaction, run]})
 
-        for reaction in list(Controller.Results['uniqueReactions'].index):
+        for reaction in list(rbaSession.Results['uniqueReactions'].index):
             if reaction not in self.uniqueReactionData.Elements:
                 self.uniqueReactionData.Elements.update({reaction: {}})
-#            self.uniqueReactionData.Elements[reaction].update({'ID': reaction})
-            for run in list(Controller.Results['uniqueReactions']):
+            for run in list(rbaSession.Results['uniqueReactions']):
                 self.uniqueReactionData.Elements[reaction].update(
-                    {run: Controller.Results['uniqueReactions'].loc[reaction, run]})
+                    {run: rbaSession.Results['uniqueReactions'].loc[reaction, run]})
 
-        for enzyme in list(Controller.Results['Enzymes'].index):
+        for enzyme in list(rbaSession.Results['Enzymes'].index):
             if enzyme not in self.EnzymeData.Elements:
                 self.EnzymeData.Elements.update({enzyme: {}})
-#            self.EnzymeData.Elements[enzyme].update({'ID': enzyme})
-            for run in list(Controller.Results['Enzymes']):
+            for run in list(rbaSession.Results['Enzymes']):
                 self.EnzymeData.Elements[enzyme].update(
-                    {run: Controller.Results['Enzymes'].loc[enzyme, run]})
+                    {run: rbaSession.Results['Enzymes'].loc[enzyme, run]})
 
-        for process in list(Controller.Results['Processes'].index):
+        for process in list(rbaSession.Results['Processes'].index):
             if process not in self.ProcessData.Elements:
                 self.ProcessData.Elements.update({process: {}})
-#            self.ProcessData.Elements[process].update({'ID': process})
-            for run in list(Controller.Results['Processes']):
+            for run in list(rbaSession.Results['Processes']):
                 self.ProcessData.Elements[process].update(
-                    {run: Controller.Results['Processes'].loc[process, run]})
+                    {run: rbaSession.Results['Processes'].loc[process, run]})
 
-        for protein in list(Controller.Results['Proteins'].index):
+        for protein in list(rbaSession.Results['Proteins'].index):
             if protein not in self.ProteinData.Elements:
                 self.ProteinData.Elements.update({protein: {}})
-#            self.ProteinData.Elements[protein].update({'ID': protein})
-            for run in list(Controller.Results['Proteins']):
+            for run in list(rbaSession.Results['Proteins']):
                 self.ProteinData.Elements[protein].update(
-                    {run: Controller.Results['Proteins'].loc[protein, run]})
+                    {run: rbaSession.Results['Proteins'].loc[protein, run]})
 
-        for protoprotein in list(Controller.Results['ProtoProteins'].index):
+        for protoprotein in list(rbaSession.Results['ProtoProteins'].index):
             if protoprotein not in self.ProtoProteinData.Elements:
                 self.ProtoProteinData.Elements.update({protoprotein: {}})
-#            self.ProtoProteinData.Elements[protoprotein].update({'ID': protoprotein})
-            for run in list(Controller.Results['ProtoProteins']):
+            for run in list(rbaSession.Results['ProtoProteins']):
                 self.ProtoProteinData.Elements[protoprotein].update(
-                    {run: Controller.Results['ProtoProteins'].loc[protoprotein, run]})
+                    {run: rbaSession.Results['ProtoProteins'].loc[protoprotein, run]})
 
-        for constr in list(Controller.Results['Constraints'].index):
+        for constr in list(rbaSession.Results['Constraints'].index):
             if constr in list(self.StructuralInformation.MetaboliteConstraintsInfo.Elements.keys()):
                 if constr not in self.MetaboliteConstraintData.Elements:
                     self.MetaboliteConstraintData.Elements.update({constr: {}})
-#                self.MetaboliteConstraintData.Elements[constr].update({'ID': constr})
-                for run in list(Controller.Results['Constraints']):
+                for run in list(rbaSession.Results['Constraints']):
                     self.MetaboliteConstraintData.Elements[constr].update(
-                        {run: Controller.Results['Constraints'].loc[constr, run]})
+                        {run: rbaSession.Results['Constraints'].loc[constr, run]})
             if constr in list(self.StructuralInformation.DensityConstraintsInfo.Elements.keys()):
                 if constr not in self.DensityConstraintData.Elements:
                     self.DensityConstraintData.Elements.update({constr: {}})
-#                self.DensityConstraintData.Elements[constr].update({'ID': constr})
-                for run in list(Controller.Results['Constraints']):
+                for run in list(rbaSession.Results['Constraints']):
                     self.DensityConstraintData.Elements[constr].update(
-                        {run: Controller.Results['Constraints'].loc[constr, run]})
+                        {run: rbaSession.Results['Constraints'].loc[constr, run]})
             if constr in list(self.StructuralInformation.EnzymeConstraintsInfo.Elements.keys()):
                 if constr not in self.EnzymeConstraintData.Elements:
                     self.EnzymeConstraintData.Elements.update({constr: {}})
-#                self.EnzymeConstraintData.Elements[constr].update({'ID': constr})
-                for run in list(Controller.Results['Constraints']):
+                for run in list(rbaSession.Results['Constraints']):
                     self.EnzymeConstraintData.Elements[constr].update(
-                        {run: Controller.Results['Constraints'].loc[constr, run]})
+                        {run: rbaSession.Results['Constraints'].loc[constr, run]})
             if constr in list(self.StructuralInformation.ProcessConstraintsInfo.Elements.keys()):
                 if constr not in self.ProcessConstraintData.Elements:
                     self.ProcessConstraintData.Elements.update({constr: {}})
-#                self.ProcessConstraintData.Elements[constr].update({'ID': constr})
-                for run in list(Controller.Results['Constraints']):
+                for run in list(rbaSession.Results['Constraints']):
                     self.ProcessConstraintData.Elements[constr].update(
-                        {run: Controller.Results['Constraints'].loc[constr, run]})
+                        {run: rbaSession.Results['Constraints'].loc[constr, run]})
 
-    def fromJSON(self, inputString):
+    def from_json(self, inputString:str):
         """
         Imports data from JSON string object
-
         Parameters
         ----------
         inputString: json-string
@@ -261,169 +213,165 @@ class RBA_SimulationData(object):
         self.DensityConstraintData = DataBlock()
         self.EnzymeConstraintData = DataBlock()
         self.ProcessConstraintData = DataBlock()
-        self.ReactionData.fromDict(Block['ReactionData'])
-        self.ProteinData.fromDict(Block['ProteinData'])
-        self.EnzymeData.fromDict(Block['EnzymeData'])
-        self.ProcessData.fromDict(Block['ProcessData'])
-        self.MetaboliteConstraintData.fromDict(Block['MetaboliteConstraintData'])
-        self.DensityConstraintData.fromDict(Block['DensityConstraintData'])
-        self.EnzymeConstraintData.fromDict(Block['EnzymeConstraintData'])
-        self.ProcessConstraintData.fromDict(Block['ProcessConstraintData'])
+        self.ReactionData.from_dict(Block['ReactionData'])
+        self.ProteinData.from_dict(Block['ProteinData'])
+        self.EnzymeData.from_dict(Block['EnzymeData'])
+        self.ProcessData.from_dict(Block['ProcessData'])
+        self.MetaboliteConstraintData.from_dict(Block['MetaboliteConstraintData'])
+        self.DensityConstraintData.from_dict(Block['DensityConstraintData'])
+        self.EnzymeConstraintData.from_dict(Block['EnzymeConstraintData'])
+        self.ProcessConstraintData.from_dict(Block['ProcessConstraintData'])
 
-    def exportXML(self):
+    def export_xml(self):
         """
         Exports xml-file
         """
 
-        x = htmlStyle(self)
+        x = _html_style(self)
         root = ET.fromstring(jxmlease.emit_xml(x, encoding='utf-8'))
         m = ET.tostring(root, 'utf-8')
         return(m)
 
-    def exportSBtab(self, filename=None, add_links=False):
+    def export_sbtab(self, filename:str="", add_links:bool=False):
         """
         Exports simulation data in one single sbtab file
+
+        Parameters
+        ----------
+        filename : str
+            Name, under which to save SBtab-file
+        add_links : str
+            Wheter to implement entry-format, which allows links between table-elements.
         """
-        GeneralRunInfoTable = self.GeneralRunInfo.toSBtab(
+        GeneralRunInfoTable = self.GeneralRunInfo.to_sbtab(
             table_id='run_information', table_type='QuantityMatrix', table_name='Run information')
         GeneralRunInfoTable.filename = 'RunInfo.tsv'
         GeneralRunInfoTable.change_attribute(
             'Text', 'Growth rates mu and cellular objective values (by default: minimisation of total enzyme concentration).')
-        #GeneralRunInfoTable.unset_attribute('Date')
+        # GeneralRunInfoTable.unset_attribute('Date')
         GeneralRunInfoTable.unset_attribute('SBtabVersion')
 
-        ObjectiveFunctionDataTable = self.ObjectiveFunctionInfo.toSBtab(
+        ObjectiveFunctionDataTable = self.ObjectiveFunctionInfo.to_sbtab(
             table_id='objective_coefficients', table_type='QuantityMatrix', table_name='Linear objective')
         ObjectiveFunctionDataTable.filename = 'ObjectiveFunctionData.tsv'
         ObjectiveFunctionDataTable.change_attribute('Unit', '')
         ObjectiveFunctionDataTable.change_attribute('QuantityType', 'objective_coefficient')
         ObjectiveFunctionDataTable.change_attribute(
             'Text', 'Coefficients in objective function (<0 : maximisation , >0 : minimisation)')
-        #ObjectiveFunctionDataTable.unset_attribute('Date')
+        # ObjectiveFunctionDataTable.unset_attribute('Date')
         ObjectiveFunctionDataTable.unset_attribute('SBtabVersion')
 
-        ReactionDataTable = self.ReactionData.toSBtab(
-            table_id='reaction_flux', table_type='QuantityMatrix', table_name='Reaction fluxes')
+        ReactionDataTable = self.ReactionData.to_sbtab(table_id='reaction_flux', table_type='QuantityMatrix', table_name='Reaction fluxes')
         ReactionDataTable.filename = 'ReactionData.tsv'
         ReactionDataTable.change_attribute('Unit', 'mmol/(h*gDW)')
         ReactionDataTable.change_attribute('QuantityType', 'reaction_flux')
         ReactionDataTable.change_attribute(
             'Text', 'Reaction fluxes obtained in the simulation runs (table columns).')
-        #ReactionDataTable.unset_attribute('Date')
+        # ReactionDataTable.unset_attribute('Date')
         ReactionDataTable.unset_attribute('SBtabVersion')
 
-        EnzymeDataTable = self.EnzymeData.toSBtab(
+        EnzymeDataTable = self.EnzymeData.to_sbtab(
             table_id='enzyme_concentration', table_type='QuantityMatrix', table_name='Enzyme concentrations')
         EnzymeDataTable.filename = 'EnzymeData.tsv'
         EnzymeDataTable.change_attribute('Unit', 'mmol/gDW')
         EnzymeDataTable.change_attribute('QuantityType', 'enzyme_concentration')
         EnzymeDataTable.change_attribute(
             'Text', 'Enzyme concentrations obtained in the simulation runs (table columns).')
-        #EnzymeDataTable.unset_attribute('Date')
+        # EnzymeDataTable.unset_attribute('Date')
         EnzymeDataTable.unset_attribute('SBtabVersion')
 
-        ProcessDataTable = self.ProcessData.toSBtab(
+        ProcessDataTable = self.ProcessData.to_sbtab(
             table_id='machine_concentration', table_type='QuantityMatrix', table_name='Machine concentrations')
         ProcessDataTable.filename = 'ProcessData.tsv'
         ProcessDataTable.change_attribute('Unit', 'mmol/gDW')
         ProcessDataTable.change_attribute('QuantityType', 'machine_concentration')
         ProcessDataTable.change_attribute(
             'Text', 'Macromolecular machine concentrations obtained in the simulation runs (table columns).')
-        #ProcessDataTable.unset_attribute('Date')
+        # ProcessDataTable.unset_attribute('Date')
         ProcessDataTable.unset_attribute('SBtabVersion')
 
-        ProteinDataTable = self.ProteinData.toSBtab(
+        ProteinDataTable = self.ProteinData.to_sbtab(
             table_id='protein_concentration', table_type='QuantityMatrix', table_name='Protein concentrations')
         ProteinDataTable.filename = 'ProteinData.tsv'
         ProteinDataTable.change_attribute('Unit', 'mmol/gDW')
         ProteinDataTable.change_attribute('QuantityType', 'protein_concentration')
         ProteinDataTable.change_attribute(
             'Text', 'Protein concentrations obtained in the simulation runs (table columns).')
-        #ProteinDataTable.unset_attribute('Date')
+        # ProteinDataTable.unset_attribute('Date')
         ProteinDataTable.unset_attribute('SBtabVersion')
 
-        MetaboliteConstraintDataTable = self.MetaboliteConstraintData.toSBtab(
+        MetaboliteConstraintDataTable = self.MetaboliteConstraintData.to_sbtab(
             table_id='metabolite_mass_balance_dual', table_type='QuantityMatrix', table_name='Metabolite mass-balance dual values')
         MetaboliteConstraintDataTable.filename = 'MetaboliteConstraintData.tsv'
         MetaboliteConstraintDataTable.change_attribute('Unit', '')
         MetaboliteConstraintDataTable.change_attribute('QuantityType', 'lagrange_multiplier')
         MetaboliteConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the metabolite mass-balance constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        #MetaboliteConstraintDataTable.unset_attribute('Date')
+        # MetaboliteConstraintDataTable.unset_attribute('Date')
         MetaboliteConstraintDataTable.unset_attribute('SBtabVersion')
 
-        DensityConstraintDataTable = self.DensityConstraintData.toSBtab(
+        DensityConstraintDataTable = self.DensityConstraintData.to_sbtab(
             table_id='density_constraint_dual', table_type='QuantityMatrix', table_name='Compartment density dual values')
         DensityConstraintDataTable.filename = 'DensityConstraintData.tsv'
         DensityConstraintDataTable.change_attribute('QuantityType', 'lagrange_multiplier')
         DensityConstraintDataTable.change_attribute('Unit', '')
         DensityConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the density constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        #DensityConstraintDataTable.unset_attribute('Date')
+        # DensityConstraintDataTable.unset_attribute('Date')
         DensityConstraintDataTable.unset_attribute('SBtabVersion')
 
-        EnzymeConstraintDataTable = self.EnzymeConstraintData.toSBtab(
-            table_id='enzyme_capacity_dual', table_type='QuantityMatrix', table_name='Enzyme capacity dual values')
+        EnzymeConstraintDataTable = self.EnzymeConstraintData.to_sbtab(table_id='enzyme_capacity_dual', table_type='QuantityMatrix', table_name='Enzyme capacity dual values')
         EnzymeConstraintDataTable.filename = 'EnzymeConstraintData.tsv'
         EnzymeConstraintDataTable.change_attribute('QuantityType', 'lagrange_multiplier')
         EnzymeConstraintDataTable.change_attribute('Unit', '')
         EnzymeConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the enzyme-capacity constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        #EnzymeConstraintDataTable.unset_attribute('Date')
+        # EnzymeConstraintDataTable.unset_attribute('Date')
         EnzymeConstraintDataTable.unset_attribute('SBtabVersion')
 
-        ProcessConstraintDataTable = self.ProcessConstraintData.toSBtab(
+        ProcessConstraintDataTable = self.ProcessConstraintData.to_sbtab(
             table_id='machine_capacity_dual', table_type='QuantityMatrix', table_name='Machine capacity dual values')
         ProcessConstraintDataTable.filename = 'ProcessConstraintData.tsv'
         ProcessConstraintDataTable.change_attribute('Unit', '')
         ProcessConstraintDataTable.change_attribute('QuantityType', 'lagrange_multiplier')
         ProcessConstraintDataTable.change_attribute(
             'Text', 'Shadow prices of the machine-capacity constraints obtained in the simulation runs (table columns). The measurement units of shadow prices are given by the measurement unit of objective function, divided by the measurement units of the respective constraints')
-        #ProcessConstraintDataTable.unset_attribute('Date')
+        # ProcessConstraintDataTable.unset_attribute('Date')
         ProcessConstraintDataTable.unset_attribute('SBtabVersion')
 
-        if filename is not None:
+        if filename !="":
             filename_SBtab = filename
         else:
             filename_SBtab = 'RBA_results'
 
         if add_links:
-            ReactionDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Reaction/'+entry+'!)')
-                                                                     for entry in list(ReactionDataTable.to_data_frame()['ID'])], position=1)
+            ReactionDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Reaction/'+entry+'!)') for entry in list(ReactionDataTable.to_data_frame()['VariableID'])], position=1)
             ProcessDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Process/'+entry+'!)')
-                                                                    for entry in list(ProcessDataTable.to_data_frame()['ID'])], position=1)
+                                                                    for entry in list(ProcessDataTable.to_data_frame()['VariableID'])], position=1)
             EnzymeDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Enzyme/'+entry+'!)')
-                                                                   for entry in list(EnzymeDataTable.to_data_frame()['ID'])], position=1)
+                                                                   for entry in list(EnzymeDataTable.to_data_frame()['VariableID'])], position=1)
             ProteinDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Protein/'+entry+'!)')
-                                                                    for entry in list(ProteinDataTable.to_data_frame()['ID'])], position=1)
+                                                                    for entry in list(ProteinDataTable.to_data_frame()['VariableID'])], position=1)
             MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Compound/'+entry+'!)') for entry in list(MetaboliteConstraintDataTable.to_data_frame()['ID'])], position=1)
+                '(!'+'Compound/'+entry+'!)') for entry in list(MetaboliteConstraintDataTable.to_data_frame()['VariableID'])], position=1)
             DensityConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Compartment/'+entry+'!)') for entry in list(DensityConstraintDataTable.to_data_frame()['ID'])], position=1)
+                '(!'+'Compartment/'+entry+'!)') for entry in list(DensityConstraintDataTable.to_data_frame()['VariableID'])], position=1)
             ProcessConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Process/'+entry+'!)') for entry in list(ProcessConstraintDataTable.to_data_frame()['ID'])], position=1)
+                '(!'+'Process/'+entry+'!)') for entry in list(ProcessConstraintDataTable.to_data_frame()['VariableID'])], position=1)
             EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Enzyme/'+entry+'!)') for entry in list(EnzymeConstraintDataTable.to_data_frame()['ID'])], position=1)
+                '(!'+'Enzyme/'+entry+'!)') for entry in list(EnzymeConstraintDataTable.to_data_frame()['VariableID'])], position=1)
 
             filename_SBtab += '_HTML'
 
         else:
-            ReactionDataTable.add_column(
-                column_list=['!ElementID']+list(ReactionDataTable.to_data_frame()['ID']), position=1)
-            ProcessDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessDataTable.to_data_frame()['ID']), position=1)
-            EnzymeDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame()['ID']), position=1)
-            ProteinDataTable.add_column(
-                column_list=['!ElementID']+list(ProteinDataTable.to_data_frame()['ID']), position=1)
-            MetaboliteConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame()['ID']), position=1)
-            DensityConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame()['ID']), position=1)
-            ProcessConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame()['ID']), position=1)
-            EnzymeConstraintDataTable.add_column(
-                column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame()['ID']), position=1)
+            ReactionDataTable.add_column(column_list=['!ElementID']+list(ReactionDataTable.to_data_frame()['VariableID']), position=1)
+            ProcessDataTable.add_column(column_list=['!ElementID']+list(ProcessDataTable.to_data_frame()['VariableID']), position=1)
+            EnzymeDataTable.add_column(column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame()['VariableID']), position=1)
+            ProteinDataTable.add_column(column_list=['!ElementID']+list(ProteinDataTable.to_data_frame()['VariableID']), position=1)
+            MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame()['VariableID']), position=1)
+            DensityConstraintDataTable.add_column(column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame()['VariableID']), position=1)
+            ProcessConstraintDataTable.add_column(column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame()['VariableID']), position=1)
+            EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame()['VariableID']), position=1)
 
         ReactionDataTable.remove_column(position=2)
         ProcessDataTable.remove_column(position=2)
@@ -434,31 +382,30 @@ class RBA_SimulationData(object):
         ProcessConstraintDataTable.remove_column(position=2)
         EnzymeConstraintDataTable.remove_column(position=2)
 
-        self.Out = SBtab.SBtabDocument(name='rbatools_SimulationData_withLinks',
-                                  sbtab_init=None, filename=str(filename_SBtab+'.tsv'))
-        self.Out.add_sbtab(GeneralRunInfoTable)
-        self.Out.add_sbtab(ObjectiveFunctionDataTable)
-        self.Out.add_sbtab(ReactionDataTable)
-        self.Out.add_sbtab(EnzymeDataTable)
-        self.Out.add_sbtab(ProcessDataTable)
-        self.Out.add_sbtab(ProteinDataTable)
-        self.Out.add_sbtab(MetaboliteConstraintDataTable)
-        self.Out.add_sbtab(DensityConstraintDataTable)
-        self.Out.add_sbtab(EnzymeConstraintDataTable)
-        self.Out.add_sbtab(ProcessConstraintDataTable)
+        self.sbtab_doc = SBtab.SBtabDocument(name='rbatools_SimulationData_withLinks',
+                                       sbtab_init=None, filename=str(filename_SBtab+'.tsv'))
+        self.sbtab_doc.add_sbtab(GeneralRunInfoTable)
+        self.sbtab_doc.add_sbtab(ObjectiveFunctionDataTable)
+        self.sbtab_doc.add_sbtab(ReactionDataTable)
+        self.sbtab_doc.add_sbtab(EnzymeDataTable)
+        self.sbtab_doc.add_sbtab(ProcessDataTable)
+        self.sbtab_doc.add_sbtab(ProteinDataTable)
+        self.sbtab_doc.add_sbtab(MetaboliteConstraintDataTable)
+        self.sbtab_doc.add_sbtab(DensityConstraintDataTable)
+        self.sbtab_doc.add_sbtab(EnzymeConstraintDataTable)
+        self.sbtab_doc.add_sbtab(ProcessConstraintDataTable)
 
-        self.Out.change_attribute('DocumentName', 'RBA data')
-        self.Out.name = filename
-        self.Out.change_attribute('DocumentType', 'rba-simulation-data')
-        self.Out.write()
-    
-    def getSBtabDoc(self):
-        return self.Out
+        self.sbtab_doc.change_attribute('DocumentName', 'RBA data')
+        self.sbtab_doc.name = filename
+        self.sbtab_doc.change_attribute('DocumentType', 'rba-simulation-data')
+        self.sbtab_doc.write()
 
-    def exportJSON(self):
+    def get_sbtab_doc(self):
+        return(self.sbtab_doc)
+
+    def export_json(self):
         """
         Returns simulation data as JSON string
-
         Returns
         -------
         JSON string
@@ -474,10 +421,9 @@ class RBA_SimulationData(object):
                  'ProcessConstraintData': self.ProcessConstraintData.Elements}
         return(json.dumps(Block))
 
-    def exportCSV(self, deleteZerosRows=True):
+    def export_csv(self, deleteZerosRows:bool=True):
         """
         Exports simulation data as csv files
-
         Parameters
         ----------
         deleteZerosRows: bool
@@ -524,18 +470,19 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.GeneralRunInfo.Elements.keys())
-            general_info_csv += ','.join(['']+list(self.GeneralRunInfo.Elements[IDs[0]].keys()))+'\n'
+            general_info_csv += ','.join([''] +
+                                         list(self.GeneralRunInfo.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.GeneralRunInfo.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.GeneralRunInfo.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        general_info_csv += ','.join(map(str,row))+'\n'
+                        general_info_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    general_info_csv += ','.join(map(str,row))+'\n'
+                    general_info_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['GeneralInfo.csv'] = general_info_csv
@@ -555,11 +502,11 @@ class RBA_SimulationData(object):
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        reaction_data_csv += ','.join(map(str,row))+'\n'
+                        reaction_data_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    reaction_data_csv += ','.join(map(str,row))+'\n'
+                    reaction_data_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['ReactionData.csv'] = reaction_data_csv
@@ -579,11 +526,11 @@ class RBA_SimulationData(object):
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        enzyme_data_csv += ','.join(map(str,row))+'\n'
+                        enzyme_data_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    enzyme_data_csv += ','.join(map(str,row))+'\n'
+                    enzyme_data_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['EnzymeData.csv'] = enzyme_data_csv
@@ -603,11 +550,11 @@ class RBA_SimulationData(object):
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        protein_data_csv += ','.join(map(str,row))+'\n'
+                        protein_data_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    protein_data_csv += ','.join(map(str,row))+'\n'
+                    protein_data_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['ProteinData.csv'] = protein_data_csv
@@ -620,18 +567,19 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.ProtoProteinData.Elements.keys())
-            proto_data_csv += ','.join(['']+list(self.ProtoProteinData.Elements[IDs[0]].keys()))+'\n'
+            proto_data_csv += ','.join([''] +
+                                       list(self.ProtoProteinData.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.ProtoProteinData.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.ProtoProteinData.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        proto_data_csv += ','.join(map(str,row))+'\n'
+                        proto_data_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    proto_data_csv += ','.join(map(str,row))+'\n'
+                    proto_data_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['ProtoData.csv'] = proto_data_csv
@@ -651,11 +599,11 @@ class RBA_SimulationData(object):
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        process_data_csv += ','.join(map(str,row))+'\n'
+                        process_data_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    process_data_csv += ','.join(map(str,row))+'\n'
+                    process_data_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['ProcessData.csv'] = process_data_csv
@@ -668,18 +616,19 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.MetaboliteConstraintData.Elements.keys())
-            metabolite_constraint_csv += ','.join(['']+list(self.MetaboliteConstraintData.Elements[IDs[0]].keys()))+'\n'
+            metabolite_constraint_csv += ','.join(
+                ['']+list(self.MetaboliteConstraintData.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.MetaboliteConstraintData.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.MetaboliteConstraintData.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        metabolite_constraint_csv += ','.join(map(str,row))+'\n'
+                        metabolite_constraint_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    metabolite_constraint_csv += ','.join(map(str,row))+'\n'
+                    metabolite_constraint_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['MetaboliteConstraint.csv'] = metabolite_constraint_csv
@@ -692,18 +641,19 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.DensityConstraintData.Elements.keys())
-            density_constraint_csv += ','.join(['']+list(self.DensityConstraintData.Elements[IDs[0]].keys()))+'\n'
+            density_constraint_csv += ','.join([''] +
+                                               list(self.DensityConstraintData.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.DensityConstraintData.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.DensityConstraintData.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        density_constraint_csv += ','.join(map(str,row))+'\n'
+                        density_constraint_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    density_constraint_csv += ','.join(map(str,row))+'\n'
+                    density_constraint_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['DensityConstraint.csv'] = density_constraint_csv
@@ -716,18 +666,19 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.ProcessConstraintData.Elements.keys())
-            process_constraint_csv += ','.join(['']+list(self.ProcessConstraintData.Elements[IDs[0]].keys()))+'\n'
+            process_constraint_csv += ','.join([''] +
+                                               list(self.ProcessConstraintData.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.ProcessConstraintData.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.ProcessConstraintData.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        process_constraint_csv += ','.join(map(str,row))+'\n'
+                        process_constraint_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    process_constraint_csv += ','.join(map(str,row))+'\n'
+                    process_constraint_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['ProcessConstraint.csv'] = process_constraint_csv
@@ -740,31 +691,30 @@ class RBA_SimulationData(object):
         with open(filename, "w", newline='') as fp:
             wr = csv.writer(fp, dialect='excel')
             IDs = list(self.EnzymeConstraintData.Elements.keys())
-            enzyme_constraint_csv += ','.join(['']+list(self.EnzymeConstraintData.Elements[IDs[0]].keys()))+'\n'
+            enzyme_constraint_csv += ','.join([''] +
+                                              list(self.EnzymeConstraintData.Elements[IDs[0]].keys()))+'\n'
             wr.writerow([None]+list(self.EnzymeConstraintData.Elements[IDs[0]].keys()))
             for i in list(IDs):
                 valuerow = list(self.EnzymeConstraintData.Elements[i].values())
                 if deleteZerosRows:
                     if not all(v == 0 for v in valuerow):
                         row = [i]+valuerow
-                        enzyme_constraint_csv += ','.join(map(str,row))+'\n'
+                        enzyme_constraint_csv += ','.join(map(str, row))+'\n'
                         wr.writerow(row)
                 else:
                     row = [i]+valuerow
-                    enzyme_constraint_csv += ','.join(map(str,row))+'\n'
+                    enzyme_constraint_csv += ','.join(map(str, row))+'\n'
                     wr.writerow(row)
         fp.close()
         self.csvs['EnzymeConstraint.csv'] = enzyme_constraint_csv
 
-    def getCSVFiles(self):
-        return self.csvs
+    def get_csv_files(self):
+        return(self.csvs)
 
-    def exportEscherMap(self, etype='fluxes'):
+    def export_escher_map(self, type:str='fluxes'):
         """
         Exports input file for generation of Escher maps.
-
         https://escher.github.io
-
         If argument type is 'fluxes' the method return an Eschermap for the
         visualisation of reaction-fluxes
         If argument type is 'investment' the method return an Eschermap for the
@@ -774,10 +724,11 @@ class RBA_SimulationData(object):
         Parameters
         ----------
         type: str ('fluxes' or 'investment')
-        Default: 'fluxes'
+            Default: 'fluxes'
         """
-        if etype is 'fluxes':
-            IDs = [id[2:] for id in list(self.uniqueReactionData.Elements.keys())]
+        if type is 'fluxes':
+
+            IDs = [self.StructuralInformation.ReactionInfo.Elements[id]["OtherIDs"]["ProtoID"] for id in list(self.uniqueReactionData.Elements.keys())]
             for run in self.uniqueReactionData.Elements[list(self.uniqueReactionData.Elements.keys())[0]]:
                 Values = [rxn[run] for rxn in list(self.uniqueReactionData.Elements.values())]
                 intermediateReactionFluxes = dict(zip(IDs, Values))
@@ -787,17 +738,17 @@ class RBA_SimulationData(object):
                     filename = self.SessionName+'_RBA_Eschermap_fluxes_'+run+'.json'
                 else:
                     filename = 'RBA_Eschermap_fluxes_'+run+'.json'
-                self.eschermap = json.dumps(ReactionFluxes, indent=4)                    
+                self.eschermap = json.dumps(ReactionFluxes, indent=4)
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionFluxes, indent=4))
-        if etype is 'investment':
+        if type is 'investment':
             IDs = list(self.uniqueReactionData.Elements.keys())
             for run in self.uniqueReactionData.Elements[list(self.uniqueReactionData.Elements.keys())[0]]:
                 Fluxes = [rxn[run] for rxn in list(self.uniqueReactionData.Elements.values())]
                 Intermediate = zip(IDs, Fluxes)
                 RxnsToTest = [i[0] for i in Intermediate if i[1] != 0.]
-                Values = [determineInvestment(self, rxn, run) for rxn in RxnsToTest]
-                ReactionInvestments = {id[2:]: val for id,
+                Values = [_determine_investment(self, rxn, run) for rxn in RxnsToTest]
+                ReactionInvestments = {self.StructuralInformation.ReactionInfo.Elements[id]["OtherIDs"]["ProtoID"]: val for id,
                                        val in dict(zip(RxnsToTest, Values)).items()}
                 if len(self.SessionName) > 0:
                     filename = self.SessionName+'_RBA_Eschermap_investment_'+run+'.json'
@@ -806,18 +757,24 @@ class RBA_SimulationData(object):
                 self.eschermap = json.dumps(ReactionInvestments, indent=4)
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionInvestments, indent=4))
-    
-    def getEscherMap(self):
-        return self.eschermap
 
-    def exportProteoMap(self, etype='proto'):
+    def get_escher_map(self):
+        return(self.eschermap)
+
+    def export_proteo_map(self, type:str='proto'):
         """
         Exports input file for the generation of Proteo maps from
         simulation data.
-
+        If argument type is 'proto' the method exports a proteo map with location independent protein IDs.
+        If argument type is 'isoforms' the method exports a proteo map with location specific protein IDs.
         https://www.proteomaps.net
+
+        Parameters
+        ----------
+        type: str ('proto' or 'isoforms')
+            Default: 'proto'
         """
-        if etype == 'isoforms':
+        if type == 'isoforms':
             IDs = list(self.ProteinData.Elements.keys())
             for run in self.ProteinData.Elements[list(self.ProteinData.Elements.keys())[0]]:
                 Values = [protein[run] for protein in list(self.ProteinData.Elements.values())]
@@ -828,10 +785,11 @@ class RBA_SimulationData(object):
                     filename = self.SessionName+'_RBA_Proteomap_'+run+'.tsv'
                 else:
                     filename = 'RBA_Proteomap_'+run+'.tsv'
-                self.proteomap = '\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]) 
+                self.proteomap = '\n'.join(['{}\t{}'.format(p, l)
+                                            for p, l in ProteinLevels.items()])
                 with open(filename, 'w') as fout:
                     fout.write('\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]))
-        if etype == 'proto':
+        if type == 'proto':
             IDs = list(self.ProtoProteinData.Elements.keys())
             for run in self.ProtoProteinData.Elements[list(self.ProtoProteinData.Elements.keys())[0]]:
                 Values = [protein[run] for protein in list(self.ProtoProteinData.Elements.values())]
@@ -842,14 +800,16 @@ class RBA_SimulationData(object):
                     filename = self.SessionName+'_RBA_Proteomap_'+run+'.tsv'
                 else:
                     filename = 'RBA_Proteomap_'+run+'.tsv'
-                self.proteomap = '\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()])
+                self.proteomap = '\n'.join(['{}\t{}'.format(p, l)
+                                            for p, l in ProteinLevels.items()])
                 with open(filename, 'w') as fout:
                     fout.write('\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]))
 
-    def getProteoMap(self):
-        return self.proteomap
+    def get_proteo_map(self):
+        return(self.proteomap)
 
-def htmlStyle(structOriginal):
+
+def _html_style(structOriginal):
     struct = copy.deepcopy(structOriginal)
     for i in list(struct.ReactionData.Elements.keys()):
         struct.ReactionData.Elements['ID_' + i + '_Data'] = struct.ReactionData.Elements.pop(i)
@@ -871,182 +831,18 @@ def htmlStyle(structOriginal):
     for i in list(struct.ProcessConstraintData.Elements.keys()):
         struct.ProcessConstraintData.Elements['ID_' + i +
                                               '_Data'] = struct.ProcessConstraintData.Elements.pop(i)
-    Block = {'RunInfo': struct.GeneralRunInfo.JSONize(),
-             'ReactionData': struct.ReactionData.JSONize(),
-             'ProteinData': struct.ProteinData.JSONize(),
-             'EnzymeData': struct.EnzymeData.JSONize(),
-             'ProcessData': struct.ProcessData.JSONize(),
-             'MetaboliteConstraintData': struct.MetaboliteConstraintData.JSONize(),
-             'DensityConstraintData': struct.DensityConstraintData.JSONize(),
-             'EnzymeConstraintData': struct.EnzymeConstraintData.JSONize(),
-             'ProcessConstraintData': struct.ProcessConstraintData.JSONize()}
+    Block = {'RunInfo': struct.GeneralRunInfo.jsonize(),
+             'ReactionData': struct.ReactionData.jsonize(),
+             'ProteinData': struct.ProteinData.jsonize(),
+             'EnzymeData': struct.EnzymeData.jsonize(),
+             'ProcessData': struct.ProcessData.jsonize(),
+             'MetaboliteConstraintData': struct.MetaboliteConstraintData.jsonize(),
+             'DensityConstraintData': struct.DensityConstraintData.jsonize(),
+             'EnzymeConstraintData': struct.EnzymeConstraintData.jsonize(),
+             'ProcessConstraintData': struct.ProcessConstraintData.jsonize()}
     return({'RBA_ModelData': {'SimulationData': Block}})
 
-
-def htmlStyleAddingCol(structOriginal):
-    struct = copy.deepcopy(structOriginal)
-    for i in list(struct.ReactionData.Elements.keys()):
-        count = 0
-        for j in list(struct.ReactionData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ReactionData.Elements[i]['C' +
-                                                str(count)+'___'+j] = struct.ReactionData.Elements[i].pop(j)
-        struct.ReactionData.Elements['ID_' + i + '_Data'] = struct.ReactionData.Elements.pop(i)
-    for i in list(struct.EnzymeData.Elements.keys()):
-        count = 0
-        for j in list(struct.EnzymeData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.EnzymeData.Elements[i]['C' +
-                                              str(count)+'___'+j] = struct.EnzymeData.Elements[i].pop(j)
-        struct.EnzymeData.Elements['ID_' + i + '_Data'] = struct.EnzymeData.Elements.pop(i)
-    for i in list(struct.ProcessData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProcessData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProcessData.Elements[i]['C' +
-                                               str(count)+'___'+j] = struct.ProcessData.Elements[i].pop(j)
-        struct.ProcessData.Elements['ID_' + i + '_Data'] = struct.ProcessData.Elements.pop(i)
-    for i in list(struct.ProteinData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProteinData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProteinData.Elements[i]['C' +
-                                               str(count)+'___'+j] = struct.ProteinData.Elements[i].pop(j)
-        struct.ProteinData.Elements['ID_' + i + '_Data'] = struct.ProteinData.Elements.pop(i)
-    for i in list(struct.MetaboliteConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.MetaboliteConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.MetaboliteConstraintData.Elements[i]['C'+str(
-                    count)+'___'+j] = struct.MetaboliteConstraintData.Elements[i].pop(j)
-        struct.MetaboliteConstraintData.Elements['ID_' + i +
-                                                 '_Data'] = struct.MetaboliteConstraintData.Elements.pop(i)
-    for i in list(struct.DensityConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.DensityConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.DensityConstraintData.Elements[i]['C' +
-                                                         str(count)+'___'+j] = struct.DensityConstraintData.Elements[i].pop(j)
-        struct.DensityConstraintData.Elements['ID_' + i +
-                                              '_Data'] = struct.DensityConstraintData.Elements.pop(i)
-    for i in list(struct.EnzymeConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.EnzymeConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.EnzymeConstraintData.Elements[i]['C' +
-                                                        str(count)+'___'+j] = struct.EnzymeConstraintData.Elements[i].pop(j)
-        struct.EnzymeConstraintData.Elements['ID_' + i +
-                                             '_Data'] = struct.EnzymeConstraintData.Elements.pop(i)
-    for i in list(struct.ProcessConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProcessConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProcessConstraintData.Elements[i]['C' +
-                                                         str(count)+'___'+j] = struct.ProcessConstraintData.Elements[i].pop(j)
-        struct.ProcessConstraintData.Elements['ID_' + i +
-                                              '_Data'] = struct.ProcessConstraintData.Elements.pop(i)
-    Block = {'RunInfo': struct.GeneralRunInfo.JSONize(),
-             'ReactionData': struct.ReactionData.JSONize(),
-             'ProteinData': struct.ProteinData.JSONize(),
-             'EnzymeData': struct.EnzymeData.JSONize(),
-             'ProcessData': struct.ProcessData.JSONize(),
-             'MetaboliteConstraintData': struct.MetaboliteConstraintData.JSONize(),
-             'DensityConstraintData': struct.DensityConstraintData.JSONize(),
-             'EnzymeConstraintData': struct.EnzymeConstraintData.JSONize(),
-             'ProcessConstraintData': struct.ProcessConstraintData.JSONize()}
-    return({'RBA_ModelData': {'SimulationData': Block}})
-
-
-def htmlStyleReplacingCol(structOriginal):
-    struct = copy.deepcopy(structOriginal)
-    for i in list(struct.ReactionData.Elements.keys()):
-        count = 0
-        for j in list(struct.ReactionData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ReactionData.Elements[i]['C' +
-                                                str(count)] = struct.ReactionData.Elements[i].pop(j)
-        struct.ReactionData.Elements['ID_' + i + '_Data'] = struct.ReactionData.Elements.pop(i)
-    for i in list(struct.EnzymeData.Elements.keys()):
-        count = 0
-        for j in list(struct.EnzymeData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.EnzymeData.Elements[i]['C'+str(count)] = struct.EnzymeData.Elements[i].pop(j)
-        struct.EnzymeData.Elements['ID_' + i + '_Data'] = struct.EnzymeData.Elements.pop(i)
-    for i in list(struct.ProcessData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProcessData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProcessData.Elements[i]['C' +
-                                               str(count)] = struct.ProcessData.Elements[i].pop(j)
-        struct.ProcessData.Elements['ID_' + i + '_Data'] = struct.ProcessData.Elements.pop(i)
-    for i in list(struct.ProteinData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProteinData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProteinData.Elements[i]['C' +
-                                               str(count)] = struct.ProteinData.Elements[i].pop(j)
-        struct.ProteinData.Elements['ID_' + i + '_Data'] = struct.ProteinData.Elements.pop(i)
-    for i in list(struct.MetaboliteConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.MetaboliteConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.MetaboliteConstraintData.Elements[i]['C' +
-                                                            str(count)] = struct.MetaboliteConstraintData.Elements[i].pop(j)
-        struct.MetaboliteConstraintData.Elements['ID_' + i +
-                                                 '_Data'] = struct.MetaboliteConstraintData.Elements.pop(i)
-    for i in list(struct.DensityConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.DensityConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.DensityConstraintData.Elements[i]['C' +
-                                                         str(count)] = struct.DensityConstraintData.Elements[i].pop(j)
-        struct.DensityConstraintData.Elements['ID_' + i +
-                                              '_Data'] = struct.DensityConstraintData.Elements.pop(i)
-    for i in list(struct.EnzymeConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.EnzymeConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.EnzymeConstraintData.Elements[i]['C' +
-                                                        str(count)] = struct.EnzymeConstraintData.Elements[i].pop(j)
-        struct.EnzymeConstraintData.Elements['ID_' + i +
-                                             '_Data'] = struct.EnzymeConstraintData.Elements.pop(i)
-    for i in list(struct.ProcessConstraintData.Elements.keys()):
-        count = 0
-        for j in list(struct.ProcessConstraintData.Elements[i].keys()):
-            if j is not 'correspondingElement':
-                count += 1
-                struct.ProcessConstraintData.Elements[i]['C' +
-                                                         str(count)] = struct.ProcessConstraintData.Elements[i].pop(j)
-        struct.ProcessConstraintData.Elements['ID_' + i +
-                                              '_Data'] = struct.ProcessConstraintData.Elements.pop(i)
-    Block = {'RunInfo': struct.GeneralRunInfo.JSONize(),
-             'ReactionData': struct.ReactionData.JSONize(),
-             'ProteinData': struct.ProteinData.JSONize(),
-             'EnzymeData': struct.EnzymeData.JSONize(),
-             'ProcessData': struct.ProcessData.JSONize(),
-             'MetaboliteConstraintData': struct.MetaboliteConstraintData.JSONize(),
-             'DensityConstraintData': struct.DensityConstraintData.JSONize(),
-             'EnzymeConstraintData': struct.EnzymeConstraintData.JSONize(),
-             'ProcessConstraintData': struct.ProcessConstraintData.JSONize()}
-    return({'RBA_ModelData': {'SimulationData': Block}})
-
-
-def determineInvestment(SimData, rxn, run):
+def _determine_investment(SimData, rxn, run):
     investment = 0
     isoReactions = SimData.StructuralInformation.ReactionInfo.Elements[rxn]['Twins']+[rxn]
     enzymesToCheck = [SimData.StructuralInformation.ReactionInfo.Elements[r]['Enzyme'] for r in isoReactions if len(

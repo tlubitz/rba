@@ -11,3 +11,4 @@ jxmlease>=1.0.3
 sbtab>=1.0.4
 matplotlib>=3.0.3
 whitenoise>=5.2.0
+swiglpk

@@ -12,10 +12,10 @@ from scipy.sparse import lil_matrix, hstack
 
 # package imports
 from rba.core.constraint_blocks import ConstraintBlocks
-from rbatools.element_block import ElementBlock
+from rbatools.information_block import InformationBlock
 
 
-class MetaboliteBlock(ElementBlock):
+class MetaboliteBlock(InformationBlock):
     """
     Class holding information on the metabolites in the model.
 
@@ -31,9 +31,11 @@ class MetaboliteBlock(ElementBlock):
           'boundary' : Boundary metabolite (type boolean)
           'Type' :  Type of metabolite (internal exernal or biomass-precursor) (type str)
           'Compartment' : Location of meatbolite (type str)
+          'AssociatedTarget' :  Wheter metabolite represents a target
+          'MassBalance_Constraint' : Id of associated mass-balance constraint.
     """
 
-    def fromFiles(self, model, Info, MetaboliteAnnotations, sbml):
+    def from_files(self, model, Info, MetaboliteAnnotations, sbml):
         """
         Derive reaction-info from RBA-model.
 
@@ -48,9 +50,9 @@ class MetaboliteBlock(ElementBlock):
 
         """
         blocks = ConstraintBlocks(model)
-        full_S = build_S(blocks.metabolism.external +
+        full_S = _build_stoichiometric_matrix(blocks.metabolism.external +
                          blocks.metabolism.internal, model.metabolism.reactions).toarray()
-        targetMetabolites = findTargetMetabolites(model)
+        targetMetabolites = _find_target_metabolites(model)
         self.Elements = {}
         index = 0
         http = urllib3.PoolManager()
@@ -63,37 +65,40 @@ class MetaboliteBlock(ElementBlock):
             index += 1
             IDdict = {}
             speciesname = ' '
-            speciescompartment = i[-1]
+            speciescompartment = i.rsplit('_')[-1]
             if type(sbml) is not str:
                 if type(sbml.model) is libsbml.Model:
                     if i in sbmlIDMap:
-                        IDdict.update(getMetaboliteAnnotationsFromSBML(sbmlIDMap.index(i), sbml))
+                        IDdict.update(_get_metabolite_annotations_from_sbml(sbmlIDMap.index(i), sbml))
                         speciesname = sbml.model.species[sbmlIDMap.index(i)].name
                         speciescompartment = sbml.model.species[sbmlIDMap.index(i)].compartment
             if type(MetaboliteAnnotations) is pandas.core.frame.DataFrame:
-                IDdict.update(readMetaboliteAnnotations(i, MetaboliteAnnotations))
+                IDdict.update(_read_metabolite_annotations(i, MetaboliteAnnotations))
             if i in blocks.metabolism.external:
                 self.Elements[i] = {'ID': i,
-                                    #                                      'Name': findMetInfo(i[2:],metabolitesBiGG) ,
                                     'Name': speciesname,
                                     'OtherIDs': IDdict,
                                     'index': index,
-                                    'ReactionsInvolvedWith': associatedReactions(i, blocks, full_S),
+                                    'ReactionsInvolvedWith': _get_associated_reactions(i, blocks, full_S),
                                     'boundary': model.metabolism.species._elements[m].boundary_condition,
                                     'Type': 'external',
-                                    'Compartment': speciescompartment}
+                                    'Compartment': speciescompartment,
+                                    'AssociatedTarget':'',
+                                    'MassBalance_Constraint':''}
             elif i in blocks.metabolism.internal:
                 typ = 'internal'
-                if checkForTarget(i, targetMetabolites):
+                if _check_for_target(i, targetMetabolites):
                     typ = 'precursor'
                 self.Elements[i] = {'ID': i,
                                     'Name': speciesname,
                                     'OtherIDs': IDdict,
-                                    'ReactionsInvolvedWith': associatedReactions(i, blocks, full_S),
+                                    'ReactionsInvolvedWith': _get_associated_reactions(i, blocks, full_S),
                                     'index': index,
                                     'boundary': model.metabolism.species._elements[m].boundary_condition,
                                     'Type': typ,
-                                    'Compartment': speciescompartment}
+                                    'Compartment': speciescompartment,
+                                    'AssociatedTarget':'',
+                                    'MassBalance_Constraint':''}
 
     def overview(self):
         """
@@ -126,7 +131,7 @@ class MetaboliteBlock(ElementBlock):
         return(out)
 
 
-def associatedReactions(metabolite, blocks, Sfull):
+def _get_associated_reactions(metabolite, blocks, Sfull):
     out = []
     if metabolite in blocks.metabolism.internal:
         Srow = blocks.metabolism.S.toarray()[blocks.metabolism.internal.index(metabolite), :]
@@ -137,7 +142,7 @@ def associatedReactions(metabolite, blocks, Sfull):
     return(out)
 
 
-def getMetaboliteAnnotationsFromSBML(index, sbml):
+def _get_metabolite_annotations_from_sbml(index, sbml):
     out = {}
     for a in sbml.model.species[index].getAnnotationString().split('\n'):
         if 'rdf:resource="http://identifiers.org/' in a:
@@ -147,7 +152,7 @@ def getMetaboliteAnnotationsFromSBML(index, sbml):
     return(out)
 
 
-def readMetaboliteAnnotations(m, MetaboliteAnnotations):
+def _read_metabolite_annotations(m, MetaboliteAnnotations):
     AnnotationKeys = list(MetaboliteAnnotations)
     AnnotationIDs = [numpy.nan]*len(AnnotationKeys)
     for i in AnnotationKeys:
@@ -157,42 +162,7 @@ def readMetaboliteAnnotations(m, MetaboliteAnnotations):
     return(dict(zip(AnnotationKeys, AnnotationIDs)))
 
 
-def findOtherIDs(met_name, http, reconstruction):
-    #     if met_name[-2] is '_': met_name=met_name.rsplit('_',1)[0]
-    if not reconstruction is 'GSMM':
-        response = http.request('GET', 'http://bigg.ucsd.edu/api/v2/models/' +
-                                reconstruction + '/metabolites/' + met_name)
-    else:
-        response = http.request('GET', 'http://bigg.ucsd.edu/api/v2/models/' +
-                                'universal' + '/metabolites/' + met_name)
-    try:
-        x = json.loads(response.data.decode('utf-8'))
-        out = {'BiGG': 'NA', 'KEGG': 'NA', 'CHEBI': 'NA', 'BioCyc': 'NA', 'SEED': 'NA', 'Name': ''}
-        out['BiGG'] = met_name
-        if 'KEGG Compound' in list(x['database_links'].keys()):
-            out['KEGG'] = [d['id'] for d in x['database_links']['KEGG Compound']]
-        if 'CHEBI' in list(x['database_links'].keys()):
-            out['CHEBI'] = [d['id'] for d in x['database_links']['CHEBI']]
-        if 'BioCyc' in list(x['database_links'].keys()):
-            out['BioCyc'] = [d['id'] for d in x['database_links']['BioCyc']]
-        if 'BioCyc' in list(x['database_links'].keys()):
-            out['SEED'] = [d['id'] for d in x['database_links']['SEED Compound']]
-        out['Name'] = x['name']
-    except:
-        out = {'BiGG': 'NA', 'KEGG': 'NA', 'CHEBI': 'NA', 'BioCyc': 'NA', 'SEED': 'NA', 'Name': ''}
-#     print(out)
-    return(out)
-
-
-def findMetInfo(metaboliteID, metabolitesBiGG):
-    if metaboliteID in list(metabolitesBiGG.index):
-        out = str(metabolitesBiGG.loc[metaboliteID]['name'])
-    else:
-        out = str('')
-    return(out)
-
-
-def findTargetMetabolites(model):
+def _find_target_metabolites(model):
     out = []
     for j in range(len(model.targets.target_groups._elements)):
         if model.targets.target_groups._elements[j].id == 'metabolite_production':
@@ -202,14 +172,14 @@ def findTargetMetabolites(model):
     return out
 
 
-def checkForTarget(i, targetMets):
+def _check_for_target(i, targetMets):
     if i in targetMets:
         return(True)
     else:
         return(False)
 
 
-def build_S(metabolites, reactions):
+def _build_stoichiometric_matrix(metabolites, reactions):
     """
     Build stoichiometry matrix from metabolites and reactions.
 

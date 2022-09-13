@@ -4,10 +4,10 @@ from __future__ import division, print_function
 import numpy
 import pandas
 # package imports
-from .element_block import ElementBlock
+from rbatools.information_block import InformationBlock
 
 
-class MacromoleculeBlock(ElementBlock):
+class MacromoleculeBlock(InformationBlock):
     """
     Class holding information on the macromolecules, other than proteins in the model.
 
@@ -17,12 +17,16 @@ class MacromoleculeBlock(ElementBlock):
        Each model-macromolecule is represented by a key.
        The values, holding information on each macromolecule, are dicts with predefined keys:
            'ID' : macromolecule ID in model (type str).
+           'ProtoID' : location independent macromolecule ID in model (type str). Equals ID without compartment-specific ending.
+           'Type' : DNA or RNA (type str)
            'Compartment' : Location of the macromolecule (type str)
+           'Composition' : Which building-blocs the macromolecule is composed of and what is the stoichiometry (type dict)
            'ProcessRequirements' : Which processes the macromolecule requires for synthesis and maintenance and how much (type dict)
            'SupportsProcess' : Process-machineries, this macromolecule is a subunit of (type list)
+           'AssociatedTarget' : Target associated with macromolecule (type str)
     """
 
-    def fromFiles(self, model):
+    def from_files(self, model):
         """
         Derive reaction-info from RBA-model.
 
@@ -37,13 +41,13 @@ class MacromoleculeBlock(ElementBlock):
         Dictionary with macromolecule-info.
 
         """
-        DNAs = getDNAList(model)
-        RNAs = getRNAList(model)
+        DNAs = _get_dna_list(model)
+        RNAs = _get_rna_list(model)
         self.Elements = {}
         index = 0
         for i in range(len(DNAs)):
-            RequiredProcess = ProcessRequirements(model, DNAs[i], type='DNA')
-            Composition = getMacromoleculeComposition(model, i, type='DNA')
+            RequiredProcess = _get_process_requirements(model, DNAs[i], type='DNA')
+            Composition = _get_macromolecule_composition(model, DNAs[i], type='DNA')
             protoid = DNAs[i]
             if DNAs[i].endswith(')'):
                 if '_(' in DNAs[i]:
@@ -55,13 +59,14 @@ class MacromoleculeBlock(ElementBlock):
                                       'ProtoID': protoid,
                                       'Type': 'DNA',
                                       'index': index,
-                                      'Compartment': getCompartment(model, i, type='DNA'),
+                                      'Compartment': _get_compartment(model, i, type='DNA'),
                                       'Composition': Composition['Composition'],
-                                      'ProcessRequirements': ProcessCost(model, Composition['Composition'], RequiredProcess),
-                                      'SupportsProcess':  RequiredProcess['Part']}
+                                      'ProcessRequirements': _get_process_cost(model, Composition['Composition'], RequiredProcess),
+                                      'SupportsProcess':  RequiredProcess['Part'],
+                                      'AssociatedTarget':''}
         for i in range(len(RNAs)):
-            RequiredProcess = ProcessRequirements(model, RNAs[i], type='RNA')
-            Composition = getMacromoleculeComposition(model, i, type='RNA')
+            RequiredProcess = _get_process_requirements(model, RNAs[i], type='RNA')
+            Composition = _get_macromolecule_composition(model, RNAs[i], type='RNA')
             protoid = RNAs[i]
             if RNAs[i].endswith(')'):
                 if '_(' in RNAs[i]:
@@ -73,9 +78,11 @@ class MacromoleculeBlock(ElementBlock):
                                       'ProtoID': protoid,
                                       'Type': 'RNA',
                                       'index': index,
-                                      'Compartment': getCompartment(model, i, type='RNA'),
-                                      'ProcessRequirements': ProcessCost(model, Composition['Composition'], RequiredProcess),
-                                      'SupportsProcess':  RequiredProcess['Part']}
+                                      'Compartment': _get_compartment(model, i, type='RNA'),
+                                      'Composition': Composition['Composition'],
+                                      'ProcessRequirements': _get_process_cost(model, Composition['Composition'], RequiredProcess),
+                                      'SupportsProcess':  RequiredProcess['Part'],
+                                      'AssociatedTarget':''}
 
     def overview(self):
         """
@@ -92,44 +99,45 @@ class MacromoleculeBlock(ElementBlock):
         return(out)
 
 
-def getRNAList(model):
+def _get_rna_list(model):
     out = []
     for e in model.rnas.macromolecules._elements:
         out.append(e.id)
     return(out)
 
 
-def getDNAList(model):
+def _get_dna_list(model):
     out = []
     for e in model.dna.macromolecules._elements:
         out.append(e.id)
     return(out)
 
 
-def getMacromoleculeComposition(model, i, type):
+def _get_macromolecule_composition(model, i, type):
     if type == 'RNA':
-        MacroMolecules = model.rnas.macromolecules._elements
+        MacroMolecules = model.rnas.macromolecules
     elif type == 'DNA':
-        MacroMolecules = model.dna.macromolecules._elements
+        MacroMolecules = model.dna.macromolecules
     out = {}
     numberNucleotides = 0
-    for a in range(len(MacroMolecules[i].composition._elements)):
-        out[MacroMolecules[i].composition._elements[a].component] = int(
-            round(MacroMolecules[i].composition._elements[a].stoichiometry, 3))  # round(...,3) added#
-        numberNucleotides += MacroMolecules[i].composition._elements[a].stoichiometry
+    composition = MacroMolecules.get_by_id(i).composition
+    for base_number in range(len(composition)):
+        out[composition[base_number].component] = round(
+            composition[base_number].stoichiometry, 3)  # round(...,3) added#
+        numberNucleotides += composition[base_number].stoichiometry
     out = {'Composition': out,
            'numberMonomers': int(numberNucleotides)}
     return(out)
 
 
-def getCompartment(model, i, type):
+def _get_compartment(model, i, type):
     if type == 'RNA':
         return(model.rnas.macromolecules._elements[i].__dict__['compartment'])
     elif type == 'DNA':
         return(model.dna.macromolecules._elements[i].__dict__['compartment'])
 
 
-def ProcessRequirements(model, macromolecule, type):
+def _get_process_requirements(model, macromolecule, type):
     if type == 'RNA':
         macromoleculetype = 'rna'
     elif type == 'DNA':
@@ -151,7 +159,7 @@ def ProcessRequirements(model, macromolecule, type):
     return(out)
 
 
-def ProcessCost(model, Monomer, req):
+def _get_process_cost(model, Monomer, req):
     out = {}
     Processes = model.processes.processes._elements
     ProcessingMaps = model.processes.processing_maps._elements

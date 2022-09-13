@@ -2,10 +2,11 @@
 from __future__ import division, print_function
 
 # package imports
-from rbatools.element_block import ElementBlock
+import numpy
+from rbatools.information_block import InformationBlock
 
 
-class CompartmentBlock(ElementBlock):
+class CompartmentBlock(InformationBlock):
     """
     Class holding information on the compartments in the model.
 
@@ -18,11 +19,13 @@ class CompartmentBlock(ElementBlock):
             'associatedProteins' : proteins localised to compartment (type list)
             'associatedEnzymes' : enzyme located in compartment (type list)
             'associatedReactions' : metabolic reactions located in compartment (type list)
+            'associatedMacromolecules' : other macromolecules than proteins (DNA,RNA), located in compartment (type list)
+            'Capacity_Constraint' : id of corresponding density constraint.
     """
 
-    def fromFiles(self, model, Info):
+    def from_files(self, model, Info):
 
-        Compartments = getCompartmentList(model)
+        Compartments = _get_compartment_list(model)
         self.Elements = {}
         index = 0
         for i in Compartments:
@@ -31,7 +34,9 @@ class CompartmentBlock(ElementBlock):
                                 'associatedProteins': [],
                                 'index': index,
                                 'associatedReactions': [],
-                                'associatedEnzymes': []}
+                                'associatedEnzymes': [],
+                                'associatedMacromolecules':[],
+                                'Capacity_Constraint':''}
 
     def overview(self):
         """
@@ -47,7 +52,7 @@ class CompartmentBlock(ElementBlock):
         return(out)
 
 
-def getCompartmentList(model):
+def _get_compartment_list(model):
     out = []
     for c in range(len(model.metabolism.compartments._elements)):
         out.append(model.metabolism.compartments._elements[c].id)

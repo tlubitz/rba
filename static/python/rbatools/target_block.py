@@ -4,10 +4,11 @@ from __future__ import division, print_function
 # global imports
 import numpy
 # package imports
-from rbatools.element_block import ElementBlock
+from rbatools.information_block import InformationBlock
+from rbatools.auxiliary_functions import *
 
 
-class TargetBlock(ElementBlock):
+class TargetBlock(InformationBlock):
     """
     Class holding information on the targets in the model.
 
@@ -26,11 +27,13 @@ class TargetBlock(ElementBlock):
                 Eg:
                 'metabolite_production', 'degradation_fluxes',
                 'concentrations'  or 'reaction_fluxes'
-           'TargetSpecies' : For which entity the target is defined (type str)
-           'TargetValue' : Model-parameter ID which defines target value (type str)
+            'TargetEntity' : For which entity the target is defined (type str)
+            'TargetParameterID' : Model-parameter ID which defines target value (type str)
+            'TargetParameter' : Model-parameter definition of target value (type dict)
+            'TargetConstraint' : 'Value' if target is defined as explicit value or 'upper/lower Bound'.
         """
 
-    def fromFiles(self, model):
+    def from_files(self, model):
         self.Elements = {}
         self.GroupList = []
         nGroups = len(list(model.targets.target_groups._elements))
@@ -56,11 +59,27 @@ class TargetBlock(ElementBlock):
                         targettype_specifier = 'concentration'
                     else:
                         targettype_specifier = ''
+                    target_param=str(k.__dict__['value'])
+                    if target_param != "None":
+                        constraint_type="Value"
+                    else:
+                        target_param=str(k.__dict__['lower_bound'])
+                        if target_param != "None":
+                            constraint_type="LowerBound"
+                        else:
+                            target_param=str(k.__dict__['upper_bound'])
+                            constraint_type="UpperBound"
+                    ParsedParam=return_parameter_definition(model=model,parameter=target_param)
                     Edict = {'ID': 'Target_'+targettype_specifier+'_'+spec,
                              'Group': str(model.targets.target_groups._elements[i].__dict__['id']),
                              'Type': str(j),
                              'TargetEntity': spec,
-                             'TargetValue': str(k.__dict__['value'])}
+                             'TargetParameterID': target_param,
+                             'TargetParameter': ParsedParam[target_param],
+                             'Generic parameter definition':ParsedParam[target_param]["Generic_latex"],
+                             'Specific parameter definition':ParsedParam[target_param]["Specific_latex"],
+                             'TargetConstraint': constraint_type
+                             }
                     self.Elements.update({Edict['ID']: Edict})
 
     def overview(self):
@@ -75,12 +94,5 @@ class TargetBlock(ElementBlock):
         out = {}
         for i in numpy.unique(self.GroupList):
             nI = len(list(numpy.where(numpy.array(self.GroupList) == i)[0]))
-            out.update({'Targets '+i: nI})
+            out.update({'Targets_'+i: nI})
         return(out)
-
-
-# model.targets.target_groups._elements --> list of different target groups ("translation_targets", "transcription_targets" ...)
-
-
-# model.targets.target_groups._elements[0].__dict__['id'] --> Group
-# list(model.targets.target_groups._elements[0].__dict__.keys()).remove('id') --> types

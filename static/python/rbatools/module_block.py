@@ -5,11 +5,10 @@ from __future__ import division, print_function
 import numpy
 import libsbml
 # package imports
-from rba.core.constraint_blocks import ConstraintBlocks
-from rbatools.element_block import ElementBlock
+from rbatools.information_block import InformationBlock
 
 
-class ModuleBlock(ElementBlock):
+class ModuleBlock(InformationBlock):
     """
     Class holding information on the modules in the model.
 
@@ -20,9 +19,10 @@ class ModuleBlock(ElementBlock):
       The values, holding information on each enzyme, are dicts with predefined keys:
           'ID' : So far dummy (type str)
           'Name' : So far dummy (type str)
+          'Members' : contained entities (type str)
     """
 
-    def fromFiles(self, model, sbml):
+    def from_files(self, model, sbml):
         self.Elements = {}
         if type(sbml) is not str:
             if type(sbml.model) is libsbml.Model:

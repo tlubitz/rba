@@ -9,35 +9,34 @@ import pandas
 import copy
 import json
 import jxmlease
-
-# import xml.etree.ElementTree as ET
+import warnings
 import libsbml
-# package imports
-import rba
-from .rba.core.constraint_blocks import ConstraintBlocks
-from .rba import RbaModel, ConstraintMatrix
-
-from .infoMatrices import InfoMatrices
-from .description_block import DescriptionBlock
-from .metabolite_block import MetaboliteBlock
-from .module_block import ModuleBlock
-from .process_block import ProcessBlock
-from .reaction_block import ReactionBlock
-from .enzyme_block import EnzymeBlock
-from .protein_block import ProteinBlock
-from .macromolecule_block import MacromoleculeBlock
-from .compartment_block import CompartmentBlock
-from .metabolite_constraints import MetaboliteConstraints
-from .density_constraints import DensityConstraints
-from .process_constraints import ProcessConstraints
-from .enzyme_constraints import EnzymeConstraints
-from .statistics_block import StatisticsBlock
-from .target_block import TargetBlock
 
 from sbtab import SBtab
+from rba import RbaModel , ConstraintMatrix
+from rba.core.constraint_blocks import ConstraintBlocks
+
+from rbatools.info_matrix import InfoMatrix
+from rbatools.description_block import DescriptionBlock
+from rbatools.metabolite_block import MetaboliteBlock
+from rbatools.module_block import ModuleBlock
+from rbatools.process_block import ProcessBlock
+from rbatools.reaction_block import ReactionBlock
+from rbatools.enzyme_block import EnzymeBlock
+from rbatools.protein_block import ProteinBlock
+from rbatools.macromolecule_block import MacromoleculeBlock
+from rbatools.compartment_block import CompartmentBlock
+from rbatools.metabolite_constraint_block import MetaboliteConstraintBlock
+from rbatools.density_constraint_block import DensityConstraintBlock
+from rbatools.process_constraint_block import ProcessConstraintBlock
+from rbatools.enzyme_constraint_block import EnzymeConstraintBlock
+from rbatools.statistics_block import StatisticsBlock
+from rbatools.target_block import TargetBlock
+from rbatools.auxiliary_functions import return_parameter_definition
 
 
-class RBA_ModelStructure(object):
+
+class ModelStructureRBA(object):
     """
     Class holding information on model-structure.
 
@@ -63,7 +62,7 @@ class RBA_ModelStructure(object):
          Compartment information
     MetaboliteConstraintsInfo : rbatools.metabolite_constraints.Metabolite_constraints
          Metabolite-constraint information
-    DensityConstraintsInfo : rbatools.density_constraints.Density_constraints
+    DensityConstraintsInfo : rbatools.density_constraints.DensityConstraintBlock
          Density-constraint information
     ProcessConstraintsInfo : rbatools.process_constraints.Process_constraints
          Process-constraint information
@@ -80,22 +79,9 @@ class RBA_ModelStructure(object):
         and a list of constraint_IDs, which are affected by its concentration, as values.
     MuDependencies : list
         List of constraint_IDs, which are affected by the growth-rate
-
-    Methods
-    ----------
-    fromFiles:
-        Generates model-structure object from model-files and provided auxilliary information.
-    fromJSON:
-        Generates model-structure object from model-structure in JSON-format.
-    exportJSON:
-        Saves model-structure object in JSON-format in specified directory, under the name ModelStructure.json.
-    exportSBtab:
-        Saves model-structure object in SBtab-format under the specified name (filename).
-    generateMatrices:
-        Generates information-matricx object and stores it as attribute 'InfoMatrices'
     """
 
-    def fromFiles(self, xml_dir):
+    def from_files(self, xml_dir:str):
         """
         Generates model-structure object from model-files and provided auxilliary information.
 
@@ -105,24 +91,19 @@ class RBA_ModelStructure(object):
             Directory, where RBA-model is located
         """
 
-        UniprotFile = importUniprotFile(xml_dir)
-        GeneMap = importGeneAnnotations(xml_dir)
-        Info = importModelInfo(xml_dir)
+        UniprotFile = _import_uniprot_file(xml_dir)
+        GeneMap = _import_gene_annotations(xml_dir)
+        Info = _import_model_info(xml_dir)
         SBMLfile = str('Not There')
         if Info['Value']['SBML-file'] != 'Not Provided':
-            SBMLfile = importSbmlFile(xml_dir, str(Info['Value']['SBML-file']))
-
-        MetaboliteAnnotations = importMetaboliteAnnotations(xml_dir)
-        ReactionAnnotations = importReactionAnnotations(xml_dir)
-
-        print('')
-        print('Generating model-structure')
-        print('...')
+            SBMLfile = _import_sbml_file(xml_dir, str(Info['Value']['SBML-file']))
+        MetaboliteAnnotations = _import_metabolite_annotations(xml_dir)
+        ReactionAnnotations = _import_reaction_annotations(xml_dir)
 
         model = RbaModel.from_xml(xml_dir)
         Zero_matrix = ConstraintMatrix(model)
         Zero_matrix.build_matrices(0)
-        constraints = sortConstraints(Zero_matrix, model)
+        constraints = _sort_constraints(Zero_matrix, model)
 
         MetaboliteInfo = MetaboliteBlock()
         ModuleInfo = ModuleBlock()
@@ -134,31 +115,65 @@ class RBA_ModelStructure(object):
         CompartmentInfo = CompartmentBlock()
         TargetInfo = TargetBlock()
 
-        TargetInfo.fromFiles(model)
-        MetaboliteInfo.fromFiles(model, Info, MetaboliteAnnotations, SBMLfile)
-        ModuleInfo.fromFiles(model, SBMLfile)
-        ProcessInfo.fromFiles(model, Info)
-        ReactionInfo.fromFiles(model, Info, ReactionAnnotations, SBMLfile, MetaboliteInfo)
-        EnzymeInfo.fromFiles(model, Info)
-        ProteinInfo.fromFiles(model, GeneMap, Info, UniprotFile)
-        MacromoleculeInfo.fromFiles(model)
-        CompartmentInfo.fromFiles(model, Info)
+        TargetInfo.from_files(model)
+        MetaboliteInfo.from_files(model, Info, MetaboliteAnnotations, SBMLfile)
+        ModuleInfo.from_files(model, SBMLfile)
+        ProcessInfo.from_files(model, Info)
+        ReactionInfo.from_files(model, Info, ReactionAnnotations, SBMLfile, MetaboliteInfo)
+        EnzymeInfo.from_files(model, Info)
+        ProteinInfo.from_files(model, GeneMap, Info, UniprotFile)
+        MacromoleculeInfo.from_files(model)
+        CompartmentInfo.from_files(model, Info)
+
+        self.MetaboliteConstraintsInfo = MetaboliteConstraintBlock()
+        self.DensityConstraintsInfo = DensityConstraintBlock()
+        self.ProcessConstraintsInfo = ProcessConstraintBlock()
+        self.EnzymeConstraintsInfo = EnzymeConstraintBlock()
+
+        self.MetaboliteConstraintsInfo.from_files(constraints, Zero_matrix)
+        self.DensityConstraintsInfo.from_files(model, constraints, Zero_matrix)
+        self.ProcessConstraintsInfo.from_files(model, constraints, Zero_matrix)
+        self.EnzymeConstraintsInfo.from_files(model, constraints, Zero_matrix)
 
         self.GeneralInfo = DescriptionBlock()
-        self.GeneralInfo.fromFiles(Info)
-        self.MetaboliteInfo = MetaboliteInfo
-        self.ModuleInfo = ModuleInfo
-        self.ProcessInfo = ProcessInfo
-        self.TargetInfo = TargetInfo
+        self.GeneralInfo.from_files(Info)
+
+        for constraint in self.MetaboliteConstraintsInfo.Elements.keys():
+            MetaboliteInfo.Elements[self.MetaboliteConstraintsInfo.Elements[constraint]['AssociatedMetabolite']]['MassBalance_Constraint']=self.MetaboliteConstraintsInfo.Elements[constraint]['ID']
+        for constraint in self.DensityConstraintsInfo.Elements.keys():
+            CompartmentInfo.Elements[self.DensityConstraintsInfo.Elements[constraint]['AssociatedCompartment']]['Capacity_Constraint']=constraint
+        for constraint in self.ProcessConstraintsInfo.Elements.keys():
+            for i in list(ProcessInfo.Elements.keys()):
+                if ProcessInfo.Elements[i]['ID']==self.ProcessConstraintsInfo.Elements[constraint]['AssociatedProcessID']:
+                    ProcessInfo.Elements[i]['Capacity_Constraint']=constraint
+                    self.ProcessConstraintsInfo.Elements[constraint]['AssociatedProcess']=i
+        for constraint in self.EnzymeConstraintsInfo.Elements.keys():
+            dir=self.EnzymeConstraintsInfo.Elements[constraint]['Direction']
+            enz=self.EnzymeConstraintsInfo.Elements[constraint]['AssociatedEnzyme']
+            if dir == 'forward':
+                EnzymeInfo.Elements[enz]['ForwardCapacity_Constraint']=constraint
+            elif dir == 'backward':
+                EnzymeInfo.Elements[enz]['BackwardCapacity_Constraint']=constraint
+
+        for target in TargetInfo.Elements.keys():
+            target_species=TargetInfo.Elements[target]["TargetEntity"]
+            if target_species in ProteinInfo.Elements.keys():
+                ProteinInfo.Elements[target_species]["AssociatedTarget"]=target
+            elif target_species in MetaboliteInfo.Elements.keys():
+                MetaboliteInfo.Elements[target_species]["AssociatedTarget"]=target
+            elif target_species in ReactionInfo.Elements.keys():
+                ReactionInfo.Elements[target_species]["AssociatedTarget"]=target
+            elif target_species in MacromoleculeInfo.Elements.keys():
+                MacromoleculeInfo.Elements[target_species]["AssociatedTarget"]=target
 
         for protein in ProteinInfo.Elements.keys():
-            AssociatedEnzyme = findAssociatedEnzyme(EnzymeInfo.Elements, protein)
+            AssociatedEnzyme = _find_associated_enzyme(EnzymeInfo.Elements, protein)
             ProteinInfo.Elements[protein]['associatedEnzymes'] = AssociatedEnzyme['Enz']
             ProteinInfo.Elements[protein]['associatedReactions'] = AssociatedEnzyme['Rx']
 
         CB = ConstraintBlocks(model)
         for enzyme in EnzymeInfo.Elements.keys():
-            EnzymeInfo.Elements[enzyme]['Isozymes'] = findIsozymes(
+            EnzymeInfo.Elements[enzyme]['Isozymes'] = _find_iso_enzymes(
                 enzyme, CB, ReactionInfo.Elements, EnzymeInfo.Elements[enzyme]['Reaction'])
 
         for rx in ReactionInfo.Elements.keys():
@@ -167,37 +182,32 @@ class RBA_ModelStructure(object):
                                                                                          ['Enzyme']]['EnzymeCompartment']
 
         for comp in CompartmentInfo.Elements.keys():
-            ContainedMacromolecules = findContainedMacromolecules(comp, MacromoleculeInfo.Elements)
-            ContainedProteins = findContainedProteins(comp, ProteinInfo.Elements)
-            ContainedEnzymes = findContainedEnzymes(
+            ContainedMacromolecules = _find_contained_macromolecules(comp, MacromoleculeInfo.Elements)
+            ContainedProteins = _find_contained_proteins(comp, ProteinInfo.Elements)
+            ContainedEnzymes = _find_contained_enzymes(
                 ContainedProteins, ProteinInfo.Elements, EnzymeInfo.Elements)
             CompartmentInfo.Elements[comp]['associatedMacromolecules'] = ContainedMacromolecules
             CompartmentInfo.Elements[comp]['associatedProteins'] = ContainedProteins
             CompartmentInfo.Elements[comp]['associatedReactions'] = ContainedEnzymes['containedReactions']
             CompartmentInfo.Elements[comp]['associatedEnzymes'] = ContainedEnzymes['containedEnzymes']
 
+        self.ProcessInfo = ProcessInfo
         self.ReactionInfo = ReactionInfo
         self.EnzymeInfo = EnzymeInfo
         self.ProteinInfo = ProteinInfo
         self.MacromoleculeInfo = MacromoleculeInfo
         self.CompartmentInfo = CompartmentInfo
+        self.MetaboliteInfo = MetaboliteInfo
+        self.ModuleInfo = ModuleInfo
+        self.TargetInfo = TargetInfo
 
-        self.MetaboliteConstraintsInfo = MetaboliteConstraints()
-        self.DensityConstraintsInfo = DensityConstraints()
-        self.ProcessConstraintsInfo = ProcessConstraints()
-        self.EnzymeConstraintsInfo = EnzymeConstraints()
 
-        self.MetaboliteConstraintsInfo.fromFiles(constraints, Zero_matrix)
-        self.DensityConstraintsInfo.fromFiles(model, constraints, Zero_matrix)
-        self.ProcessConstraintsInfo.fromFiles(model, constraints, Zero_matrix)
-        self.EnzymeConstraintsInfo.fromFiles(model, constraints, Zero_matrix)
-
-        BioConstraintStats = StatsConstraintsBiological(self.MetaboliteConstraintsInfo.Elements,
+        BioConstraintStats = _stats_constraints_biological(self.MetaboliteConstraintsInfo.Elements,
                                                         self.EnzymeConstraintsInfo.Elements,
                                                         self.DensityConstraintsInfo.Elements,
                                                         self.ProcessConstraintsInfo.Elements)
 
-        MathConstraintStats = StatsConstraintsMathematical(self.MetaboliteConstraintsInfo.Elements,
+        MathConstraintStats = _stats_constraints_mathematical(self.MetaboliteConstraintsInfo.Elements,
                                                            self.EnzymeConstraintsInfo.Elements,
                                                            self.DensityConstraintsInfo.Elements,
                                                            self.ProcessConstraintsInfo.Elements,
@@ -205,7 +215,7 @@ class RBA_ModelStructure(object):
                                                            self.ReactionInfo.Elements,
                                                            self.ProcessInfo.Elements)
 
-        FullOverview = generateOverview(self.ReactionInfo.overview(),
+        FullOverview = _generate_overview(self.ReactionInfo.overview(),
                                         self.MetaboliteInfo.overview(),
                                         self.ModuleInfo.overview(),
                                         self.EnzymeInfo.overview(),
@@ -220,11 +230,11 @@ class RBA_ModelStructure(object):
         self.ModelStatistics = StatisticsBlock()
         self.ModelStatistics.derive(FullOverview)
 
-        self.ProteinMatrix = generateProteinMatrix(self)
-        self.ProteinGeneMatrix = generateProteinGeneMatrix(self)
-        self.MediumDependencies, self.MuDependencies = findParameterDependencies(self)
+        self.ProteinMatrix = _generate_protein_matrix(self)
+        self.ProteinGeneMatrix = _generate_protein_gene_matrix(self)
+        self.MediumDependencies, self.MuDependencies = _find_parameter_dependencies(self,model=model)
 
-    def fromJSON(self, inputString):
+    def from_json(self, inputString:str):
         """
         Generates model-structure object from model-structure in JSON-format.
 
@@ -245,26 +255,26 @@ class RBA_ModelStructure(object):
         self.ProteinInfo = ProteinBlock()
         self.MacromoleculeInfo = MacromoleculeBlock()
         self.ReactionInfo = ReactionBlock()
-        self.DensityConstraintsInfo = DensityConstraints()
-        self.ProcessConstraintsInfo = ProcessConstraints()
-        self.MetaboliteConstraintsInfo = MetaboliteConstraints()
-        self.EnzymeConstraintsInfo = EnzymeConstraints()
+        self.DensityConstraintsInfo = DensityConstraintBlock()
+        self.ProcessConstraintsInfo = ProcessConstraintBlock()
+        self.MetaboliteConstraintsInfo = MetaboliteConstraintBlock()
+        self.EnzymeConstraintsInfo = EnzymeConstraintBlock()
 
-        self.ModelStatistics.fromDict(Block['ModelStatistics'])
-        self.GeneralInfo.fromDict(Block['ModelInformation'])
-        self.ProcessInfo.fromDict(Block['Process'])
-        self.CompartmentInfo.fromDict(Block['Compartment'])
-        self.MetaboliteInfo.fromDict(Block['Metabolite'])
-        self.ModuleInfo.fromDict(Block['Module'])
-        self.EnzymeInfo.fromDict(Block['Enzyme'])
-        self.ProteinInfo.fromDict(Block['Protein'])
-        self.MacromoleculeInfo.fromDict(Block['Macromolecule'])
-        self.ReactionInfo.fromDict(Block['Reaction'])
-        self.DensityConstraintsInfo.fromDict(Block['DensityConstraint'])
-        self.ProcessConstraintsInfo.fromDict(Block['ProcessConstraint'])
-        self.MetaboliteConstraintsInfo.fromDict(Block['MetaboliteConstraint'])
-        self.EnzymeConstraintsInfo.fromDict(Block['EnzymeConstraint'])
-        self.TargetInfo.fromDict(Block['Target'])
+        self.ModelStatistics.from_dict(Block['ModelStatistics'])
+        self.GeneralInfo.from_dict(Block['ModelInformation'])
+        self.ProcessInfo.from_dict(Block['Process'])
+        self.CompartmentInfo.from_dict(Block['Compartment'])
+        self.MetaboliteInfo.from_dict(Block['Metabolite'])
+        self.ModuleInfo.from_dict(Block['Module'])
+        self.EnzymeInfo.from_dict(Block['Enzyme'])
+        self.ProteinInfo.from_dict(Block['Protein'])
+        self.MacromoleculeInfo.from_dict(Block['Macromolecule'])
+        self.ReactionInfo.from_dict(Block['Reaction'])
+        self.DensityConstraintsInfo.from_dict(Block['DensityConstraint'])
+        self.ProcessConstraintsInfo.from_dict(Block['ProcessConstraint'])
+        self.MetaboliteConstraintsInfo.from_dict(Block['MetaboliteConstraint'])
+        self.EnzymeConstraintsInfo.from_dict(Block['EnzymeConstraint'])
+        self.TargetInfo.from_dict(Block['Target'])
         self.ProteinMatrix = Block['ProteinMatrix']
         self.ProteinMatrix['Matrix'] = numpy.array(self.ProteinMatrix['Matrix'])
         self.ProteinGeneMatrix = Block['ProteinGeneMatrix']
@@ -272,7 +282,7 @@ class RBA_ModelStructure(object):
         self.MediumDependencies = Block['MediumDependencies']
         self.MuDependencies = Block['MuDependencies']
 
-    def exportJSON(self, path):
+    def export_json(self, path:str):
         """
         Saves model-structure object in JSON-format in specified directory, under the name ModelStructure.json.
 
@@ -300,20 +310,16 @@ class RBA_ModelStructure(object):
                  'ProteinGeneMatrix': self.ProteinGeneMatrix,
                  'MediumDependencies': self.MediumDependencies,
                  'MuDependencies': self.MuDependencies}
-        # blocks.metabolism.external, model.metabolism.reactions
-        # Block['ExternalStoichiometryMatrix']['S'] = Block['ProteinMatrix']['Matrix'].tolist()
-        # Block['ExternalStoichiometryMatrix']['Reactions'] = Block['ProteinMatrix']['Matrix'].tolist()
-        # Block['ExternalStoichiometryMatrix']['Metabolites'] = [i.id for i in blocks.metabolism.external]
         Block['ProteinMatrix']['Matrix'] = Block['ProteinMatrix']['Matrix'].tolist()
         Block['ProteinGeneMatrix']['Matrix'] = Block['ProteinGeneMatrix']['Matrix'].tolist()
-        JSONstring = json.dumps(Block, default=JSON_Int64_compensation)
+        JSONstring = json.dumps(Block, default=_json_int64_compensation)
         filename = path + '/ModelStructure.json'
         f = open(filename, 'w')
         f.write(JSONstring)
         f.close()
         return(JSONstring)
 
-    def exportSBtab(self, add_links=False, filename=None):
+    def export_sbtab(self, add_links:bool=False, filename:str=""):
         """
         Saves model-structure object in SBtab-format under the specified name (filename).
 
@@ -324,24 +330,35 @@ class RBA_ModelStructure(object):
         add_links : str
             Wheter to implement entry-format, which allows links between table-elements.
         """
-        GeneralInfoTable = self.GeneralInfo.toSBtab(table_id='ModelMetadata', table_type='Quantity', table_name='Model information', Col_list=[
+        GeneralInfoTable = self.GeneralInfo.to_sbtab(table_id='ModelMetadata', table_type='Quantity', table_name='Model Information', Col_list=[
                                                     'Measure', 'Value'], NameList=['Element', 'Value'])
-        GeneralInfoTable.remove_row(position=2)
         GeneralInfoTable.filename = 'ModelMetadata.tsv'
         GeneralInfoTable.change_attribute('Text', 'Model metadata')
-        #GeneralInfoTable.unset_attribute('Date')
+        try:
+            GeneralInfoTable.unset_attribute('Date')
+        except:
+            pass
         GeneralInfoTable.unset_attribute('SBtabVersion')
 
-        StatsTable = self.ModelStatistics.toSBtab(
-            table_id='ModelElements', table_type='Quantity', table_name='Model size', Col_list=['Measure', 'Value'], NameList=['Element', 'Number'])
+        StatsTable = self.ModelStatistics.to_sbtab(
+            table_id='ModelElements', table_type='Quantity', table_name='Model Size', Col_list=['Measure', 'Value'], NameList=['Element', 'Number'])
         StatsTable.filename = 'ModelElements.tsv'
         StatsTable.change_attribute('Text', 'Numbers of cell elements and constraints')
-        #StatsTable.unset_attribute('Date')
+        try:
+            StatsTable.unset_attribute('Date')
+        except:
+            pass
         StatsTable.unset_attribute('SBtabVersion')
 
         MetaboliteBlock_forChanges = copy.deepcopy(self.MetaboliteInfo)
         if add_links:
             for k in list(MetaboliteBlock_forChanges.Elements.keys()):
+                if MetaboliteBlock_forChanges.Elements[k]['AssociatedTarget'] != '':
+                    MetaboliteBlock_forChanges.Elements[k]['AssociatedTarget'] = '(!' + 'CellTarget' + \
+                        '/'+MetaboliteBlock_forChanges.Elements[k]['AssociatedTarget']+'!)'
+                if MetaboliteBlock_forChanges.Elements[k]['MassBalance_Constraint'] != '':
+                    MetaboliteBlock_forChanges.Elements[k]['MassBalance_Constraint'] = '(!' + 'MetaboliteConstraint' + \
+                        '/'+MetaboliteBlock_forChanges.Elements[k]['MassBalance_Constraint']+'!)'
                 if MetaboliteBlock_forChanges.Elements[k]['Compartment'] in self.CompartmentInfo.Elements.keys():
                     MetaboliteBlock_forChanges.Elements[k]['Compartment'] = '(!' + 'Compartment' + \
                         '/'+MetaboliteBlock_forChanges.Elements[k]['Compartment']+'!)'
@@ -353,17 +370,23 @@ class RBA_ModelStructure(object):
                         MetaboliteBlock_forChanges.Elements[k]['OtherIDs'][id] = str('(!identifiers:'+id+'/'+str(
                             MetaboliteBlock_forChanges.Elements[k]['OtherIDs'][id])+'|'+str(MetaboliteBlock_forChanges.Elements[k]['OtherIDs'][id])+'!)')
 
-        MetaboliteTable = MetaboliteBlock_forChanges.toSBtab(table_id='Compound', table_type='Compound', table_name='Metabolites', Col_list=[
-            'ID', 'Name', 'Compartment', 'Type', 'ReactionsInvolvedWith', 'OtherIDs'], NameList=['ID', 'Name', 'Compartment', 'Type', 'Reactions', 'Annotation'])
+        MetaboliteTable = MetaboliteBlock_forChanges.to_sbtab(table_id='Compound', table_type='Quantity', table_name='Metabolites', Col_list=[
+            'ID', 'Name', 'Compartment', 'Type', 'ReactionsInvolvedWith', 'OtherIDs','AssociatedTarget','MassBalance_Constraint'], NameList=['ID', 'Name', 'Compartment', 'Type', 'Reactions', 'Annotation','IsCellTarget','MassBalance'])
         MetaboliteTable.filename = 'Compound.tsv'
         MetaboliteTable.change_attribute(
             'Text', 'Metabolite species are localised in cell compartments and are associated with metabolite mass balance constraints.')
-        #MetaboliteTable.unset_attribute('Date')
+        try:
+            MetaboliteTable.unset_attribute('Date')
+        except:
+            pass
         MetaboliteTable.unset_attribute('SBtabVersion')
 
         ReactionBlock_forChanges = copy.deepcopy(self.ReactionInfo)
         if add_links:
             for k in list(ReactionBlock_forChanges.Elements.keys()):
+                if ReactionBlock_forChanges.Elements[k]['AssociatedTarget'] != '':
+                    ReactionBlock_forChanges.Elements[k]['AssociatedTarget'] = '(!' + 'CellTarget' + \
+                        '/'+ReactionBlock_forChanges.Elements[k]['AssociatedTarget']+'!)'
                 oldEnz = ReactionBlock_forChanges.Elements[k]['Enzyme']
                 if len(oldEnz) > 0:
                     ReactionBlock_forChanges.Elements[k]['Enzyme'] = '(!' + \
@@ -401,17 +424,26 @@ class RBA_ModelStructure(object):
                         ReactionBlock_forChanges.Elements[k]['OtherIDs'][id] = str('(!identifiers:'+id+'/'+str(
                             ReactionBlock_forChanges.Elements[k]['OtherIDs'][id])+'|'+str(ReactionBlock_forChanges.Elements[k]['OtherIDs'][id])+'!)')
 
-        ReactionTable = ReactionBlock_forChanges.toSBtab(table_id='Reaction', table_type='Reaction', table_name='Reactions', Col_list=['ID', 'Name', 'Type', 'Reversible', 'Formula', 'Enzyme', 'Compartment_Machinery', 'Twins', 'Compartment_Species', 'OtherIDs'], NameList=[
-            'ID', 'Name', 'Type', 'IsReversible', 'ReactionFormula', 'Enzyme', 'EnzymeCompartment', 'IsoenzymeReactions', 'ReactionCompartment', 'Annotation'])
+        ReactionTable = ReactionBlock_forChanges.to_sbtab(table_id='Reaction', table_type='Quantity', table_name='Reactions', Col_list=['ID', 'Name', 'Type', 'Reversible', 'Formula', 'Enzyme', 'Compartment_Machinery', 'Twins', 'Compartment_Species','AssociatedTarget', 'OtherIDs'], NameList=[
+            'ID', 'Name', 'Type', 'IsReversible', 'ReactionFormula', 'Enzyme', 'EnzymeCompartment', 'IsoenzymeReactions', 'ReactionCompartment','IsCellTarget', 'Annotation'])
         ReactionTable.filename = 'Reaction.tsv'
         ReactionTable.change_attribute(
             'Text', 'Chemical reactions are localised in cell compartments. All reactions are enzyme catalysed.')
-        #ReactionTable.unset_attribute('Date')
+        try:
+            ReactionTable.unset_attribute('Date')
+        except:
+            pass
         ReactionTable.unset_attribute('SBtabVersion')
 
         EnzymeBlock_forChanges = copy.deepcopy(self.EnzymeInfo)
         if add_links:
             for k in list(EnzymeBlock_forChanges.Elements.keys()):
+                if EnzymeBlock_forChanges.Elements[k]['ForwardCapacity_Constraint'] != '':
+                    EnzymeBlock_forChanges.Elements[k]['ForwardCapacity_Constraint'] = '(!' + 'EnzymeCapacityConstraint' + \
+                        '/'+EnzymeBlock_forChanges.Elements[k]['ForwardCapacity_Constraint']+'!)'
+                if EnzymeBlock_forChanges.Elements[k]['BackwardCapacity_Constraint'] != '':
+                    EnzymeBlock_forChanges.Elements[k]['BackwardCapacity_Constraint'] = '(!' + 'EnzymeCapacityConstraint' + \
+                        '/'+EnzymeBlock_forChanges.Elements[k]['BackwardCapacity_Constraint']+'!)'
                 oldRx = EnzymeBlock_forChanges.Elements[k]['Reaction']
                 EnzymeBlock_forChanges.Elements[k]['Reaction'] = '(!'+'Reaction'+'/'+oldRx+'!)'
                 for index, id in enumerate(EnzymeBlock_forChanges.Elements[k]['Isozymes']):
@@ -427,17 +459,23 @@ class RBA_ModelStructure(object):
                     EnzymeBlock_forChanges.Elements[k]['Subunits']['(!'+'Protein'+'/' +
                                                                    id+'!)'] = EnzymeBlock_forChanges.Elements[k]['Subunits'].pop(id)
 
-        EnzymeTable = EnzymeBlock_forChanges.toSBtab(table_id='Enzyme', table_type='Enzyme', table_name='Enzymes', Col_list=[
-            'ID', 'Reaction', 'IdenticalEnzymes', 'Subunits', 'EnzymeCompartment', 'OtherIDs', 'Isozymes'], NameList=['ID', 'CatalysedReaction', 'OtherEnzymaticActivities', 'Subunits', 'Compartment', 'Annotation', 'Isoenzymes'])
+        EnzymeTable = EnzymeBlock_forChanges.to_sbtab(table_id='Enzyme', table_type='Quantity', table_name='Enzymes', Col_list=[
+            'ID', 'Reaction', 'IdenticalEnzymes', 'Subunits', 'EnzymeCompartment', 'OtherIDs', 'Isozymes','ForwardCapacity_Constraint','BackwardCapacity_Constraint'], NameList=['ID', 'CatalysedReaction', 'OtherEnzymaticActivities', 'Subunits', 'Compartment', 'Annotation', 'Isoenzymes','ForwardCapacity','BackwardCapacity'])
         EnzymeTable.filename = 'Enzyme.tsv'
         EnzymeTable.change_attribute(
             'Text', 'Enzymes are localised in cell compartments and catalyse specific reactions. To describe multi-functional enzyme, RBA uses multiple enzyme entries. Enzymes are associated with enzyme capacity constraints.')
-        #EnzymeTable.unset_attribute('Date')
+        try:
+            EnzymeTable.unset_attribute('Date')
+        except:
+            pass
         EnzymeTable.unset_attribute('SBtabVersion')
 
         ProteinBlock_forChanges = copy.deepcopy(self.ProteinInfo)
         if add_links:
             for k in list(ProteinBlock_forChanges.Elements.keys()):
+                if ProteinBlock_forChanges.Elements[k]['AssociatedTarget'] != '':
+                    ProteinBlock_forChanges.Elements[k]['AssociatedTarget'] = '(!' + 'CellTarget' + \
+                        '/'+ProteinBlock_forChanges.Elements[k]['AssociatedTarget']+'!)'
                 oldComp = ProteinBlock_forChanges.Elements[k]['Compartment']
                 ProteinBlock_forChanges.Elements[k]['Compartment'] = '(!' + \
                     'Compartment'+'/'+oldComp+'!)'
@@ -463,17 +501,22 @@ class RBA_ModelStructure(object):
                                 ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id] = str('(!identifiers:ec-code/'+str(
                                     ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id]).split('EC ')[1]+'|'+str(ProteinBlock_forChanges.Elements[k]['ExternalIDs'][id])+'!)')
 
-        ProteinTable = ProteinBlock_forChanges.toSBtab(table_id='Protein', table_type='Protein', table_name='Proteins', Col_list=['ID', 'ProtoID', 'Name', 'Compartment', 'SupportsProcess', 'associatedEnzymes', 'associatedReactions', 'AAnumber', 'ProcessRequirements', 'Weight', 'ExternalIDs', 'Function'], NameList=[
-            'ID', 'ProtoID', 'Name', 'Compartment', 'ContributesToProcess', 'EnzymaticActivity', 'CatalysedReaction', 'ChainLength', 'RequiresProcess', 'MolecularWeight', 'Annotation', 'Function'])
+        ProteinTable = ProteinBlock_forChanges.to_sbtab(table_id='Protein', table_type='Quantity', table_name='Proteins', Col_list=['ID', 'ProtoID', 'Name', 'Compartment', 'SupportsProcess', 'associatedEnzymes', 'associatedReactions', 'AAnumber', 'ProcessRequirements','AssociatedTarget', 'Weight', 'ExternalIDs', 'Function'], NameList=[
+            'ID', 'ProtoID', 'Name', 'Compartment', 'ContributesToProcess', 'EnzymaticActivity', 'CatalysedReaction', 'ChainLength', 'RequiresProcess','IsCellTarget', 'MolecularWeight', 'Annotation', 'Function'])
         ProteinTable.filename = 'Protein.tsv'
         ProteinTable.change_attribute(
             'Text', 'Proteins are localised in cell compartments and can be (or be part of) metabolic enzymes.')
-        #ProteinTable.unset_attribute('Date')
+        try:
+            ProteinTable.unset_attribute('Date')
+        except:
+            pass
         ProteinTable.unset_attribute('SBtabVersion')
 
         MacromoleculeBlock_forChanges = copy.deepcopy(self.MacromoleculeInfo)
         if add_links:
             for k in list(MacromoleculeBlock_forChanges.Elements.keys()):
+                if MacromoleculeBlock_forChanges.Elements[k]['AssociatedTarget'] != '':
+                    MacromoleculeBlock_forChanges.Elements[k]['AssociatedTarget'] = '(!' + 'CellTarget' + '/'+MacromoleculeBlock_forChanges.Elements[k]['AssociatedTarget']+'!)'
                 oldComp = MacromoleculeBlock_forChanges.Elements[k]['Compartment']
                 MacromoleculeBlock_forChanges.Elements[k]['Compartment'] = '(!' + \
                     'Compartment'+'/'+oldComp+'!)'
@@ -484,17 +527,23 @@ class RBA_ModelStructure(object):
                     MacromoleculeBlock_forChanges.Elements[k]['ProcessRequirements'][
                         '(!'+'Process'+'/' + id+'!)'] = MacromoleculeBlock_forChanges.Elements[k]['ProcessRequirements'].pop(id)
 
-        MacromoleculeTable = MacromoleculeBlock_forChanges.toSBtab(table_id='Macromolecule', table_type='Quantity', table_name='Other macromolecules', Col_list=[
-                                                                   'ID', 'ProtoID', 'Type', 'Compartment', 'SupportsProcess', 'ProcessRequirements'], NameList=['ID', 'ProtoID', 'Type', 'Compartment', 'ContributesToProcess', 'RequiresProcess'])
+        MacromoleculeTable = MacromoleculeBlock_forChanges.to_sbtab(table_id='Macromolecule', table_type='Quantity', table_name='Macromolecules', Col_list=[
+                                                                   'ID', 'ProtoID', 'Type', 'Compartment', 'SupportsProcess', 'ProcessRequirements','AssociatedTarget'], NameList=['ID', 'ProtoID', 'Type', 'Compartment', 'SupportedtedProcess', 'RequiresProcess','IsCellTarget'])
         MacromoleculeTable.filename = 'Macromolecules.tsv'
         MacromoleculeTable.change_attribute(
-            'Text', 'Like proteins, other macromolecules are localised in cell compartments and can be part of cellular machines or serve other functions in the cell.')
-        #MacromoleculeTable.unset_attribute('Date')
+            'Text', 'Macromolecule are localised in cell compartments and can be part of cellular machinery or serve another function inside the cell.')
+        try:
+            MacromoleculeTable.unset_attribute('Date')
+        except:
+            pass
         MacromoleculeTable.unset_attribute('SBtabVersion')
 
         CompartmentBlock_forChanges = copy.deepcopy(self.CompartmentInfo)
         if add_links:
             for k in list(CompartmentBlock_forChanges.Elements.keys()):
+                if CompartmentBlock_forChanges.Elements[k]['Capacity_Constraint'] != '':
+                    CompartmentBlock_forChanges.Elements[k]['Capacity_Constraint'] = '(!' + 'DensityConstraint' + \
+                        '/'+CompartmentBlock_forChanges.Elements[k]['Capacity_Constraint']+'!)'
                 for index, id in enumerate(CompartmentBlock_forChanges.Elements[k]['associatedReactions']):
                     CompartmentBlock_forChanges.Elements[k]['associatedReactions'][
                         index] = '(!' + 'Reaction'+'/'+id+'!)'
@@ -505,13 +554,16 @@ class RBA_ModelStructure(object):
                     CompartmentBlock_forChanges.Elements[k]['associatedProteins'][
                         index] = '(!' + 'Protein'+'/'+id+'!)'
 
-        CompartmentTable = CompartmentBlock_forChanges.toSBtab(table_id='Compartment', table_type='Compartment', table_name='Cell compartments', Col_list=[
-                                                               'ID', 'associatedProteins', 'associatedEnzymes', 'associatedReactions'], NameList=['ID', 'Proteins', 'Enzymes', 'Reactions'])
+        CompartmentTable = CompartmentBlock_forChanges.to_sbtab(table_id='Compartment', table_type='Quantity', table_name='Cell Compartments', Col_list=[
+                                                               'ID', 'associatedProteins', 'associatedEnzymes', 'associatedReactions','Capacity_Constraint'], NameList=['ID', 'Proteins', 'Enzymes', 'Reactions','Density'])
 
         CompartmentTable.filename = 'Compartment.tsv'
         CompartmentTable.change_attribute(
             'Text', 'Cell compartments are used to describe the localisation of proteins, enzymes, and reactions and are associated with density constraints.')
-        #CompartmentTable.unset_attribute('Date')
+        try:
+            CompartmentTable.unset_attribute('Date')
+        except:
+            pass
         CompartmentTable.unset_attribute('SBtabVersion')
 
         ModuleBlock_forChanges = copy.deepcopy(self.ModuleInfo)
@@ -531,17 +583,22 @@ class RBA_ModelStructure(object):
                         ModuleBlock_forChanges.Elements[k]['Members'][index] = '(!' + \
                             'Compartment'+'/'+id+'!)'
 
-        ModuleTable = ModuleBlock_forChanges.toSBtab(table_id='CellModule', table_type='Quantity', table_name='Cell modules', Col_list=[
+        ModuleTable = ModuleBlock_forChanges.to_sbtab(table_id='CellModule', table_type='Quantity', table_name='Cell Modules', Col_list=[
                                                      'ID', 'Name', 'Members'], NameList=['ID', 'Name', 'Contains'])
         ModuleTable.filename = 'Module.tsv'
-        ModuleTable.change_attribute(
-            'Text', 'Modules are sets of model elements, typically used to describe functional subsystems such as metabolic pathways.')
-        #ModuleTable.unset_attribute('Date')
+        ModuleTable.change_attribute('Text', 'Information on Modules in RBAmodel')
+        try:
+            ModuleTable.unset_attribute('Date')
+        except:
+            pass
         ModuleTable.unset_attribute('SBtabVersion')
 
         ProcessBlock_forChanges = copy.deepcopy(self.ProcessInfo)
         if add_links:
             for k in list(ProcessBlock_forChanges.Elements.keys()):
+                if ProcessBlock_forChanges.Elements[k]['Capacity_Constraint'] != '':
+                    ProcessBlock_forChanges.Elements[k]['Capacity_Constraint'] = '(!' + 'MachineryCapacityConstraint' + \
+                        '/'+ProcessBlock_forChanges.Elements[k]['Capacity_Constraint']+'!)'
                 for component in ProcessBlock_forChanges.Elements[k]['Components'].keys():
                     ProductKeys = list(
                         ProcessBlock_forChanges.Elements[k]['Components'][component]['Products'].keys())
@@ -561,15 +618,18 @@ class RBA_ModelStructure(object):
                         ProcessBlock_forChanges.Elements[k]['Composition']['(!'+'Macromolecule' +
                                                                            '/' + id+'!)'] = ProcessBlock_forChanges.Elements[k]['Composition'].pop(id)
                     elif id in self.MetaboliteInfo.Elements.keys():
-                        ProcessBlock_forChanges.Elements[k]['Composition']['(!'+'Compound'+'/' +
+                        ProcessBlock_forChanges.Elements[k]['Composition']['(!'+'Metabolite'+'/' +
                                                                            id+'!)'] = ProcessBlock_forChanges.Elements[k]['Composition'].pop(id)
 
-        ProcessTable = ProcessBlock_forChanges.toSBtab(table_id='Process', table_type='Quantity', table_name='Macromolecular processes', Col_list=[
-            'ID', 'Name', 'Composition', 'Components', 'Initiation'], NameList=['ID', 'Name', 'MachineSubunits', 'ProcessComponents', 'InitiationCofactors'])
+        ProcessTable = ProcessBlock_forChanges.to_sbtab(table_id='Process', table_type='Quantity', table_name='Macromolecular Processes', Col_list=[
+            'ID', 'Name', 'Composition', 'Components', 'Initiation','Capacity_Constraint'], NameList=['ID', 'Name', 'MachineSubunits', 'MachineComponents', 'InitiationCofactors','Capacity'])
         ProcessTable.filename = 'Process.tsv'
         ProcessTable.change_attribute(
-            'Text', 'Macromolecular machines catalyse the processes that produce, modify, and degrade macromolecules. They are associated with machine capacity constraints.')
-        #ProcessTable.unset_attribute('Date')
+            'Text', 'Macromolecular machines catalyse the biochemical reactions that produce, modify, and degrade macromolecules. They are catalysed by macromolecular machines and associated with process capacity constraints.')
+        try:
+            ProcessTable.unset_attribute('Date')
+        except:
+            pass
         ProcessTable.unset_attribute('SBtabVersion')
 
         MetaboliteConstraintsBlock_forChanges = copy.deepcopy(self.MetaboliteConstraintsInfo)
@@ -579,27 +639,31 @@ class RBA_ModelStructure(object):
                 MetaboliteConstraintsBlock_forChanges.Elements[k][
                     'AssociatedMetabolite'] = '(!' + 'Compound'+'/'+oldMet+'!)'
 
-        MetaboliteConstraintTable = MetaboliteConstraintsBlock_forChanges.toSBtab(table_id='MetaboliteConstraint', table_type='Quantity', table_name='Metabolite mass-balance constraints', Col_list=[
+        MetaboliteConstraintTable = MetaboliteConstraintsBlock_forChanges.to_sbtab(table_id='MetaboliteConstraint', table_type='Quantity', table_name='Metabolite Mass Balance Constraints', Col_list=[
                                                                                   'ID', 'AssociatedMetabolite', 'Type'], NameList=['ID', 'Metabolite', 'Type'])
         MetaboliteConstraintTable.filename = 'MetaboliteConstraint.tsv'
         MetaboliteConstraintTable.change_attribute(
             'Text', 'Metabolite mass balance constraints ensure mass balance and stationary fluxes in metabolism.')
-        #MetaboliteConstraintTable.unset_attribute('Date')
+        try:
+            MetaboliteConstraintTable.unset_attribute('Date')
+        except:
+            pass
         MetaboliteConstraintTable.unset_attribute('SBtabVersion')
 
         CompartmentConstraintsBlock_forChanges = copy.deepcopy(self.DensityConstraintsInfo)
         if add_links:
             for k in list(CompartmentConstraintsBlock_forChanges.Elements.keys()):
                 oldComp = CompartmentConstraintsBlock_forChanges.Elements[k]['AssociatedCompartment']
-                CompartmentConstraintsBlock_forChanges.Elements[k][
-                    'AssociatedCompartment'] = '(!' + 'Compartment'+'/'+oldComp+'!)'
+                CompartmentConstraintsBlock_forChanges.Elements[k]['AssociatedCompartment'] = '(!' + 'Compartment'+'/'+oldComp+'!)'
 
-        DensityConstraintTable = CompartmentConstraintsBlock_forChanges.toSBtab(table_id='DensityConstraint', table_type='Quantity', table_name='Density constraints', Col_list=[
-                                                                                'ID', 'AssociatedCompartment', 'Type', 'CapacityParameter'], NameList=['ID', 'Compartment', 'Type', 'Formula'])
+        DensityConstraintTable = CompartmentConstraintsBlock_forChanges.to_sbtab(table_id='DensityConstraint', table_type='Quantity', table_name='Density Constraints', Col_list=['ID', 'AssociatedCompartment', 'Type','CapacityParameterID', 'Generic parameter definition','Specific parameter definition'], NameList=['ID', 'Compartment', 'Type', 'CapacityParameter','Formula', 'Formula (parameterized)'])
         DensityConstraintTable.filename = 'DensityConstraint.tsv'
         DensityConstraintTable.change_attribute(
             'Text', 'Density constraints put an upper bound on the sum of macromolecule concentrations in a given compartment. The capacity parameter defines this bound in units corresponding to amino acids (contained in proteins), or one third of nucleotides (contained in RNA).')
-        #DensityConstraintTable.unset_attribute('Date')
+        try:
+            DensityConstraintTable.unset_attribute('Date')
+        except:
+            pass
         DensityConstraintTable.unset_attribute('SBtabVersion')
 
         ProcessConstraintsBlock_forChanges = copy.deepcopy(self.ProcessConstraintsInfo)
@@ -609,12 +673,15 @@ class RBA_ModelStructure(object):
                 ProcessConstraintsBlock_forChanges.Elements[k]['AssociatedProcess'] = '(!' + \
                     'Process'+'/'+oldComp+'!)'
 
-        ProcessConstraintTable = ProcessConstraintsBlock_forChanges.toSBtab(table_id='MachineryCapacityConstraint', table_type='Quantity', table_name='Machinery-capacity constraints', Col_list=[
-            'ID', 'AssociatedProcess', 'Type', 'CapacityParameter'], NameList=['ID', 'Process', 'Type', 'Formula'])
+        ProcessConstraintTable = ProcessConstraintsBlock_forChanges.to_sbtab(table_id='MachineryCapacityConstraint', table_type='Quantity', table_name='Machinery Capacity Constraints', Col_list=[
+            'ID', 'AssociatedProcess', 'Type','CapacityParameterID', 'Generic parameter definition','Specific parameter definition'], NameList=['ID', 'Process', 'Type', 'CapacityParameter', 'Formula', 'Formula (parameterized)'])
         ProcessConstraintTable.filename = 'MachineryConstraint.tsv'
         ProcessConstraintTable.change_attribute(
             'Text', 'A machinery capacity constraint states that the rate of a macromolecular process is proportional to the concentration of the catalysing machine. The proportionality constant  (capacity parameter) can be a constant or a function of model parameters such as the growth rate.')
-        #ProcessConstraintTable.unset_attribute('Date')
+        try:
+            ProcessConstraintTable.unset_attribute('Date')
+        except:
+            pass
         ProcessConstraintTable.unset_attribute('SBtabVersion')
 
         EnzymeConstraintsBlock_forChanges = copy.deepcopy(self.EnzymeConstraintsInfo)
@@ -624,12 +691,15 @@ class RBA_ModelStructure(object):
                 EnzymeConstraintsBlock_forChanges.Elements[k]['AssociatedEnzyme'] = '(!' + \
                     'Enzyme'+'/'+oldComp+'!)'
 
-        EnzymeConstraintTable = EnzymeConstraintsBlock_forChanges.toSBtab(table_id='EnzymeCapacityConstraint', table_type='Quantity', table_name='Enzyme-capacity constraints', Col_list=[
-            'ID', 'AssociatedEnzyme', 'AssociatedReaction', 'Direction', 'Type', 'CapacityParameter'], NameList=['ID', 'Enzyme', 'Reaction', 'Direction', 'Type', 'Formula'])
+        EnzymeConstraintTable = EnzymeConstraintsBlock_forChanges.to_sbtab(table_id='EnzymeCapacityConstraint', table_type='Quantity', table_name='Enzyme Capacity Constraints', Col_list=[
+            'ID', 'AssociatedEnzyme', 'AssociatedReaction', 'Direction', 'Type','CapacityParameterID' ,'Generic parameter definition','Specific parameter definition'], NameList=['ID', 'Enzyme', 'Reaction', 'Direction', 'Type', 'CapacityParameter', 'Formula', 'Formula (parameterized)'])
         EnzymeConstraintTable.filename = 'EnzymeConstraint.tsv'
         EnzymeConstraintTable.change_attribute(
             'Text', 'An enzyme capacity constraint states that a reaction rate is proportional to the concentration of the catalysing enzyme. The proportionality constant (capacity parameter) can be a constant or a function of model parameters such as the growth rate.')
-        #EnzymeConstraintTable.unset_attribute('Date')
+        try:
+            EnzymeConstraintTable.unset_attribute('Date')
+        except:
+            pass
         EnzymeConstraintTable.unset_attribute('SBtabVersion')
 
         TargetBlock_forChanges = copy.deepcopy(self.TargetInfo)
@@ -649,42 +719,27 @@ class RBA_ModelStructure(object):
                     TargetBlock_forChanges.Elements[k]['TargetEntity'] = '(!' + \
                         'Macromolecule'+'/'+oldTargSpec+'!)'
 
-        TargetTable = TargetBlock_forChanges.toSBtab(table_id='CellTarget', table_type='Quantity', table_name='Cell targets', Col_list=[
-            'ID', 'Group', 'Type', 'TargetEntity', 'TargetValue'], NameList=['ID', 'TargetGroup', 'TargetType', 'TargetEntity', 'TargetParameter'])
+        TargetTable = TargetBlock_forChanges.to_sbtab(table_id='CellTarget', table_type='Quantity', table_name='Cell Targets', Col_list=[
+            'ID', 'Group', 'Type', 'TargetEntity', 'TargetParameterID', 'Generic parameter definition','Specific parameter definition'], NameList=['ID', 'TargetGroup', 'TargetType', 'TargetEntity', 'TargetParameter', 'Formula', 'Formula (parameterized)'])
         TargetTable.filename = 'Target.tsv'
         TargetTable.change_attribute(
             'Text', 'Cell targets are biochemical variables (fluxes or concentrations) that need to remain below or above a certain threshold value to ensure a viable cell. They define constraints in the RBA model.')
-        #TargetTable.unset_attribute('Date')
+        try:
+            TargetTable.unset_attribute('Date')
+        except:
+            pass
         TargetTable.unset_attribute('SBtabVersion')
 
-        if not add_links:
-            GeneralInfoTable.unset_attribute('Text')
-            StatsTable.unset_attribute('Text')
-            MetaboliteTable.unset_attribute('Text')
-            ReactionTable.unset_attribute('Text')
-            EnzymeTable.unset_attribute('Text')
-            ProteinTable.unset_attribute('Text')
-            MacromoleculeTable.unset_attribute('Text')
-            CompartmentTable.unset_attribute('Text')
-            ModuleTable.unset_attribute('Text')
-            ProcessTable.unset_attribute('Text')
-            TargetTable.unset_attribute('Text')
-            MetaboliteConstraintTable.unset_attribute('Text')
-            DensityConstraintTable.unset_attribute('Text')
-            ProcessConstraintTable.unset_attribute('Text')
-            EnzymeConstraintTable.unset_attribute('Text')
-
-        if filename is not None:
+        if filename != "":
             filename_SBtab = filename
         else:
-            filename_SBtab = 'RBA_model'
-
-        if add_links:
-            filename_SBtab += '_HTML'
+            if add_links:
+                filename_SBtab = 'RBA_model_withLinks'
+            else:
+                filename_SBtab = 'RBA_model'
 
         Out = SBtab.SBtabDocument(name='rbatools_withLinks', sbtab_init=None,
                                   filename=str(filename_SBtab+'.tsv'))
-        Out.change_attribute('Author', self.GeneralInfo.Elements['Author'])
         Out.add_sbtab(GeneralInfoTable)
         Out.add_sbtab(StatsTable)
         Out.add_sbtab(MetaboliteTable)
@@ -706,59 +761,118 @@ class RBA_ModelStructure(object):
         Out.change_attribute('DocumentType', 'rba-model-synopsis')
         Out.write()
 
-    def generateMatrices(self):
-        """
-        Generates information-matricx object and stores it as attribute 'InfoMatrices'
-        """
-        self.InfoMatrices = InfoMatrices(self)
 
-
-def findParameterDependencies(ModelStructure):
+def _find_parameter_dependencies(ModelStructure,model):
     MedDepts = {}
     MuDepts = []
+    for tA in ModelStructure.TargetInfo.Elements.keys():
+        if len(list(ModelStructure.TargetInfo.Elements[tA]['TargetParameter'].keys()))>0:
+            if ModelStructure.TargetInfo.Elements[tA]['TargetParameter']['Type'] not in ['constant']:
+                if ModelStructure.TargetInfo.Elements[tA]['TargetParameter']['Type'] not in ['Aggregate']:
+                    for var in ModelStructure.TargetInfo.Elements[tA]['TargetParameter']['Variables']:
+                        if var == 'growth_rate':
+                            MuDepts.append(tA)
+                        else :
+                            if var in MedDepts.keys():
+                                MedDepts[var].append(tA)
+                            else:
+                                MedDepts[var]=[tA]
+                else:
+                    for term in ModelStructure.TargetInfo.Elements[tA]['TargetParameter']['Multiplicative Terms']:
+                        term_definition=return_parameter_definition(model=model,parameter=term)
+                        for var in term_definition[term]['Variables']:
+                            if var == 'growth_rate':
+                                if tA not in MuDepts:
+                                    MuDepts.append(tA)
+                            else :
+                                if var in MedDepts.keys():
+                                    if tA not in MedDepts[var]:
+                                        MedDepts[var].append(tA)
+                                else:
+                                    MedDepts[var]=[tA]
+
+
     for eK in ModelStructure.EnzymeConstraintsInfo.Elements.keys():
-        e = ModelStructure.EnzymeConstraintsInfo.Elements[eK]
-        for pf in e['CapacityParameter']:
-            iV = list(pf.values())[0]['IndependentVariable']
-            if list(pf.values())[0]['FunctionType'] != 'constant':
-                if iV.startswith('M_'):
-                    if iV.rsplit('_', 1)[0] in MedDepts.keys():
-                        MedDepts[iV.rsplit('_', 1)[0]].append(e['ID'])
-                    elif iV.rsplit('_', 1)[0] not in MedDepts.keys():
-                        MedDepts.update({iV.rsplit('_', 1)[0]: [e['ID']]})
-                if iV == 'growth_rate':
-                    if e['ID'] not in MuDepts:
-                        MuDepts.append(e['ID'])
+        if len(list(ModelStructure.EnzymeConstraintsInfo.Elements[eK]['CapacityParameter'].keys()))>0:
+            if ModelStructure.EnzymeConstraintsInfo.Elements[eK]['CapacityParameter']['Type'] not in ['constant']:
+                if ModelStructure.EnzymeConstraintsInfo.Elements[eK]['CapacityParameter']['Type'] not in ['Aggregate']:
+                    for var in ModelStructure.EnzymeConstraintsInfo.Elements[eK]['CapacityParameter']['Variables']:
+                        if var == 'growth_rate':
+                            MuDepts.append(eK)
+                        else :
+                            if var in MedDepts.keys():
+                                MedDepts[var].append(eK)
+                            else:
+                                MedDepts[var]=[eK]
+                else:
+                    for term in ModelStructure.EnzymeConstraintsInfo.Elements[eK]['CapacityParameter']['Multiplicative Terms']:
+                        term_definition=return_parameter_definition(model=model,parameter=term)
+                        for var in term_definition[term]['Variables']:
+                            if var == 'growth_rate':
+                                if eK not in MuDepts:
+                                    MuDepts.append(eK)
+                            else :
+                                if var in MedDepts.keys():
+                                    if eK not in MedDepts[var]:
+                                        MedDepts[var].append(eK)
+                                else:
+                                    MedDepts[var]=[eK]
     for dK in ModelStructure.DensityConstraintsInfo.Elements.keys():
-        d = ModelStructure.DensityConstraintsInfo.Elements[dK]
-        for pf in d['CapacityParameter']:
-            iV = list(pf.values())[0]['IndependentVariable']
-            if list(pf.values())[0]['FunctionType'] != 'constant':
-                if iV.startswith('M_'):
-                    if iV.rsplit('_', 1)[0] in MedDepts.keys():
-                        MedDepts[iV.rsplit('_', 1)[0]].append(d['ID'])
-                    elif iV.rsplit('_', 1)[0] not in MedDepts.keys():
-                        MedDepts.update({iV.rsplit('_', 1)[0]: [d['ID']]})
-                if iV == 'growth_rate':
-                    if d['ID'] not in MuDepts:
-                        MuDepts.append(d['ID'])
+        if len(list(ModelStructure.DensityConstraintsInfo.Elements[dK]['CapacityParameter'].keys()))>0:
+            if ModelStructure.DensityConstraintsInfo.Elements[dK]['CapacityParameter']['Type'] not in ['constant']:
+                if ModelStructure.DensityConstraintsInfo.Elements[dK]['CapacityParameter']['Type'] not in ['Aggregate']:
+                    for var in ModelStructure.DensityConstraintsInfo.Elements[dK]['CapacityParameter']['Variables']:
+                        if var == 'growth_rate':
+                            MuDepts.append(dK)
+                        else :
+                            if var in MedDepts.keys():
+                                MedDepts[var].append(dK)
+                            else:
+                                MedDepts[var]=[dK]
+                else:
+                    for term in ModelStructure.DensityConstraintsInfo.Elements[dK]['CapacityParameter']['Multiplicative Terms']:
+                        term_definition=return_parameter_definition(model=model,parameter=term)
+                        for var in term_definition[term]['Variables']:
+                            if var == 'growth_rate':
+                                if dK not in MuDepts:
+                                    MuDepts.append(dK)
+                            else :
+                                if var in MedDepts.keys():
+                                    if dK not in MedDepts[var]:
+                                        MedDepts[var].append(dK)
+                                else:
+                                    MedDepts[var]=[dK]
     for pK in ModelStructure.ProcessConstraintsInfo.Elements.keys():
-        p = ModelStructure.ProcessConstraintsInfo.Elements[pK]
-        for pf in p['CapacityParameter']:
-            iV = list(pf.values())[0]['IndependentVariable']
-            if list(pf.values())[0]['FunctionType'] != 'constant':
-                if iV.startswith('M_'):
-                    if iV.rsplit('_', 1)[0] in MedDepts.keys():
-                        MedDepts[iV.rsplit('_', 1)[0]].append(p['ID'])
-                    elif iV.rsplit('_', 1)[0] not in MedDepts.keys():
-                        MedDepts.update({iV.rsplit('_', 1)[0]: [p['ID']]})
-                if iV == 'growth_rate':
-                    if p['ID'] not in MuDepts:
-                        MuDepts.append(p['ID'])
+        if len(list(ModelStructure.ProcessConstraintsInfo.Elements[pK]['CapacityParameter'].keys()))>0:
+            if ModelStructure.ProcessConstraintsInfo.Elements[pK]['CapacityParameter']['Type'] not in ['constant']:
+                if ModelStructure.ProcessConstraintsInfo.Elements[pK]['CapacityParameter']['Type'] not in ['Aggregate']:
+                    for var in ModelStructure.ProcessConstraintsInfo.Elements[pK]['CapacityParameter']['Variables']:
+                        if var == 'growth_rate':
+                            MuDepts.append(pK)
+                        else :
+                            if var in MedDepts.keys():
+                                MedDepts[var].append(pK)
+                            else:
+                                MedDepts[var]=[pK]
+                else:
+                    for term in ModelStructure.ProcessConstraintsInfo.Elements[pK]['CapacityParameter']['Multiplicative Terms']:
+                        term_definition=return_parameter_definition(model=model,parameter=term)
+                        if term_definition[term]['Type'] not in ['constant']:
+                            for var in term_definition[term]['Variables']:
+                                if var == 'growth_rate':
+                                    if pK not in MuDepts:
+                                        MuDepts.append(pK)
+                                else :
+                                    if var in MedDepts.keys():
+                                        if pK not in MedDepts[var]:
+                                            MedDepts[var].append(pK)
+                                    else:
+                                        MedDepts[var]=[pK]
+
     return(MedDepts, MuDepts)
 
 
-def generateProteinGeneMatrix(ModelStructure):
+def _generate_protein_gene_matrix(ModelStructure):
     uniqueProteins = []
     uniqueProteinMap = {}
     Proteins = list(ModelStructure.ProteinInfo.Elements.keys())
@@ -767,8 +881,7 @@ def generateProteinGeneMatrix(ModelStructure):
             uniqueProteinMap.update({ModelStructure.ProteinInfo.Elements[i]['ProtoID']: []})
             uniqueProteins.append(ModelStructure.ProteinInfo.Elements[i]['ProtoID'])
         uniqueProteinMap[ModelStructure.ProteinInfo.Elements[i]['ProtoID']].append(i)
-    ProteinProteinMatrix = numpy.zeros(
-        (len(list(uniqueProteinMap.keys())), len(list(ModelStructure.ProteinInfo.Elements.keys()))))
+    ProteinProteinMatrix = numpy.zeros((len(list(uniqueProteinMap.keys())), len(list(ModelStructure.ProteinInfo.Elements.keys()))))
     for u in list(uniqueProteinMap.keys()):
         row_ind = uniqueProteins.index(u)
         for i in uniqueProteinMap[u]:
@@ -777,9 +890,8 @@ def generateProteinGeneMatrix(ModelStructure):
     return({'Matrix': numpy.array(ProteinProteinMatrix), 'Proteins': Proteins, 'ProtoProteins': uniqueProteins})
 
 
-def generateProteinMatrix(ModelStructure):
+def _generate_protein_matrix(ModelStructure):
     Proteins = list(ModelStructure.ProteinInfo.Elements.keys())
-    # print(list(ModelStructure.ProcessInfo.Elements.keys()))
     Processes = [ModelStructure.ProcessInfo.Elements[i]['ID'] +
                  '_machinery' for i in list(ModelStructure.ProcessInfo.Elements.keys())]
     Enzymes = list(ModelStructure.EnzymeInfo.Elements.keys())
@@ -787,17 +899,13 @@ def generateProteinMatrix(ModelStructure):
     ProteinMatrix = numpy.zeros((len(Proteins), len(Consumers)))
     for p in Proteins:
         if len(ModelStructure.ProteinInfo.Elements[p]['SupportsProcess']) > 0:
-            # print(list(ModelStructure.ProteinInfo.Elements[p]['SupportsProcess']))
             for pc in list(ModelStructure.ProteinInfo.Elements[p]['SupportsProcess']):
-                try:
-                    coeff = 0
-                    row_ind = Proteins.index(p)
-                    col_ind = Consumers.index(
-                        ModelStructure.ProcessInfo.Elements[pc]['ID']+'_machinery')
-                    coeff = ModelStructure.ProcessInfo.Elements[pc]['Composition'][p]
-                    ProteinMatrix[row_ind, col_ind] += coeff
-                except:
-                    continue
+                coeff = 0
+                row_ind = Proteins.index(p)
+                col_ind = Consumers.index(
+                    ModelStructure.ProcessInfo.Elements[pc]['ID']+'_machinery')
+                coeff = ModelStructure.ProcessInfo.Elements[pc]['Composition'][p]
+                ProteinMatrix[row_ind, col_ind] += coeff
         if len(ModelStructure.ProteinInfo.Elements[p]['associatedEnzymes']) > 0:
             for ez in list(ModelStructure.ProteinInfo.Elements[p]['associatedEnzymes']):
                 coeff = 0
@@ -808,251 +916,79 @@ def generateProteinMatrix(ModelStructure):
     return({'Matrix': numpy.array(ProteinMatrix), 'Consumers': Consumers, 'Proteins': Proteins})
 
 
-def importBiggMetabolites(xml_dir):
-    if os.path.isfile(str(xml_dir+'/bigg_models_metabolites.txt')):
-        return(pandas.read_csv(str(xml_dir+'/bigg_models_metabolites.txt'), sep='\t', index_col=0))
-    else:
-        sys.exit('\n Required BiGG Metabolite File "bigg_models_metabolites.txt" not found.\n' +
-                 ' Please provide in input-directory\n' +
-                 ' To be found under: http://bigg.ucsd.edu/static/namespace/bigg_models_metabolites.txt\n')
-
-
-def importBiggReactions(xml_dir):
-    if os.path.isfile(str(xml_dir+'/bigg_models_reactions.txt')):
-        return(pandas.read_csv(str(xml_dir+'/bigg_models_reactions.txt'), sep='\t', index_col=0))
-    else:
-        sys.exit('\n Required BiGG Reaction File "bigg_models_reactions.txt "not found.\n' +
-                 ' Please provide in input-directory\n' +
-                 ' To be found under: http://bigg.ucsd.edu/static/namespace/bigg_models_reactions.txt\n')
-
-
-def importUniprotFile(xml_dir):
+def _import_uniprot_file(xml_dir):
     if os.path.isfile(str(xml_dir+'/uniprot.csv')):
         return(pandas.read_csv(str(xml_dir+'/uniprot.csv'), sep='\t'))
     else:
-        print('\n Uniprot-file "uniprot.csv" not found.\n' +
-              ' Continuing without additional information...\n')
+        print('WARNING: Uniprot-file "uniprot.csv" not found.\n' + ' Continuing without additional information...\n')
         return(str('Not There'))
 
 
-def importSbmlFile(xml_dir, filename):
+def _import_sbml_file(xml_dir, filename):
     if os.path.isfile(str(xml_dir+'/'+filename)):
         SBfile = libsbml.readSBML(str(xml_dir+'/'+filename))
         if SBfile.getNumErrors() > 0:
             SBfile.printErrors()
-            print('Invalid SBML')
+            print('WARNING: Invalid SBML')
             return(str('Not There'))
         else:
             sbml = SBfile
             return(sbml)
     else:
-        print('\n SBML-file {} not found.\n' +
-              ' Continuing without additional information...\n'.format(filename))
+        print('WARNING: SBML-file {} not found.\n' + ' Continuing without additional information...\n'.format(filename))
         return(str('Not There'))
 
 
-def importGeneAnnotations(xml_dir):
+def _import_gene_annotations(xml_dir):
     if os.path.isfile(str(xml_dir+'/GeneAnnotations.csv')):
         out = pandas.read_csv(str(xml_dir+'/GeneAnnotations.csv'), sep=',', index_col=0)
-        if len(list(out)) == 0:
-            print('WARNING: Your file "GeneAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+        if not list(out):
+            print('WARNING: File "GeneAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+            return(str('Not There'))
         return(out)
     else:
-        print('\n No Gene-annotation file "GeneAnnotations.csv" provided.\n' +
-              ' Continuing without additional information...\n')
+        print('WARNING: No Gene-annotation file "GeneAnnotations.csv" provided.\n' + ' Continuing without additional information...\n')
         return(str('Not There'))
 
 
-def importReactionAnnotations(xml_dir):
+def _import_reaction_annotations(xml_dir):
     if os.path.isfile(str(xml_dir+'/ReactionAnnotations.csv')):
         out = pandas.read_csv(str(xml_dir+'/ReactionAnnotations.csv'), sep=',', index_col=0)
-        if len(list(out)) == 0:
-            print('WARNING: Your file "ReactionAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+        if not list(out):
+            print('WARNING: File "ReactionAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+            return(str('Not There'))
         return(out)
     else:
-        print('\n No Reaction-annotation file "ReactionAnnotations.csv" provided.\n' +
-              ' Continuing without additional information...\n')
+        print('WARNING: No Reaction-annotation file "ReactionAnnotations.csv" provided.\n' + ' Continuing without additional information...\n')
         return(str('Not There'))
 
 
-def importMetaboliteAnnotations(xml_dir):
+def _import_metabolite_annotations(xml_dir):
     if os.path.isfile(str(xml_dir+'/MetaboliteAnnotations.csv')):
         out = pandas.read_csv(str(xml_dir+'/MetaboliteAnnotations.csv'), sep=',', index_col=0)
-        if len(list(out)) == 0:
-            print('WARNING: Your file "MetaboliteAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+        if not list(out):
+            print('WARNING: File "MetaboliteAnnotations.csv" seems to be empty or has the wrong delimiter (comma required).')
+            return(str('Not There'))
         return(out)
     else:
-        print('\n No Reaction-annotation file "MetaboliteAnnotations.csv" provided.\n' +
-              ' Continuing without additional information...\n')
+        print('WARNING: No Reaction-annotation file "MetaboliteAnnotations.csv" provided.\n' + ' Continuing without additional information...\n')
         return(str('Not There'))
 
 
-def importModelInfo(xml_dir):
+def _import_model_info(xml_dir):
     if os.path.isfile(str(xml_dir+'/ModelInformation.csv')):
-        out = pandas.read_csv(str(xml_dir+'/ModelInformation.csv'),
-                              sep=',', header=0)
+        out = pandas.read_csv(str(xml_dir+'/ModelInformation.csv'),sep=',', header=0)
         out.index = list(out['Key'])
-        if len(list(out)) == 0:
-            print('WARNING: Your file "ModelInformation.csv" seems to be empty or has the wrong delimiter (comma required).')
+        if list(out):
+            print('WARNING: File "ModelInformation.csv" seems to be empty or has the wrong delimiter (comma required).')
+            return(pandas.DataFrame([['Name', 'ModelName'], ['Author', 'John Doe'], ['Organism', 'Life'], ['Reconstruction', 'GSMM'], ['SBML-file', 'Not Provided']], index=['Name', 'Author', 'Organism', 'Reconstruction', 'SBML-file'], columns=['Key', 'Value']))
         return(out)
     else:
-        print('\n No model-info file "ModelInformation.csv" provided.\n' +
-              ' Using dummy-information\n')
-        return(pandas.DataFrame([['Name', 'ModelName'], ['Author', 'J. Doe'], ['Organism', 'Life'], ['Reconstruction', 'GSMM'], ['SBML-file', 'Not Provided']], index=['Name', 'Author', 'Organism', 'Reconstruction', 'SBML-file'], columns=['Key', 'Value']))
+        print('WARNING: No model-info file "ModelInformation.csv" provided.\n' + ' Using dummy-information\n')
+        return(pandas.DataFrame([['Name', 'ModelName'], ['Author', 'John Doe'], ['Organism', 'Life'], ['Reconstruction', 'GSMM'], ['SBML-file', 'Not Provided']], index=['Name', 'Author', 'Organism', 'Reconstruction', 'SBML-file'], columns=['Key', 'Value']))
 
 
-def htmlStyle(structOriginal):
-    struct = copy.deepcopy(structOriginal)
-
-    for j in struct.ProcessInfo.Elements.keys():
-        for i in struct.ProcessInfo.Elements[j]['Composition'].keys():
-            struct.ProcessInfo.Elements[j]['Composition']['Protein##' +
-                                                          i] = struct.ProcessInfo.Elements[j]['Composition'].pop(i)
-
-    for j in struct.EnzymeInfo.Elements.keys():
-        for i in struct.EnzymeInfo.Elements[j]['Subunits'].keys():
-            struct.EnzymeInfo.Elements[j]['Subunits']['Protein##' +
-                                                      i] = struct.EnzymeInfo.Elements[j]['Subunits'].pop(i)
-        for i in range(len(struct.EnzymeInfo.Elements[j]['Isozymes'])):
-            struct.EnzymeInfo.Elements[j]['Isozymes'][i] = 'Enzyme##' + \
-                struct.EnzymeInfo.Elements[j]['Isozymes'][i]
-        for i in range(len(struct.EnzymeInfo.Elements[j]['IdenticalEnzymes'])):
-            struct.EnzymeInfo.Elements[j]['IdenticalEnzymes'][i] = 'Enzyme##' + \
-                struct.EnzymeInfo.Elements[j]['IdenticalEnzymes'][i]
-        for i in range(len(struct.EnzymeInfo.Elements[j]['EnzymeCompartment'])):
-            struct.EnzymeInfo.Elements[j]['EnzymeCompartment'][i] = 'Compartment##' + \
-                struct.EnzymeInfo.Elements[j]['EnzymeCompartment'][i]
-        struct.EnzymeInfo.Elements[j]['Reaction'] = 'Reaction##' + \
-            struct.EnzymeInfo.Elements[j]['Reaction']
-
-    for j in struct.ReactionInfo.Elements.keys():
-        for i in struct.ReactionInfo.Elements[j]['Reactants'].keys():
-            struct.ReactionInfo.Elements[j]['Reactants']['Metabolite##' +
-                                                         i] = struct.ReactionInfo.Elements[j]['Reactants'].pop(i)
-        for i in struct.ReactionInfo.Elements[j]['Products'].keys():
-            struct.ReactionInfo.Elements[j]['Products']['Metabolite##' +
-                                                        i] = struct.ReactionInfo.Elements[j]['Products'].pop(i)
-        for i in range(len(struct.ReactionInfo.Elements[j]['Twins'])):
-            struct.ReactionInfo.Elements[j]['Twins'][i] = 'Reaction##' + \
-                struct.ReactionInfo.Elements[j]['Twins'][i]
-        struct.ReactionInfo.Elements[j]['Enzyme'] = 'Enzyme##' + \
-            struct.ReactionInfo.Elements[j]['Enzyme']
-
-    for j in struct.ProteinInfo.Elements.keys():
-        for i in struct.ProteinInfo.Elements[j]['ProcessRequirements'].keys():
-            struct.ProteinInfo.Elements[j]['ProcessRequirements']['Process##' +
-                                                                  i] = struct.ProteinInfo.Elements[j]['ProcessRequirements'].pop(i)
-        for i in range(len(struct.ProteinInfo.Elements[j]['associatedReactions'])):
-            struct.ProteinInfo.Elements[j]['associatedReactions'][i] = 'Reaction##' + \
-                struct.ProteinInfo.Elements[j]['associatedReactions'][i]
-        for i in range(len(struct.ProteinInfo.Elements[j]['associatedEnzymes'])):
-            struct.ProteinInfo.Elements[j]['associatedEnzymes'][i] = 'Enzyme##' + \
-                struct.ProteinInfo.Elements[j]['associatedEnzymes'][i]
-        for i in range(len(struct.ProteinInfo.Elements[j]['SupportsProcess'])):
-            struct.ProteinInfo.Elements[j]['SupportsProcess'][i] = 'Process##' + \
-                struct.ProteinInfo.Elements[j]['SupportsProcess'][i]
-        struct.ProteinInfo.Elements[j]['Compartment'] = 'Compartment##' + \
-            struct.ProteinInfo.Elements[j]['Compartment']
-
-    for j in struct.CompartmentInfo.Elements.keys():
-        for i in range(len(struct.CompartmentInfo.Elements[j]['associatedProteins'])):
-            struct.CompartmentInfo.Elements[j]['associatedProteins'][i] = 'Protein##' + \
-                struct.CompartmentInfo.Elements[j]['associatedProteins'][i]
-        for i in range(len(struct.CompartmentInfo.Elements[j]['associatedReactions'])):
-            struct.CompartmentInfo.Elements[j]['associatedReactions'][i] = 'Reaction##' + \
-                struct.CompartmentInfo.Elements[j]['associatedReactions'][i]
-        for i in range(len(struct.CompartmentInfo.Elements[j]['associatedEnzymes'])):
-            struct.CompartmentInfo.Elements[j]['associatedEnzymes'][i] = 'Enzyme##' + \
-                struct.CompartmentInfo.Elements[j]['associatedEnzymes'][i]
-
-    for j in struct.MetaboliteInfo.Elements.keys():
-        for i in range(len(struct.MetaboliteInfo.Elements[j]['ReactionsInvolvedWith'])):
-            struct.MetaboliteInfo.Elements[j]['ReactionsInvolvedWith'][i] = 'Reaction##' + \
-                struct.MetaboliteInfo.Elements[j]['ReactionsInvolvedWith'][i]
-
-    for j in struct.MetaboliteConstraintsInfo.Elements.keys():
-        struct.MetaboliteConstraintsInfo.Elements[j]['AssociatedMetabolite'] = 'Metabolite##' + \
-            struct.MetaboliteConstraintsInfo.Elements[j]['AssociatedMetabolite']
-    for j in struct.EnzymeConstraintsInfo.Elements.keys():
-        struct.EnzymeConstraintsInfo.Elements[j]['AssociatedEnzyme'] = 'Enzyme##' + \
-            struct.EnzymeConstraintsInfo.Elements[j]['AssociatedEnzyme']
-    for j in struct.EnzymeConstraintsInfo.Elements.keys():
-        struct.EnzymeConstraintsInfo.Elements[j]['AssociatedReaction'] = 'Reaction##' + \
-            struct.EnzymeConstraintsInfo.Elements[j]['AssociatedReaction']
-    for j in struct.ProcessConstraintsInfo.Elements.keys():
-        struct.ProcessConstraintsInfo.Elements[j]['AssociatedProcess'] = 'Process##' + \
-            struct.ProcessConstraintsInfo.Elements[j]['AssociatedProcess']
-    for j in struct.DensityConstraintsInfo.Elements.keys():
-        struct.DensityConstraintsInfo.Elements[j]['AssociatedCompartment'] = 'Compartment##' + \
-            struct.DensityConstraintsInfo.Elements[j]['AssociatedCompartment']
-
-    for i in struct.CompartmentInfo.Elements.keys():
-        struct.CompartmentInfo.Elements['ID_' + i] = struct.CompartmentInfo.Elements.pop(i)
-    for i in struct.ProcessInfo.Elements.keys():
-        struct.ProcessInfo.Elements['ID_' + i] = struct.ProcessInfo.Elements.pop(i)
-    for i in struct.MetaboliteInfo.Elements.keys():
-        struct.MetaboliteInfo.Elements['ID_' + i] = struct.MetaboliteInfo.Elements.pop(i)
-    for i in struct.ModuleInfo.Elements.keys():
-        struct.ModuleInfo.Elements['ID_' + i] = struct.ModuleInfo.Elements.pop(i)
-    for i in struct.EnzymeInfo.Elements.keys():
-        struct.EnzymeInfo.Elements['ID_' + i] = struct.EnzymeInfo.Elements.pop(i)
-    for i in struct.ProteinInfo.Elements.keys():
-        struct.ProteinInfo.Elements['ID_' + i] = struct.ProteinInfo.Elements.pop(i)
-    for i in struct.ReactionInfo.Elements.keys():
-        struct.ReactionInfo.Elements['ID_' + i] = struct.ReactionInfo.Elements.pop(i)
-    for i in struct.MetaboliteConstraintsInfo.Elements.keys():
-        struct.MetaboliteConstraintsInfo.Elements['ID_' +
-                                                  i] = struct.MetaboliteConstraintsInfo.Elements.pop(i)
-    for i in struct.EnzymeConstraintsInfo.Elements.keys():
-        struct.EnzymeConstraintsInfo.Elements['ID_' +
-                                              i] = struct.EnzymeConstraintsInfo.Elements.pop(i)
-    for i in struct.ProcessConstraintsInfo.Elements.keys():
-        struct.ProcessConstraintsInfo.Elements['ID_' +
-                                               i] = struct.ProcessConstraintsInfo.Elements.pop(i)
-    for i in struct.DensityConstraintsInfo.Elements.keys():
-        struct.DensityConstraintsInfo.Elements['ID_' +
-                                               i] = struct.DensityConstraintsInfo.Elements.pop(i)
-
-    struct.ProcessInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.CompartmentInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.MetaboliteInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.ModuleInfo.Elements.update({'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.EnzymeInfo.Elements.update({'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.ProteinInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.ReactionInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.DensityConstraintsInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.ProcessConstraintsInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.MetaboliteConstraintsInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-    struct.EnzymeConstraintsInfo.Elements.update(
-        {'Description': 'abcdefghijklmnopqrstuvwxyz', 'Pictures': []})
-
-    Block = {'ModelInformation': struct.GeneralInfo.JSONize(),
-             'ModelStatistics': struct.ModelStatistics.JSONize(),
-             'Process': struct.ProcessInfo.JSONize(),
-             'Compartment': struct.CompartmentInfo.JSONize(),
-             'Metabolite': struct.MetaboliteInfo.JSONize(),
-             'Module': struct.ModuleInfo.JSONize(),
-             'Enzyme': struct.EnzymeInfo.JSONize(),
-             'Protein': struct.ProteinInfo.JSONize(),
-             'Reaction': struct.ReactionInfo.JSONize(),
-             'DensityConstraint': struct.DensityConstraintsInfo.JSONize(),
-             'ProcessConstraint': struct.ProcessConstraintsInfo.JSONize(),
-             'MetaboliteConstraint': struct.MetaboliteConstraintsInfo.JSONize(),
-             'EnzymeConstraint': struct.EnzymeConstraintsInfo.JSONize()
-             }
-
-    return({'RBA_ModelData': {'StructuralInformation': Block}})
-
-
-def generateOverview(StatsReactions, StatsMetabolites, StatsModules, StatsEnzymes, StatsProteins, StatsMacromolecules, StatsProcesses, StatsCompartments, StatsTargets, StatsConstraintsBiological, StatsConstraintsMathematical):
+def _generate_overview(StatsReactions, StatsMetabolites, StatsModules, StatsEnzymes, StatsProteins, StatsMacromolecules, StatsProcesses, StatsCompartments, StatsTargets, StatsConstraintsBiological, StatsConstraintsMathematical):
     out = {'Reactions Total': StatsReactions['ReactionsTotal'],
            'Reactions Unique': StatsReactions['ReactionsUnique'],
            'Reactions Spontaneous': StatsReactions['ReactionsSpontaneous'],
@@ -1066,7 +1002,7 @@ def generateOverview(StatsReactions, StatsMetabolites, StatsModules, StatsEnzyme
            'Metabolites Internal': StatsMetabolites['MetabolitesInternal'],
            'Metabolites External': StatsMetabolites['MetabolitesExternal'],
            'Metabolites GrowthRelevant': StatsMetabolites['MetabolitesGrowthRelevant'],
-           'Metabolites (boundary)': StatsMetabolites['BoundaryMetabolites'],
+           'Boundary Metabolites': StatsMetabolites['BoundaryMetabolites'],
            'Enzymes Total': StatsEnzymes['EnzymesTotal'],
            'Enzymes Unique': StatsEnzymes['EnzymesUnique'],
            'Proteins Total': StatsProteins['ProteinsTotal'],
@@ -1087,7 +1023,7 @@ def generateOverview(StatsReactions, StatsMetabolites, StatsModules, StatsEnzyme
     return(out)
 
 
-def StatsConstraintsBiological(MetCs, CapCs, DenCs, EffCs):
+def _stats_constraints_biological(MetCs, CapCs, DenCs, EffCs):
     out = {'BioConstraintsMetabolite': len(MetCs.keys()),
            'BioConstraintsCapacity': len(CapCs.keys()),
            'BioConstraintsProcess': len(EffCs.keys()),
@@ -1095,7 +1031,7 @@ def StatsConstraintsBiological(MetCs, CapCs, DenCs, EffCs):
     return(out)
 
 
-def StatsConstraintsMathematical(MetCs, CapCs, DenCs, EffCs, Enzymes, Reactions, Processes):
+def _stats_constraints_mathematical(MetCs, CapCs, DenCs, EffCs, Enzymes, Reactions, Processes):
     nVars = len(Enzymes.keys())+len(Reactions.keys())+len(Processes.keys())
     nConsts = len(MetCs.keys())+len(CapCs.keys())+len(DenCs.keys())+len(EffCs.keys())
     nEqC = 0
@@ -1127,7 +1063,7 @@ def StatsConstraintsMathematical(MetCs, CapCs, DenCs, EffCs, Enzymes, Reactions,
     return(out)
 
 
-def findContainedProteins(comp, Prots):
+def _find_contained_proteins(comp, Prots):
     out = []
     for k in Prots.keys():
         if Prots[k]['Compartment'] == comp:
@@ -1135,7 +1071,7 @@ def findContainedProteins(comp, Prots):
     return(out)
 
 
-def findContainedMacromolecules(comp, Macromolecules):
+def _find_contained_macromolecules(comp, Macromolecules):
     out = []
     for k in Macromolecules.keys():
         if Macromolecules[k]['Compartment'] == comp:
@@ -1143,7 +1079,7 @@ def findContainedMacromolecules(comp, Macromolecules):
     return(out)
 
 
-def findContainedEnzymes(ContainedProteins, Prots, Enzymes):
+def _find_contained_enzymes(ContainedProteins, Prots, Enzymes):
     rs = []
     enzs = []
     for k in ContainedProteins:
@@ -1154,7 +1090,7 @@ def findContainedEnzymes(ContainedProteins, Prots, Enzymes):
     return(out)
 
 
-def findAssociatedEnzyme(Enzymes, protein):
+def _find_associated_enzyme(Enzymes, protein):
     out1 = []
     out2 = []
     for e in Enzymes.keys():
@@ -1166,7 +1102,7 @@ def findAssociatedEnzyme(Enzymes, protein):
     return(out)
 
 
-def findIsozymes(ez, blocks, Reactions, rx):
+def _find_iso_enzymes(ez, blocks, Reactions, rx):
     out = []
     twins = Reactions[rx]['Twins']
     if len(twins) > 0:
@@ -1177,7 +1113,7 @@ def findIsozymes(ez, blocks, Reactions, rx):
     return(out)
 
 
-def sortConstraints(matrix, model):
+def _sort_constraints(matrix, model):
     metaboliteList = [model.metabolism.species._elements[m].id for m in range(
         len(model.metabolism.species._elements))]
     mets = {}
@@ -1201,7 +1137,6 @@ def sortConstraints(matrix, model):
     return(out)
 
 
-def JSON_Int64_compensation(o):
+def _json_int64_compensation(o):
     if isinstance(o, numpy.int64):
         return int(o)
-#    raise TypeError

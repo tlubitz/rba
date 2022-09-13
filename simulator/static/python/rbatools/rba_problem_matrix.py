@@ -1,9 +1,20 @@
+# python 2/3 compatibility
 from __future__ import division, print_function
+
+
 import numpy
 import scipy
+import warnings
+from scipy.sparse import (SparseEfficiencyWarning)
+from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
+from rbatools.auxiliary_functions import *
+from rbatools._warnings_and_errors import *
+
+warnings.simplefilter('ignore', SparseEfficiencyWarning)
 
 
-class RBA_Matrix(object):
+class ProblemMatrix(object):
     """
     Class holding RBA-Linear Problem.
     Required Object type for linear problems (matrices), to be used in this RBA-API.
@@ -31,26 +42,6 @@ class RBA_Matrix(object):
         Dictionary mapping constraint names to their numeric index (generated automatically)
     colIndicesMap : dict
         Dictionary mapping variable names to their numeric index (generated automatically)
-
-    Methods
-    ----------
-    __init__()
-        Initiates with empty Problem. Attributes can be changed manually.
-
-    loadMatrix(matrix)
-        Imports information for attributes from input-objects
-
-    mapIndices():
-        Generates rowIndicesMap and colIndicesMap from attributes.
-
-    AtoLiL()
-        Transforms constraint matrix (LHS) to scipy.sparse.lil_matrix format.
-
-    AtoCOO()
-        Transforms constraint matrix (LHS) to scipy.sparse.coo_matrix format.
-
-    tofloat64()
-        Transforms all numerical attributes to number type numpy.float64.
     """
 
     def __init__(self):
@@ -58,7 +49,7 @@ class RBA_Matrix(object):
         Initiates with empty Problem. Attributes can be changed manually.
         """
 
-        self.A = scipy.sparse.coo.coo_matrix(numpy.array([]))
+        self.A = coo_matrix(numpy.array([]))
         self.b = numpy.array([])
         self.f = numpy.array([])
         self.LB = numpy.array([])
@@ -66,15 +57,9 @@ class RBA_Matrix(object):
         self.row_signs = []
         self.row_names = []
         self.col_names = []
-        self.mapIndices()
+        self.map_indices()
 
-        def AtoLiL(self):
-            self.A = self.A.tolil()
-
-        def AtoCOO(self):
-            self.A = self.A.tocoo()
-
-    def loadMatrix(self, matrix):
+    def load_matrix(self, matrix):
         """
         Imports information from compatible object.
 
@@ -89,60 +74,73 @@ class RBA_Matrix(object):
             The matrix with elements to be added
         """
 
-        if checkForAttributes(matrix, ['A', 'b', 'f', 'LB', 'UB', 'row_signs', 'row_names', 'col_names']):
-            if type(matrix.A) is scipy.sparse.coo.coo_matrix:
+        if check_for_attributes(matrix, ['A', 'b', 'f', 'LB', 'UB', 'row_signs', 'row_names', 'col_names']):
+            if type(matrix.A) is coo_matrix:
                 self.A = matrix.A.astype('float64')
             elif type(matrix.A) is numpy.ndarray:
-                self.A = scipy.sparse.coo.coo_matrix(matrix.A.astype('float64'))
+                self.A = coo_matrix(matrix.A.astype('float64'))
             elif type(matrix.A) is scipy.sparse.lil_matrix:
-                self.A = scipy.sparse.coo.coo_matrix(matrix.A.astype('float64'))
+                self.A = coo_matrix(matrix.A.astype('float64'))
+            elif type(matrix.A) is scipy.sparse.csc_matrix:
+                self.A = coo_matrix(matrix.A.astype('float64'))
+            elif type(matrix.A) is scipy.sparse.csr_matrix:
+                self.A = coo_matrix(matrix.A.astype('float64'))
             else:
-                print('A must be of type coo_matrix or array')
-                return
-            if type(matrix.b) is list or type(matrix.b) is numpy.ndarray:
+                raise InputError('Constraint matrix A must be an array or sparse matrix')
+                #warnings.warn('Constraint matrix A must be an array or sparse matrix')
+                #return
+            if type(matrix.b) is numpy.ndarray:
                 self.b = matrix.b.astype('float64')
             else:
-                print('b must be of list')
-                return
+                raise InputError('Righthand side vector b must be of type numpy array')
+                #warnings.warn('Righthand side vector b must be of type numpy array')
+                #return
             if type(matrix.f) is numpy.ndarray:
                 self.f = matrix.f.astype('float64')
             else:
-                print('f must be of type array')
-                return
+                raise InputError('Objective function vector f must be of type numpy array')
+                #warnings.warn('Objective function vector f must be of type numpy array')
+                #return
             if type(matrix.LB) is numpy.ndarray:
                 self.LB = matrix.LB.astype('float64')
             else:
-                print('LB must be of type array')
-                return
+                raise InputError('Lower bound vector LB must be of type numpy array')
+                #warnings.warn('Lower bound vector LB must be of type numpy array')
+                #return
             if type(matrix.UB) is numpy.ndarray:
                 self.UB = matrix.UB.astype('float64')
             else:
-                print('UB must be of type array')
-                return
+                raise InputError('Upper bound vector UB must be of type numpy array')
+                #warnings.warn('Upper bound vector UB must be of type numpy array')
+                #return
             if type(matrix.row_signs) is list:
                 self.row_signs = matrix.row_signs
             else:
-                print('row_signs must be of list')
-                return
+                raise InputError('Row signs list must be of type list')
+                #warnings.warn('Row signs list must be of type list')
+                #return
             if type(matrix.row_names) is list:
                 self.row_names = matrix.row_names
             else:
-                print('row_names must be of list')
-                return
+                raise InputError('Row names list must be of type list')
+                #warnings.warn('Row names list must be of type list')
+                #return
             if type(matrix.col_names) is list:
                 self.col_names = matrix.col_names
             else:
-                print('col_names must be of list')
-                return
+                raise InputError('Column names list must be of type list')
+                #warnings.warn('Column names list must be of type list')
+                #return
         else:
-            print('Input does not have all necessary elements')
-            return
-        self.mapIndices()
+            raise InputError('Input does not have all necessary elements')
+            #warnings.warn('Input does not have all necessary elements')
+            #return
+        self.map_indices()
 
-    def scaleLHS(self, factor):
+    def scale_lhs(self, factor):
         self.A = self.A*factor
 
-    def mapIndices(self):
+    def map_indices(self):
         """
         Generates rowIndicesMap and colIndicesMap from attributes.
 
@@ -152,19 +150,19 @@ class RBA_Matrix(object):
         self.rowIndicesMap = dict(zip(self.row_names, list(range(len(self.row_names)))))
         self.colIndicesMap = dict(zip(self.col_names, list(range(len(self.col_names)))))
 
-    def AtoLiL(self):
+    def a_to_lil(self):
         """
         Transforms constraint matrix (LHS) to scipy.sparse.lil_matrix format.
         """
         self.A = scipy.sparse.lil_matrix(self.A)
 
-    def AtoCOO(self):
+    def a_to_coo(self):
         """
         Transforms constraint matrix (LHS) to scipy.sparse.coo_matrix format.
         """
-        self.A = scipy.sparse.coo_matrix(self.A)
+        self.A = coo_matrix(self.A)
 
-    def tofloat64(self):
+    def to_float64(self):
         """
         Transforms all numerical attributes to number type numpy.float64.
         """
@@ -173,11 +171,3 @@ class RBA_Matrix(object):
         self.f = self.f.astype('float64')
         self.LB = self.LB.astype('float64')
         self.UB = self.UB.astype('float64')
-
-
-def checkForAttributes(obj, attr):
-    for i in attr:
-        x = getattr(obj, i, None)
-        if x is None:
-            return(True)
-    return(True)

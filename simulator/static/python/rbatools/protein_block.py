@@ -5,10 +5,10 @@ from __future__ import division, print_function
 import numpy
 import pandas
 # package imports
-from .element_block import ElementBlock
+from rbatools.information_block import InformationBlock
 
 
-class ProteinBlock(ElementBlock):
+class ProteinBlock(InformationBlock):
     """
     Class holding information on the proteins in the model.
 
@@ -18,7 +18,7 @@ class ProteinBlock(ElementBlock):
        Each model-protein is represented by a key.
        The values, holding information on each protein, are dicts with predefined keys:
            'ID' : protein ID in model (type str). May be compartment_isoform.
-           'ProtoID' : protein ID in model (type str). Equals ID without compartment-specific ending.
+           'ProtoID' : location independent protein ID in model (type str). Equals ID without compartment-specific ending.
            'ExternalIDs' : identifiers of this protein in other namespaces (Locus-tag, Gene-symbol, ...) (type dict)
            'Function' : associated function, according to Uniprot (type str)
            'Name' : name, according to Uniprot (type list)
@@ -30,9 +30,10 @@ class ProteinBlock(ElementBlock):
            'Weight' : Weight of protein (type float)
            'ProcessRequirements' : Which processes the protein requires for synthesis and maintenance and how much (type dict)
            'SupportsProcess' : Process-machineries, this protein is a subunit of (type list)
+           'AssociatedTarget' : Wheter protein represents a (translation) target.
     """
 
-    def fromFiles(self, model, IDmap, Info, UniprotData='Not There'):
+    def from_files(self, model, IDmap, Info, UniprotData='Not There'):
         """
         Derive reaction-info from RBA-model.
 
@@ -47,14 +48,14 @@ class ProteinBlock(ElementBlock):
         Dictionary with protein-info.
 
         """
-        Prots = getProteinList(model)
+        Prots = _get_protein_list(model)
         if type(IDmap) is pandas.core.frame.DataFrame:
             IDmap = pandas.DataFrame(index=Prots)
         self.Elements = {}
         index = 0
         for i in range(len(Prots)):
-            RequiredProcess = ProcessRequirements(model, Prots[i])
-            Composition = getProteinComposition(model, i)
+            RequiredProcess = _get_process_requirements(model, Prots[i])
+            Composition = _get_protein_composition(model, i)
             genes = {'ids': {},
                      'desc': ' ',
                      'name': ' ',
@@ -70,7 +71,7 @@ class ProteinBlock(ElementBlock):
                 else:
                     protoid = Prots[i]
             if type(UniprotData) is pandas.core.frame.DataFrame:
-                genes = mineUniprotFile(UniprotData, IDmap, protoid)
+                genes = _mine_uniprot_file(UniprotData, IDmap, protoid)
             index += 1
             self.Elements[Prots[i]] = {'ID': Prots[i],
                                        'ProtoID': protoid,
@@ -80,12 +81,22 @@ class ProteinBlock(ElementBlock):
                                        'associatedReactions': [],
                                        'index': index,
                                        'associatedEnzymes': [],
-                                       'Compartment': getCompartment(model, i),
+                                       'Compartment': _get_compartment(model, i),
                                        'AAcomposition': Composition['AAcomp'],
-                                       'AAnumber': genes['length'],
+                                       'AAnumber': Composition['AAnum'],
                                        'Weight': genes['weight'],
-                                       'ProcessRequirements': ProcessCost(model, Composition['AAcomp'], RequiredProcess),
-                                       'SupportsProcess':  RequiredProcess['Part']}
+                                       'ProcessRequirements': _get_process_cost(model, Composition['AAcomp'], RequiredProcess),
+                                       'SupportsProcess':  RequiredProcess['Part'],
+                                       'AssociatedTarget':''}
+
+    def return_protein_iso_form_map(self):
+        protoProteins = {}
+        for protein in self.Elements.keys():
+            if self.Elements[protein]['ProtoID'] in list(protoProteins.keys()):
+                protoProteins[self.Elements[protein]['ProtoID']].append(protein)
+            else:
+                protoProteins[self.Elements[protein]['ProtoID']] = [protein]
+        return(protoProteins)
 
     def overview(self):
         """
@@ -101,14 +112,14 @@ class ProteinBlock(ElementBlock):
         return(out)
 
 
-def getProteinList(model):
+def _get_protein_list(model):
     out = []
     for e in model.proteins.macromolecules._elements:
         out.append(e.id)
     return(out)
 
 
-def mineUniprotFile(UniprotData, IDmap, protein):
+def _mine_uniprot_file(UniprotData, IDmap, protein):
     differentIDs = {}
     function = ''
     name = ''
@@ -148,11 +159,11 @@ def mineUniprotFile(UniprotData, IDmap, protein):
     return(out)
 
 
-def getCompartment(model, protein):
+def _get_compartment(model, protein):
     return(model.proteins.macromolecules._elements[protein].__dict__['compartment'])
 
 
-def getProteinComposition(model, protein):
+def _get_protein_composition(model, protein):
     out = {}
     numberAA = 0
     MacroMolecules = model.proteins.macromolecules._elements
@@ -165,7 +176,7 @@ def getProteinComposition(model, protein):
     return(out)
 
 
-def ProcessRequirements(model, protein):
+def _get_process_requirements(model, protein):
     out1 = []
     out2 = []
     Processes = model.processes.processes._elements
@@ -183,7 +194,7 @@ def ProcessRequirements(model, protein):
     return(out)
 
 
-def ProcessCost(model, AminoAcid, req):
+def _get_process_cost(model, AminoAcid, req):
     out = {}
     Processes = model.processes.processes._elements
     ProcessingMaps = model.processes.processing_maps._elements
