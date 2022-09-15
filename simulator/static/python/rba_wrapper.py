@@ -26,22 +26,22 @@ class Wrapper:
 
     def get_csv(self):
         ## Export results in CSV ##
-        csv = self.Simulation.SimulationData.export_csv()
+        csv = self.Simulation.SimulationData.export_csv(return_result=True)
         return csv
 
     def get_eschermap(self):
         ## Export results as Escher Map ##
-        em = self.Simulation.SimulationData.export_escher_map(type='fluxes')
+        em = self.Simulation.SimulationData.export_escher_map(type='fluxes',return_result=True)
 
         return em
 
     def get_proteomap(self):
         ## Export results in CSV ##
-        proteomap = self.Simulation.SimulationData.export_proteo_map()
+        proteomap = self.Simulation.SimulationData.export_proteo_map(return_result=True)
 
         return proteomap
 
     def get_sbtab(self):
         ## Export results in CSV ##
-        sbtab = self.Simulation.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen')
+        sbtab = self.Simulation.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen',return_result=True)
         return sbtab

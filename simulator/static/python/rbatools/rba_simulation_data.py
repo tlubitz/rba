@@ -232,7 +232,7 @@ class SimulationDataRBA(object):
         m = ET.tostring(root, 'utf-8')
         return(m)
 
-    def export_sbtab(self, filename:str="", add_links:bool=False):
+    def export_sbtab(self, filename:str="", add_links:bool=False,return_result : bool = False):
         """
         Exports simulation data in one single sbtab file
 
@@ -242,6 +242,9 @@ class SimulationDataRBA(object):
             Name, under which to save SBtab-file
         add_links : str
             Wheter to implement entry-format, which allows links between table-elements.
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         SBtab
@@ -347,34 +350,42 @@ class SimulationDataRBA(object):
         else:
             filename_SBtab = 'RBA_results'
 
+        reaction_variables=[i[0] for i in ReactionDataTable.value_rows]
+        #reaction_variables=list(ReactionDataTable.to_data_frame()['VariableID'])
+        process_variables=[i[0] for i in ProcessDataTable.value_rows]
+        #process_variables=list(ProcessDataTable.to_data_frame()['VariableID'])
+        enzyme_variables=[i[0] for i in EnzymeDataTable.value_rows]
+        #enzyme_variables=list(EnzymeDataTable.to_data_frame()['VariableID'])
+        protein_variables=[i[0] for i in ProteinDataTable.value_rows]
+        #protein_variables=list(ProteinDataTable.to_data_frame()['VariableID'])
+        metabolite_constraint_variables=[i[0] for i in MetaboliteConstraintDataTable.value_rows]
+        #metabolite_constraint_variables=list(MetaboliteConstraintDataTable.to_data_frame()['VariableID'])
+        density_constraint_variables=[i[0] for i in DensityConstraintDataTable.value_rows]
+        #density_constraint_variables=list(DensityConstraintDataTable.to_data_frame()['VariableID'])
+        process_constraint_variables=[i[0] for i in ProcessConstraintDataTable.value_rows]
+        #process_constraint_variables=list(ProcessConstraintDataTable.to_data_frame()['VariableID'])
+        enzyme_constraint_variables=[i[0] for i in EnzymeConstraintDataTable.value_rows]
+        #enzyem_constraint_variables=list(EnzymeConstraintDataTable.to_data_frame()['VariableID'])
+
         if add_links:
-            ReactionDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Reaction/'+entry+'!)') for entry in list(ReactionDataTable.to_data_frame()['VariableID'])], position=1)
-            ProcessDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Process/'+entry+'!)')
-                                                                    for entry in list(ProcessDataTable.to_data_frame()['VariableID'])], position=1)
-            EnzymeDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Enzyme/'+entry+'!)')
-                                                                   for entry in list(EnzymeDataTable.to_data_frame()['VariableID'])], position=1)
-            ProteinDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Protein/'+entry+'!)')
-                                                                    for entry in list(ProteinDataTable.to_data_frame()['VariableID'])], position=1)
-            MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Compound/'+entry+'!)') for entry in list(MetaboliteConstraintDataTable.to_data_frame()['VariableID'])], position=1)
-            DensityConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Compartment/'+entry+'!)') for entry in list(DensityConstraintDataTable.to_data_frame()['VariableID'])], position=1)
-            ProcessConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Process/'+entry+'!)') for entry in list(ProcessConstraintDataTable.to_data_frame()['VariableID'])], position=1)
-            EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+[str(
-                '(!'+'Enzyme/'+entry+'!)') for entry in list(EnzymeConstraintDataTable.to_data_frame()['VariableID'])], position=1)
-
+            ReactionDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Reaction/'+entry+'!)') for entry in reaction_variables], position=1)
+            ProcessDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Process/'+entry+'!)')for entry in process_variables], position=1)
+            EnzymeDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Enzyme/'+entry+'!)')for entry in enzyme_variables], position=1)
+            ProteinDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Protein/'+entry+'!)')for entry in protein_variables], position=1)
+            MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Compound/'+entry+'!)') for entry in metabolite_constraint_variables], position=1)
+            DensityConstraintDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Compartment/'+entry+'!)') for entry in density_constraint_variables], position=1)
+            ProcessConstraintDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Process/'+entry+'!)') for entry in process_constraint_variables], position=1)
+            EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+[str('(!'+'Enzyme/'+entry+'!)') for entry in enzyme_constraint_variables], position=1)
             filename_SBtab += '_HTML'
-
         else:
-            ReactionDataTable.add_column(column_list=['!ElementID']+list(ReactionDataTable.to_data_frame()['VariableID']), position=1)
-            ProcessDataTable.add_column(column_list=['!ElementID']+list(ProcessDataTable.to_data_frame()['VariableID']), position=1)
-            EnzymeDataTable.add_column(column_list=['!ElementID']+list(EnzymeDataTable.to_data_frame()['VariableID']), position=1)
-            ProteinDataTable.add_column(column_list=['!ElementID']+list(ProteinDataTable.to_data_frame()['VariableID']), position=1)
-            MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+list(MetaboliteConstraintDataTable.to_data_frame()['VariableID']), position=1)
-            DensityConstraintDataTable.add_column(column_list=['!ElementID']+list(DensityConstraintDataTable.to_data_frame()['VariableID']), position=1)
-            ProcessConstraintDataTable.add_column(column_list=['!ElementID']+list(ProcessConstraintDataTable.to_data_frame()['VariableID']), position=1)
-            EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+list(EnzymeConstraintDataTable.to_data_frame()['VariableID']), position=1)
+            ReactionDataTable.add_column(column_list=['!ElementID']+reaction_variables, position=1)
+            ProcessDataTable.add_column(column_list=['!ElementID']+process_variables, position=1)
+            EnzymeDataTable.add_column(column_list=['!ElementID']+enzyme_variables, position=1)
+            ProteinDataTable.add_column(column_list=['!ElementID']+protein_variables, position=1)
+            MetaboliteConstraintDataTable.add_column(column_list=['!ElementID']+metabolite_constraint_variables, position=1)
+            DensityConstraintDataTable.add_column(column_list=['!ElementID']+density_constraint_variables, position=1)
+            ProcessConstraintDataTable.add_column(column_list=['!ElementID']+process_constraint_variables, position=1)
+            EnzymeConstraintDataTable.add_column(column_list=['!ElementID']+enzyme_constraint_variables, position=1)
 
         ReactionDataTable.remove_column(position=2)
         ProcessDataTable.remove_column(position=2)
@@ -402,11 +413,17 @@ class SimulationDataRBA(object):
         self.sbtab_doc.name = filename
         self.sbtab_doc.change_attribute('DocumentType', 'rba-simulation-data')
         self.sbtab_doc.write()
-        return(self.sbtab_doc)
+        if return_result:
+            return(self.sbtab_doc)
 
-    def export_json(self):
+    def export_json(self,return_result : bool = False):
         """
         Returns simulation data as JSON string
+        Parameters
+        ----------
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         JSON string
@@ -420,9 +437,10 @@ class SimulationDataRBA(object):
                  'DensityConstraintData': self.DensityConstraintData.Elements,
                  'EnzymeConstraintData': self.EnzymeConstraintData.Elements,
                  'ProcessConstraintData': self.ProcessConstraintData.Elements}
-        return(json.dumps(Block))
+        if return_result:
+            return(json.dumps(Block))
 
-    def export_csv(self, deleteZerosRows:bool=True):
+    def export_csv(self, deleteZerosRows:bool=True,return_result : bool = False):
         """
         Exports simulation data as csv files
         Parameters
@@ -431,6 +449,9 @@ class SimulationDataRBA(object):
             Boolean wheter to remove rows which have only zero entries.
             (e.g. reactions which never carry flux in all runs)
             Default: True
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         Dictionaries with csvs
@@ -711,9 +732,10 @@ class SimulationDataRBA(object):
                     wr.writerow(row)
         fp.close()
         self.csvs['EnzymeConstraint.csv'] = enzyme_constraint_csv
-        return(self.csvs)
+        if return_result:
+            return(self.csvs)
 
-    def export_escher_map(self, type:str='fluxes'):
+    def export_escher_map(self, type:str='fluxes',return_result : bool = False):
         """
         Exports input file for generation of Escher maps.
         https://escher.github.io
@@ -727,6 +749,9 @@ class SimulationDataRBA(object):
         ----------
         type: str ('fluxes' or 'investment')
             Default: 'fluxes'
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         JSON file
@@ -762,9 +787,10 @@ class SimulationDataRBA(object):
                 self.eschermap = json.dumps(ReactionInvestments, indent=4)
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionInvestments, indent=4))
-        return(self.eschermap)
+        if return_result:
+            return(self.eschermap)
 
-    def export_proteo_map(self, type:str='proto'):
+    def export_proteo_map(self, type:str='proto',return_result : bool = False):
         """
         Exports input file for the generation of Proteo maps from
         simulation data.
@@ -776,6 +802,9 @@ class SimulationDataRBA(object):
         ----------
         type: str ('proto' or 'isoforms')
             Default: 'proto'
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         Proteo map text file
@@ -810,7 +839,8 @@ class SimulationDataRBA(object):
                                             for p, l in ProteinLevels.items()])
                 with open(filename, 'w') as fout:
                     fout.write('\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]))
-        return(self.proteomap)
+        if return_result:
+            return(self.proteomap)
 
 def _html_style(structOriginal):
     struct = copy.deepcopy(structOriginal)

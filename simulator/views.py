@@ -261,7 +261,7 @@ def simulate(request):
         # create CSV files, save em, and create links to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        csv_files = wrapper.rba_session.SimulationData.export_csv()
+        csv_files = wrapper.rba_session.SimulationData.export_csv(return_result=True)
         for cf_key in csv_files:
             csv_file = csv_files[cf_key]
             csv_path = pre_path + '%s/%s_%s' %(request.session['rbafilename'][:-4], request.session['session_id'], cf_key)
@@ -279,7 +279,7 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         emap_path = pre_path + '%s/eschermap_%s.json' %(request.session['rbafilename'][:-4],request.session['session_id'])
-        emap_content = wrapper.rba_session.SimulationData.export_escher_map()
+        emap_content = wrapper.rba_session.SimulationData.export_escher_map(return_result=True)
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
@@ -293,7 +293,7 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         proteomap_path = pre_path + '%s/proteomap_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
-        proteomap_content = wrapper.rba_session.SimulationData.export_proteo_map()
+        proteomap_content = wrapper.rba_session.SimulationData.export_proteo_map(return_result=True)
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
@@ -305,7 +305,7 @@ def simulate(request):
     try:
         # create SBtab Document, save it, and create link to download
         sbtab_path = pre_path + '%s/sbtab_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
-        sbtab_content = wrapper.rba_session.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
+        sbtab_content = wrapper.rba_session.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen',return_result=True, rba=True)
         f = open(sbtab_path, 'w+')
         f.write(sbtab_content.to_str())
         f.close()

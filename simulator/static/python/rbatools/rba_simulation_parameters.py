@@ -75,7 +75,7 @@ class SimulationParametersRBA(object):
                 self.CompartmentCapacities.Elements[compcap].update(
                     {run: json.dumps(rbaSession.Parameters['CompartmentCapacities'].loc[compcap, run])})
 
-    def export_sbtab(self, filename:str):
+    def export_sbtab(self, filename:str, return_result : bool = False):
         """
         Exports simulation parameters in one single sbtab file
 
@@ -83,6 +83,9 @@ class SimulationParametersRBA(object):
         ----------
         filename : str
             Name, under which to save SBtab-file
+        return_result : bool
+            Whether result should be returned. If false nothing is returned.
+            Default: False
         Returns
         -------
         SBtab
@@ -103,7 +106,7 @@ class SimulationParametersRBA(object):
         EnzymeCapacitiesTable_FW.change_attribute(
             'Text', 'Enzyme forward capacities (relating enzyme concentrations to reaction rates) may depend on model parameters such as growth rate and will therefore vary between simulation runs.')
         EnzymeCapacitiesTable_FW.change_attribute('TableID', 'enzyme_forward_capacity')
-        EnzymeCapacitiesTable_FW.unset_attribute('Date')
+        #EnzymeCapacitiesTable_FW.unset_attribute('Date')
         EnzymeCapacitiesTable_FW.unset_attribute('SBtabVersion')
 
         EnzymeCapacitiesTable_BW.filename = 'EnzymeBackwardCapacities.tsv'
@@ -112,7 +115,7 @@ class SimulationParametersRBA(object):
         EnzymeCapacitiesTable_BW.change_attribute(
             'Text', 'Enzyme backward capacities (relating enzyme concentrations to reaction rates) may depend on model parameters such as growth rate and will therefore vary between simulation runs.')
         EnzymeCapacitiesTable_BW.change_attribute('TableID', 'enzyme_backward_capacity')
-        EnzymeCapacitiesTable_BW.unset_attribute('Date')
+        #EnzymeCapacitiesTable_BW.unset_attribute('Date')
         EnzymeCapacitiesTable_BW.unset_attribute('SBtabVersion')
 
         ProcessCapacitiesTable.filename = 'MachineCapacities.tsv'
@@ -121,7 +124,7 @@ class SimulationParametersRBA(object):
         ProcessCapacitiesTable.change_attribute(
             'Text', 'Machine capacities (relating machine concentrations to process rates)  may depend on model parameters such as growth rate and will therefore vary between simulation runs.')
         ProcessCapacitiesTable.change_attribute('TableID', 'machinery_capacity')
-        ProcessCapacitiesTable.unset_attribute('Date')
+        #ProcessCapacitiesTable.unset_attribute('Date')
         ProcessCapacitiesTable.unset_attribute('SBtabVersion')
 
         CompartmentCapacitiesTable.filename = 'CompartmentCapacities.tsv'
@@ -130,7 +133,7 @@ class SimulationParametersRBA(object):
         CompartmentCapacitiesTable.change_attribute(
             'Text', 'Compartment capacities (defining the maximal macromolecule density in a compartment)  may depend on model parameters such as growth rate and will therefore vary between simulation runs.')
         CompartmentCapacitiesTable.change_attribute('TableID', 'compartment_capacity')
-        CompartmentCapacitiesTable.unset_attribute('Date')
+        #CompartmentCapacitiesTable.unset_attribute('Date')
         CompartmentCapacitiesTable.unset_attribute('SBtabVersion')
 
         self.sbtab_doc = SBtab.SBtabDocument(name='RBAparameters', sbtab_init=None,
@@ -145,4 +148,5 @@ class SimulationParametersRBA(object):
         self.sbtab_doc.name = filename
         self.sbtab_doc.change_attribute('DocumentType', 'rba-simulation-parameters')
         self.sbtab_doc.write()
-        return(self.sbtab_doc)
+        if return_result:
+            return(self.sbtab_doc)
