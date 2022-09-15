@@ -242,6 +242,9 @@ class SimulationDataRBA(object):
             Name, under which to save SBtab-file
         add_links : str
             Wheter to implement entry-format, which allows links between table-elements.
+        Returns
+        -------
+        SBtab
         """
         GeneralRunInfoTable = self.GeneralRunInfo.to_sbtab(
             table_id='run_information', table_type='QuantityMatrix', table_name='Run information')
@@ -399,8 +402,6 @@ class SimulationDataRBA(object):
         self.sbtab_doc.name = filename
         self.sbtab_doc.change_attribute('DocumentType', 'rba-simulation-data')
         self.sbtab_doc.write()
-
-    def get_sbtab_doc(self):
         return(self.sbtab_doc)
 
     def export_json(self):
@@ -430,6 +431,9 @@ class SimulationDataRBA(object):
             Boolean wheter to remove rows which have only zero entries.
             (e.g. reactions which never carry flux in all runs)
             Default: True
+        Returns
+        -------
+        Dictionaries with csvs
         """
         self.csvs = {}
         exchange_data_csv = ''
@@ -707,8 +711,6 @@ class SimulationDataRBA(object):
                     wr.writerow(row)
         fp.close()
         self.csvs['EnzymeConstraint.csv'] = enzyme_constraint_csv
-
-    def get_csv_files(self):
         return(self.csvs)
 
     def export_escher_map(self, type:str='fluxes'):
@@ -725,6 +727,9 @@ class SimulationDataRBA(object):
         ----------
         type: str ('fluxes' or 'investment')
             Default: 'fluxes'
+        Returns
+        -------
+        JSON file
         """
         if type is 'fluxes':
 
@@ -757,8 +762,6 @@ class SimulationDataRBA(object):
                 self.eschermap = json.dumps(ReactionInvestments, indent=4)
                 with open(filename, 'w') as fout:
                     fout.write(json.dumps(ReactionInvestments, indent=4))
-
-    def get_escher_map(self):
         return(self.eschermap)
 
     def export_proteo_map(self, type:str='proto'):
@@ -773,6 +776,9 @@ class SimulationDataRBA(object):
         ----------
         type: str ('proto' or 'isoforms')
             Default: 'proto'
+        Returns
+        -------
+        Proteo map text file
         """
         if type == 'isoforms':
             IDs = list(self.ProteinData.Elements.keys())
@@ -804,10 +810,7 @@ class SimulationDataRBA(object):
                                             for p, l in ProteinLevels.items()])
                 with open(filename, 'w') as fout:
                     fout.write('\n'.join(['{}\t{}'.format(p, l) for p, l in ProteinLevels.items()]))
-
-    def get_proteo_map(self):
         return(self.proteomap)
-
 
 def _html_style(structOriginal):
     struct = copy.deepcopy(structOriginal)

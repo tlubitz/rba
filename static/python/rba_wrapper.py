@@ -16,9 +16,9 @@ class Wrapper:
 
     def set_default_parameters(self):
         ## Set medium to first condition, simulate and record results. ##
-        self.Simulation.set_medium(changes={'M_Glucose': 10})
+        self.Simulation.set_medium({'M_Glucose': 10})
         self.Simulation.find_max_growth_rate()
-        self.Simulation.record_results(run_name='Glucose')
+        self.Simulation.record_results('Glucose')
 
     def write_results(self):
         ## Write recorded results to RBA_SimulationData object ##
@@ -31,20 +31,17 @@ class Wrapper:
 
     def get_eschermap(self):
         ## Export results as Escher Map ##
-        self.Simulation.SimulationData.export_escher_map(type='fluxes')
-        em = self.Simulation.SimulationData.get_escher_map()
+        em = self.Simulation.SimulationData.export_escher_map(type='fluxes')
 
         return em
 
     def get_proteomap(self):
         ## Export results in CSV ##
-        self.Simulation.SimulationData.export_proteo_map()
-        proteomap = self.Simulation.SimulationData.get_proteo_map()
+        proteomap = self.Simulation.SimulationData.export_proteo_map()
 
         return proteomap
 
     def get_sbtab(self):
         ## Export results in CSV ##
-        self.Simulation.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen')
-        sbtab = self.Simulation.SimulationData.get_sbtab_doc() 
+        sbtab = self.Simulation.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen')
         return sbtab

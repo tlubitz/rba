@@ -83,6 +83,9 @@ class SimulationParametersRBA(object):
         ----------
         filename : str
             Name, under which to save SBtab-file
+        Returns
+        -------
+        SBtab
         """
 
         EnzymeCapacitiesTable_FW = self.EnzymeCapacities_FW.to_sbtab(
@@ -142,6 +145,4 @@ class SimulationParametersRBA(object):
         self.sbtab_doc.name = filename
         self.sbtab_doc.change_attribute('DocumentType', 'rba-simulation-parameters')
         self.sbtab_doc.write()
-
-    def get_sbtab_doc(self):
         return(self.sbtab_doc)
