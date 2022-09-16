@@ -380,17 +380,19 @@ class LinearProblem(ProblemMatrix):
                 self.build_cplex_lp()
                 return(True)
             else:
-                raise DependencyError("Solver {} not found, consider using glpk as lp-solver".format(self.lp_solver))
-                #warnings.warn("Solver {} not found, consider using glpk as lp-solver".format(self.lp_solver))
-                #return(False)
+                warnings.warn("Solver {} not found, trying glpk as lp-solver")
+                if glpk_available:
+                    self.build_glpk_lp()
+                    self.lp_solver=="glpk"
+                    return(True)
+                else:
+                    raise DependencyError("Solver {} not found, make sure package swiglpk is working".format(self.lp_solver))
         elif self.lp_solver=="glpk":
             if glpk_available:
                 self.build_glpk_lp()
                 return(True)
             else:
                 raise DependencyError("Solver {} not found, make sure package swiglpk is working".format(self.lp_solver))
-                #warnings.warn("Solver {} not found, make sure package swiglpk is working".format(self.lp_solver))
-                #return(False)
 
     def solve_lp(self):
         """
