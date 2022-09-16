@@ -230,8 +230,10 @@ class SessionRBA(object):
         """
         Removes all previosly recorded results and deletes own 'Results'-attribute.
         """
-        delattr(self, 'Results')
-        delattr(self, 'Parameters')
+        if hasattr(self, 'Results'):
+            delattr(self, 'Results')
+        if hasattr(self, 'Parameters'):
+            delattr(self, 'Parameters')
 
     def write_results(self, session_name: str, digits: int = 10):
         """
