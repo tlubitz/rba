@@ -12,7 +12,7 @@ import shutil
 import zipfile
 import json
 import socket
-import cplex
+#import cplex
 import random
 import matplotlib
 #matplotlib.use('TkAgg')
