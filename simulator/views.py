@@ -19,7 +19,10 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from .static.python.RBA_tools_WIP.rbatools import rba_websimulator_interface
+from rbatools import enzyme_block
+
+#from .static.python.RBA_tools_WIP.rbatools import rba_websimulator_interface
+from .static.python import rba_websimulator_interface
 
 
 def index(request):
@@ -122,20 +125,23 @@ def loadmodel(request):
     '''
     load an existing model from server
     '''
-    if socket.gethostname() == 'timputer':
+    if socket.gethostname() == 'timputer0':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = os.getcwd() + '/rba/static/'
+        pre_path = os.getcwd() + '/rba_online_simulator/static/'
         mode = 'prod'
+    
+    print(mode)
 
     request.session['error_code'] = []    
     request.session['csv_mode'] = 'w'
 
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
-    if socket.gethostname() == 'timputer': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
-    else: request.session['newdir'] = os.getcwd() + '/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
+    print(socket.gethostname())
+    if socket.gethostname() == 'timputer0': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
+    else: request.session['newdir'] = os.getcwd() + '/rba_online_simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
 
     # load model and prepare parameters for change
     wrapper = load_local(request.session['newdir'])
@@ -185,7 +191,8 @@ def load_local(path):
     '''
     loads wrapper model
     '''
-    return rba_websimulator_interface.RBA_websimulator_interface(path)
+    #return rba_websimulator_interface.RBA_websimulator_interface(path)
+    return rba_websimulator_interface.WebsimulatorInterfaceRBA(path)
 
 
 @csrf_exempt
@@ -195,11 +202,11 @@ def simulate(request):
     '''
     request.session['error_code'] = []    
     cplex_error = False
-    if socket.gethostname() == 'timputer':
+    if socket.gethostname() == 'timputer0':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = os.getcwd() + '/rba/static/'
+        pre_path = os.getcwd() + '/rba_online_simulator/static/'
         mode = 'prod'
 
     try:
@@ -215,7 +222,7 @@ def simulate(request):
             if mode == 'dev':
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
+                success = wrapper.replay_from_logfile(file_path = 'rba_online_simulator/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             if success != 'ok': request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
@@ -334,11 +341,11 @@ def undolast(request):
     Undo the last simulation step
     '''
     request.session['error_code'] = []
-    if socket.gethostname() == 'timputer':
+    if socket.gethostname() == 'timputer0':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = os.getcwd() + '/rba/static/'
+        pre_path = os.getcwd() + '/rba_online_simulator/static/'
         mode = 'prod'
 
     try:    
@@ -347,7 +354,7 @@ def undolast(request):
             if mode == 'dev':
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
+                success = wrapper.replay_from_logfile(file_path = 'rba_online_simulator/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4], request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())
@@ -384,11 +391,11 @@ def plot(request):
     Plot a parameter
     '''
     request.session['error_code'] = []    
-    if socket.gethostname() == 'timputer':
+    if socket.gethostname() == 'timputer0':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
     else:
-        pre_path = os.getcwd() + '/rba/static/'
+        pre_path = os.getcwd() + '/rba_online_simulator/static/'
         mode = 'prod'
 
     try: parameter = json.loads(list(request.POST.items())[0][0])['plot_parameter']
@@ -403,7 +410,7 @@ def plot(request):
             if mode == 'dev':
                 success = wrapper.replay_from_logfile(file_path = 'simulator/static/results/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             elif mode == 'prod':
-                success = wrapper.replay_from_logfile(file_path = 'rba/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
+                success = wrapper.replay_from_logfile(file_path = 'rba_online_simulator/static/%s/changelog_%s.csv'%(request.session['rbafilename'][:-4],request.session['session_id']))
             if not success: request.session['error_code'].append('Repeated simulation failed due to internal error.')                
         except:
             request.session['error_code'].append('Could not correctly replay in %s.'%os.getcwd())'''
@@ -425,7 +432,7 @@ def plot(request):
         if mode == 'dev':
             plot_path = 'simulator/static/results/%s'%request.session['rbafilename'][:-4]
         else:
-            plot_path = os.getcwd() + '/rba/static/results/%s'%request.session['rbafilename'][:-4]
+            plot_path = os.getcwd() + '/rba_online_simulator/static/results/%s'%request.session['rbafilename'][:-4]
         
         plt.savefig(plot_path + '/plot_%s.png'%request.session['session_id'])
         if mode == 'dev':

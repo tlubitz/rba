@@ -8,5 +8,5 @@ from django.urls import include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('simulator/', include('simulator.urls')),
-    path('', RedirectView.as_view(url='simulator/', permanent=True)),
+    path('', RedirectView.as_view(url='simulator/')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
