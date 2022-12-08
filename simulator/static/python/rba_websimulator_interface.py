@@ -40,6 +40,7 @@ class WebsimulatorInterfaceRBA(object):
                 change_df.loc[self.change_log.shape[0], 'model_parameter'] = model_parameter
                 change_df.loc[self.change_log.shape[0],'function_parameter'] = function_parameter
                 change_df.loc[self.change_log.shape[0], 'parameter_type'] = parameter_type
+                old_value = self.rba_session.model.parameters.functions._elements_by_id[model_parameter].parameters._elements_by_id[function_parameter].value
                 change_df.loc[self.change_log.shape[0], 'old_value'] = old_value
                 change_df.loc[self.change_log.shape[0], 'new_value'] = new_value
                 change_df.loc[self.change_log.shape[0], 'remark'] = change_message

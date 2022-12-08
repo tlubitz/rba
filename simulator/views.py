@@ -201,7 +201,6 @@ def simulate(request):
     Simulate model
     '''
     request.session['error_code'] = []    
-    cplex_error = False
     if socket.gethostname() == 'timputer0':
         pre_path = 'simulator/static/results/'
         mode = 'dev'
@@ -243,9 +242,9 @@ def simulate(request):
             
 
     try:
-        wrapper.rba_session.findMaxGrowthRate()
-        wrapper.rba_session.recordResults('M_Glucose')
-        wrapper.rba_session.writeResults(session_name='Test')
+        wrapper.rba_session.find_max_growth_rate()
+        wrapper.rba_session.record_results('M_Glucose')
+        wrapper.rba_session.write_results(session_name='Test')
     except: request.session['error_code'].append('Growth rate of model could not be determined.')
     
     try:
@@ -268,8 +267,7 @@ def simulate(request):
         # create CSV files, save em, and create links to download
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
-        wrapper.rba_session.SimulationData.exportCSV()
-        csv_files = wrapper.rba_session.SimulationData.getCSVFiles()
+        csv_files = wrapper.rba_session.SimulationData.export_csv(return_result = True)
         for cf_key in csv_files:
             csv_file = csv_files[cf_key]
             csv_path = pre_path + '%s/%s_%s' %(request.session['rbafilename'][:-4], request.session['session_id'], cf_key)
@@ -287,8 +285,8 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         emap_path = pre_path + '%s/eschermap_%s.json' %(request.session['rbafilename'][:-4],request.session['session_id'])
-        wrapper.rba_session.SimulationData.exportEscherMap()
-        emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
+        emap_content = wrapper.rba_session.SimulationData.export_escher_map(return_result = True)
+        #emap_content = wrapper.rba_session.SimulationData.getEscherMap()   
         f = open(emap_path, 'w+')
         f.write(emap_content)
         f.close()
@@ -302,8 +300,8 @@ def simulate(request):
         try: os.mkdir(pre_path + '%s'%(request.session['rbafilename'][:-4]))
         except: pass
         proteomap_path = pre_path + '%s/proteomap_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
-        wrapper.rba_session.SimulationData.exportProteoMap()
-        proteomap_content = wrapper.rba_session.SimulationData.getProteoMap()
+        proteomap_content = wrapper.rba_session.SimulationData.export_proteo_map(return_result = True)
+        #proteomap_content = wrapper.rba_session.SimulationData.getProteoMap()
         f = open(proteomap_path, 'w+')
         f.write(proteomap_content)
         f.close()
@@ -315,8 +313,8 @@ def simulate(request):
     try:
         # create SBtab Document, save it, and create link to download
         sbtab_path = pre_path + '%s/sbtab_%s.tsv' %(request.session['rbafilename'][:-4], request.session['session_id'])
-        wrapper.rba_session.SimulationData.exportSBtab(filename='Sbtab_Results_Glucose_Screen', rba=True)
-        sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
+        sbtab_content = wrapper.rba_session.SimulationData.export_sbtab(filename='Sbtab_Results_Glucose_Screen', return_result = True)
+        #sbtab_content = wrapper.rba_session.SimulationData.getSBtabDoc()
         f = open(sbtab_path, 'w+')
         f.write(sbtab_content.to_str())
         f.close()
