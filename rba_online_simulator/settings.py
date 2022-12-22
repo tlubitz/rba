@@ -32,7 +32,7 @@ else:
     print('*>>>>> You are working in PRODUCTION mode <<<<<*')
     DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'timosan.pythonanywhere.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'timosan.pythonanywhere.com', 'sysbioinrae.pythonanywhere.com']
 
 # Application definition
 

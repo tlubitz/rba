@@ -22,7 +22,7 @@ function delete_session() {
     $.get('/simulator/clearsession', function(data) {
         console.log('Deleting session');
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-        else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+        else { window.location.href="https://sysbioinrae.pythonanywhere.com/simulator/"; }
     });
 }
 
@@ -38,7 +38,7 @@ function load_model(modelname) {
         //console.log(data);
         
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-        else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+        else { window.location.href="https://sysbioinrae.pythonanywhere.com/simulator/"; }
     });
 }
 
@@ -73,7 +73,7 @@ function simulate() {
     $.post('/simulator/simulate/', JSON.stringify(parameters_species), function(data) {
         console.log('Simulating...');
         if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-        else { window.location.href="https://timosan.pythonanywhere.com/simulator"; }
+        else { window.location.href="https://sysbioinrae.pythonanywhere.com/simulator"; }
     });
 }
 
@@ -84,7 +84,7 @@ function undo_last() {
   $.get('/simulator/undolast/', function(data) {
       console.log('Undo last step');
       if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator"; }
-      else { window.location.href="https://timosan.pythonanywhere.com/simulator/"; }
+      else { window.location.href="https://sysbioinrae.pythonanywhere.com/simulator/"; }
   });
 }
 
@@ -99,6 +99,6 @@ function plot_parameter() {
   $.post('/simulator/plot/', JSON.stringify(parameter), function(data) {
     console.log('Plotting...');
     if (mode == 'dev') { window.location.href="http://127.0.0.1:8000/simulator#plot-path"; }
-    else { window.location.href="https://timosan.pythonanywhere.com/simulator#plot-path"; }
+    else { window.location.href="https://sysbioinrae.pythonanywhere.com/simulator#plot-path"; }
   });
 }
