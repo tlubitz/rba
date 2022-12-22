@@ -4,23 +4,23 @@
 {% block content %}
 <div class="rba-content">
     <h1>
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/index.html">
-            <img src="{% static 'images/main.jpg' %}" width="180" class="logoresize"></a>&nbsp;&nbsp;
+        <a href="https://rba.inrae.fr/index.html">
+            <img src="{% static 'images/logo.png' %}" width="180" class="logoresize"></a>&nbsp;&nbsp;
             Resource balance analysis
     </h1>
 
     <hr>
     
     <p class="pp">
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/index.html">Main</a>  &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/overview.html">Getting started</a>  &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/models.html">Models</a>  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/index.html">Main</a>  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/overview.html">Getting started</a>  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/models.html">Models</a>  &nbsp;|&nbsp;
         Simulation  &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/theory.html">Theory</a> &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/learning.html">Learning materials</a>  &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/literature.html">Literature</a> &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/downloads.html">Downloads</a> &nbsp;|&nbsp;
-        <a href="http://genome.jouy.inra.fr/~wliebermeis/rba-models/contact.html">Contact</a>
+        <a href="https://rba.inrae.fr/theory.html">Theory</a> &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/learning.html">Learning materials</a>  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/literature.html">Literature</a> &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/downloads.html">Downloads</a> &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/contact.html">Contact</a>
     </p>
     <br>
 
@@ -31,7 +31,7 @@
             <div class="db-models col-md-12">
                 <h4>Choose a model</h4>
                 <div class="model-input">
-                    <button class="btn btn-primary" onclick="load_model('louis.zip')">Louis</button>
+                    <button class="btn btn-primary" onclick="load_model('louis.zip')">Minimal CCM</button>
                     <div class="btn-label">
                         <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
                     </div>
@@ -57,7 +57,7 @@
         {% if rbafilename %}
             <div class="row uploaded">
                 <div class="col-md-12">
-                    Good job! You have uploaded the file {{ rbafilename }}<br>
+                    Good job! You have loaded the file {{ rbafilename }}<br>
                     <div class="button-row">
                         <button type="button" class="btn btn-primary" onclick="simulate()">Simulate!</button>
                         {% if status %}
@@ -146,7 +146,7 @@
     {% if rbafilename %}
     <article class="module">
         <div class="sublist plot-list">
-            <div class="bold">Plot Parameters</div>
+            <div class="bold">Plot growth-rate dependent Parameters</div>
 
             <select name="Test" id="select_parameter">
                 {% for parameter in model_parameters_list %}
