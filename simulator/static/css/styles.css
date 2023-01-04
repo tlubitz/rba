@@ -1,6 +1,7 @@
 @media screen and (max-width: 767px) {
     body {
         margin-left:6px;
+        font-size: 10px;
     }
 
     .center {
@@ -35,7 +36,8 @@
     }
 
     .logoresize {
-        width:80px;
+        width:auto;
+        height: 60px;
     }
     
     .imageresize {
@@ -93,6 +95,11 @@
     html {
         font-size: 14px;
         font-family: Arial, sans-serif;
+    }
+
+    .logoresize {
+        width:auto;
+        height: 60px;
     }
 
     .btn-label {

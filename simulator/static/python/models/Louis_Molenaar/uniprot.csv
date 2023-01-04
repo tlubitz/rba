@@ -1,4 +1,0 @@
-Entry	Length	Mass	EC number	Function [CC]	Protein names	Gene names
-Pfunct_mem	1	1				Protein_standard_membrane 
-Pfunct_cyt	1	1				Protein_standard_cytoplasm 
-Ptarg	1	1				Protein_target
