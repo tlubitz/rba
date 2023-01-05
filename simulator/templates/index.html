@@ -14,11 +14,12 @@
     <p class="pp">
         <a href="https://rba.inrae.fr/index.html">Main</a>  &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/overview.html">What is RBA</a>  &nbsp;|&nbsp;
-        <a href="https://rba.inrae.fr/models.html">Models</a>  &nbsp;|&nbsp;
-        Simulation  &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/theory.html">Theory</a> &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/models.html">Models</a>  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/tools.html">Tools</a>  &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/rbatools.html">RBAtools</a> &nbsp;|&nbsp;
-        <a href="https://rba.inrae.fr/learning.html">Learning materials</a>  &nbsp;|&nbsp;
+        Simulator  &nbsp;|&nbsp;
+        <a href="https://rba.inrae.fr/learning.html">Learning</a>  &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/literature.html">Literature</a> &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/downloads.html">Downloads</a> &nbsp;|&nbsp;
         <a href="https://rba.inrae.fr/contact.html">Contact</a>
@@ -37,12 +38,12 @@
                         <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
                     </div>
                 </div>
-                <div class="model-input">
+                <!--div class="model-input">
                     <button class="btn btn-primary" onclick="load_model('ecoli.zip')">Ecoli</button>
                     <div class="btn-label">
                         <a href="https://rba.inrae.fr/models/MinimalModel_CentralCarbon/ModelOverview.html" target="_blank">Model Details</a>
                     </div>
-                </div>
+                </div-->
                 <div class="model-input">
                     <button class="btn btn-primary" onclick="load_model('louisminimal.zip')">Minimal Molenaar</button>
                     <div class="btn-label">
@@ -81,9 +82,12 @@
                 </div>
             </div>
 
+            <h3 class="small_model_name">{{ model_name }}</h3>
+
+
             {% if model_parameters_list %}
                 <hr>
-                <button type="button" class="collapsible">Click here if you want to change model parameter values (for advanced users)</button>
+                <button type="button" class="collapsible">Click here to change model parameter values (for advanced users)</button>
                 <div class="ps parameters content">
                     <div class="ps-title bold center row">Parameter Value Multipliers</div>
                     {% for parameter in model_parameters_list %}
@@ -107,7 +111,7 @@
             {% endif %}
             
             <div class="sublist">
-                <div class="bold">Download Model</div>
+                <div class="bold">Download Model (RBA XML)</div>
                 {% if dl_path %}
                     <a href="{{ dl_path }}" target="_blank">Download Model</a><br>
                 {% endif %}
@@ -131,7 +135,8 @@
     {% if status %}
     <hr>
         <article class="module results">
-            <h4>Simulation Results</h4>
+            <h4>Simulation Results for {{ model_name }}</h4>
+            <div class="green">Simulation successful!</div>
             <div class="sublist">
                 <div class="bold">Maps & Tabs</div>
                 {% if emap_path %}

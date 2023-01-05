@@ -24,6 +24,7 @@ from rbatools import enzyme_block
 #from .static.python.RBA_tools_WIP.rbatools import rba_websimulator_interface
 from .static.python import rba_websimulator_interface
 
+filename2modelname = {'louis.zip': 'Minimal CCM', 'louisminimal.zip': 'Minimal Molenaar', 'bsubtilis.zip': 'B.Subtilis'}
 
 def index(request):
     '''
@@ -39,7 +40,8 @@ def index(request):
                 'log_path',
                 'status',
                 'errors',
-                'plot_path']:
+                'plot_path',
+                'model_name']:
         if not request.session.get(var, None):
             request.session[var] = False
 
@@ -95,7 +97,8 @@ def index(request):
                                           'dl_path': request.session['dl_path'],
                                           'plot_path': request.session['plot_path'],
                                           'model_parameters_list': request.session['model_parameters_list'],
-                                          'model_species_list': request.session['model_species_list']})
+                                          'model_species_list': request.session['model_species_list'],
+                                          'model_name': request.session['model_name']})
 
 
 def clearsession(request):
@@ -137,7 +140,10 @@ def loadmodel(request):
 
     # identify model and set directory
     request.session['rbafilename'] = json.loads(list(request.POST.items())[0][0])['modelname']
-    print(socket.gethostname())
+    print(filename2modelname)
+    print(request.session['rbafilename'])
+    request.session['model_name'] = filename2modelname[request.session['rbafilename']]
+
     if socket.gethostname() == 'timputer0': request.session['newdir'] = 'simulator/static/python/models/%s' %(request.session['rbafilename'][:-4])
     else: request.session['newdir'] = os.getcwd() + '/rba/static/python/models/%s' %(request.session['rbafilename'][:-4])
 

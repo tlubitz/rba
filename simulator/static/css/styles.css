@@ -30,6 +30,10 @@
     .pp {
         font-size:0.8em;
     }
+
+    .small_model_name {
+        padding-top: 2rem;
+    }
     
     .noresize {
         font-size:1em;
@@ -95,6 +99,14 @@
     html {
         font-size: 14px;
         font-family: Arial, sans-serif;
+    }
+
+    .green {
+        color: green;
+    }
+
+    .small_model_name {
+        padding-top: 2rem;
     }
 
     .logoresize {
